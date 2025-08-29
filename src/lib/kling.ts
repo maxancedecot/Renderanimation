@@ -47,7 +47,13 @@ function extractBase64FromDataUrl(dataUrl: string): string {
 
 function ensureImageParam(imageUrl?: string, imageDataUrl?: string): string {
   if (imageDataUrl) return extractBase64FromDataUrl(imageDataUrl);
-  if (imageUrl) return imageUrl;
+  if (imageUrl) {
+    const trimmed = imageUrl.trim();
+    if (/^https?:\/\//i.test(trimmed)) return trimmed;
+    throw new Error(
+      `imageUrl invalide: "${imageUrl}". Fournis une URL https absolue (ex: https://.../image.png) ou utilise imageDataUrl (data:base64).`
+    );
+  }
   throw new Error("Aucune image fournie (ni URL publique, ni base64).");
 }
 
