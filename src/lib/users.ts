@@ -100,3 +100,20 @@ export async function deleteUser(id: string): Promise<boolean> {
   return true;
 }
 
+/** Ensure a default admin exists from env DEFAULT_ADMIN_EMAIL/DEFAULT_ADMIN_PASSWORD */
+export async function ensureDefaultAdmin(): Promise<void> {
+  const email = (process.env.DEFAULT_ADMIN_EMAIL || "").trim();
+  const password = process.env.DEFAULT_ADMIN_PASSWORD || "";
+  if (!email || !password) return;
+  const users = await readAll();
+  if (users.some((u) => u.email.toLowerCase() === email.toLowerCase())) return;
+  const user: UserRecord = {
+    id: crypto.randomUUID(),
+    email: email.toLowerCase(),
+    name: "Admin",
+    passwordHash: hashPassword(password),
+    createdAt: new Date().toISOString(),
+  };
+  users.push(user);
+  await writeAll(users);
+}

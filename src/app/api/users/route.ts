@@ -2,7 +2,7 @@ export const runtime = "nodejs";
 
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/src/lib/auth";
-import { listUsers, addUser } from "@/lib/users";
+import { listUsers, addUser, ensureDefaultAdmin } from "@/lib/users";
 
 function isAdmin(email?: string | null): boolean {
   const allow = (process.env.ADMIN_EMAILS || "").split(",").map(s => s.trim().toLowerCase()).filter(Boolean);
@@ -11,6 +11,7 @@ function isAdmin(email?: string | null): boolean {
 }
 
 export async function GET() {
+  await ensureDefaultAdmin();
   const session = await auth();
   if (!session?.user || !isAdmin(session.user.email)) {
     return NextResponse.json({ error: "forbidden" }, { status: 403 });
@@ -20,6 +21,7 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
+  await ensureDefaultAdmin();
   const session = await auth();
   if (!session?.user || !isAdmin(session.user.email)) {
     return NextResponse.json({ error: "forbidden" }, { status: 403 });
@@ -32,4 +34,3 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: e?.message || "create failed" }, { status: 400 });
   }
 }
-
