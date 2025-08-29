@@ -176,12 +176,13 @@ export default function UploadBox() {
   const createKling = useMutation({
     mutationFn: async ({ prompt }: { prompt: string }) => {
       if (!imageUrl && !file) throw new Error("Aucune image dispo");
+      // N'envoie PAS de base64 si on a déjà une URL publique (évite FUNCTION_PAYLOAD_TOO_LARGE)
       let imageDataUrl: string | undefined;
-      if (file) {
+      if (!imageUrl && file) {
         const b64 = await fileToBase64(file);
         imageDataUrl = `data:${file.type};base64,${b64}`;
       }
-      // Priorité au URL publique (imageUrl pointe déjà vers l’image nettoyée si le bouton a été utilisé)
+      // Priorité à l'URL publique (imageUrl pointe déjà vers l’image nettoyée si le bouton a été utilisé)
       const r = await fetch("/api/kling/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
