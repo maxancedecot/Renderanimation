@@ -338,23 +338,25 @@ export default function UploadBox() {
           <div className="rounded-2xl border bg-white p-6 shadow-sm space-y-4">
             <h2 className="text-lg font-semibold">Préparation</h2>
 
-            <div className="flex flex-wrap gap-3">
-              <button
-                className="inline-flex items-center justify-center rounded-lg bg-rose-600 px-4 py-2 text-white hover:bg-rose-600/90 disabled:opacity-60"
-                onClick={() => removePeople.mutate()}
-                disabled={removePeople.isPending}
-              >
-                {removePeople.isPending ? "Retrait des personnes…" : "Retirer les personnes"}
-              </button>
+            {!result && (
+              <div className="flex flex-wrap gap-3">
+                <button
+                  className="inline-flex items-center justify-center rounded-lg bg-rose-600 px-4 py-2 text-white hover:bg-rose-600/90 disabled:opacity-60"
+                  onClick={() => removePeople.mutate()}
+                  disabled={removePeople.isPending}
+                >
+                  {removePeople.isPending ? "Retrait des personnes…" : "Retirer les personnes"}
+                </button>
 
-              <button
-                className="inline-flex items-center justify-center rounded-lg bg-black px-4 py-2 text-white hover:bg-black/90 disabled:opacity-60"
-                onClick={() => runAnalyze.mutate()}
-                disabled={runAnalyze.isPending}
-              >
-                {runAnalyze.isPending ? "Analyse…" : "Analyser l’image"}
-              </button>
-            </div>
+                <button
+                  className="inline-flex items-center justify-center rounded-lg bg-black px-4 py-2 text-white hover:bg-black/90 disabled:opacity-60"
+                  onClick={() => runAnalyze.mutate()}
+                  disabled={runAnalyze.isPending}
+                >
+                  {runAnalyze.isPending ? "Analyse…" : "Analyser l’image"}
+                </button>
+              </div>
+            )}
 
             {result && (
               <>
