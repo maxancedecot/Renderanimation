@@ -238,6 +238,51 @@ export default function UploadBox() {
 
   return (
     <div className="grid lg:grid-cols-2 gap-8">
+      {/* Étapes (progression) */}
+      <div className="rounded-2xl border bg-neutral-50 p-6 lg:col-span-2">
+        {(() => {
+          const step1Done = !!imageUrl; // après upload (ou nettoyage)
+          const step2Done = !!result;   // après analyse OK
+          const step3Done = !!finalVideoUrl; // vidéo prête
+
+          const step1Active = uploadAndAnalyze.isPending && !step1Done;
+          const step2Active = runAnalyze.isPending && !step2Done;
+          const step3Active = (createKling.isPending || !!klingTaskId) && !step3Done;
+
+          const boxClass = (done: boolean, active: boolean) =>
+            [
+              "rounded-xl p-4 ring-1 text-center transition",
+              done && "bg-green-50 ring-green-200 text-green-700",
+              !done && active && "bg-indigo-50 ring-indigo-200 text-indigo-700",
+              !done && !active && "bg-white ring-black/10 text-neutral-500"
+            ].filter(Boolean).join(" ");
+
+          const numClass = (done: boolean, active: boolean) =>
+            [
+              "text-xl font-semibold",
+              done && "text-green-700",
+              active && !done && "text-indigo-700",
+              !done && !active && "text-neutral-800"
+            ].filter(Boolean).join(" ");
+
+          return (
+            <div className="grid grid-cols-3 gap-3">
+              <div className={boxClass(step1Done, step1Active)}>
+                <div className={numClass(step1Done, step1Active)}>1</div>
+                <div className="text-xs mt-1">Upload</div>
+              </div>
+              <div className={boxClass(step2Done, step2Active)}>
+                <div className={numClass(step2Done, step2Active)}>2</div>
+                <div className="text-xs mt-1">Analyse</div>
+              </div>
+              <div className={boxClass(step3Done, step3Active)}>
+                <div className={numClass(step3Done, step3Active)}>3</div>
+                <div className="text-xs mt-1">Vidéo Kling</div>
+              </div>
+            </div>
+          );
+        })()}
+      </div>
       {/* Colonne gauche : Upload + Nettoyage + Analyse + Kling */}
       <div className="space-y-6">
         {/* Upload */}

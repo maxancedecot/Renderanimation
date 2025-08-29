@@ -15,22 +15,7 @@ export default function Page() {
               Parfait pour les promoteurs immobiliers qui souhaitent animer des rendus 3D statiques sans payer un prix exorbitant.
             </p>
           </div>
-          <div className="rounded-2xl border bg-neutral-50 p-6">
-            <div className="grid grid-cols-3 gap-3 text-center">
-              <div className="rounded-xl bg-white p-4 ring-1 ring-black/5">
-                <div className="text-xl font-semibold">1</div>
-                <div className="text-xs text-neutral-500 mt-1">Upload</div>
-              </div>
-              <div className="rounded-xl bg-white p-4 ring-1 ring-black/5">
-                <div className="text-xl font-semibold">2</div>
-                <div className="text-xs text-neutral-500 mt-1">Analyse</div>
-              </div>
-              <div className="rounded-xl bg-white p-4 ring-1 ring-black/5">
-                <div className="text-xl font-semibold">3</div>
-                <div className="text-xs text-neutral-500 mt-1">Vidéo Kling</div>
-              </div>
-            </div>
-          </div>
+          {/* Stepper déplacé et dynamique dans UploadBox */}
         </div>
       </section>
 
