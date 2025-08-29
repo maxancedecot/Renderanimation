@@ -31,6 +31,20 @@ function encodeRFC3986(str: string) {
   );
 }
 
+function normalizeBase(urlOrHost: string, { requireProtocol = true } = {}): string {
+  const raw = (urlOrHost || "").trim();
+  if (!raw) return raw;
+  const withProto = /^https?:\/\//i.test(raw) ? raw : `https://${raw}`;
+  try {
+    const u = new URL(withProto);
+    const noSlash = `${u.protocol}//${u.host}${u.pathname}`.replace(/\/+$/, "");
+    return noSlash;
+  } catch {
+    if (requireProtocol) throw new Error(`URL invalide: ${urlOrHost}`);
+    return raw;
+  }
+}
+
 export async function POST(req: NextRequest) {
   try {
     const { filename, contentType } = await req.json();
@@ -50,8 +64,9 @@ export async function POST(req: NextRequest) {
     // Clé objet (chemin dans le bucket)
     const key = `uploads/${Date.now()}-${filename}`.replace(/\s+/g, "_");
 
-    // Host (sans protocole ni slash final)
-    const host = endpoint.replace(/^https?:\/\//, "").replace(/\/+$/, "");
+    // Host (sans protocole ni slash final), validé
+    const endpointBase = normalizeBase(endpoint);
+    const host = endpointBase.replace(/^https?:\/\//, "");
 
     // Paramètres de signature SigV4
     const method = "PUT";
@@ -113,7 +128,10 @@ export async function POST(req: NextRequest) {
     const uploadUrl = `https://${host}${canonicalUri}?${canonicalQuery}&X-Amz-Signature=${signature}`;
 
     // URL publique de lecture (pour Kling)
-    const cdnBase = (process.env.CDN_BASE || `https://${host}/${bucket}`).replace(/\/+$/, "");
+    const rawCdnBase = process.env.CDN_BASE && process.env.CDN_BASE.trim().length > 0
+      ? process.env.CDN_BASE
+      : `https://${host}/${bucket}`;
+    const cdnBase = normalizeBase(rawCdnBase);
     const publicUrl = `${cdnBase}/${key}`;
 
     return NextResponse.json({

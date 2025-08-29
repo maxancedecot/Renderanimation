@@ -1,12 +1,25 @@
 // src/app/api/images/remove-people/route.ts
+export const runtime = "nodejs";
+
 import { NextResponse } from "next/server";
 import OpenAI from "openai";
 import { toFile } from "openai/uploads";
 import { r2, R2_BUCKET } from "@/lib/r2";
 import { PutObjectCommand } from "@aws-sdk/client-s3";
 import { randomUUID } from "crypto";
+import fs from "node:fs";
+import path from "node:path";
 
 export const runtime = "nodejs";
+
+function guessMimeFromExt(p: string) {
+  const ext = p.split(".").pop()?.toLowerCase();
+  if (ext === "png") return "image/png";
+  if (ext === "webp") return "image/webp";
+  if (ext === "jpg" || ext === "jpeg") return "image/jpeg";
+  if (ext === "tif" || ext === "tiff") return "image/tiff";
+  return "image/png";
+}
 
 async function fetchImageBuffer(imageUrlOrDataUrl: string): Promise<Uint8Array> {
   if (imageUrlOrDataUrl.startsWith("data:")) {
@@ -14,6 +27,14 @@ async function fetchImageBuffer(imageUrlOrDataUrl: string): Promise<Uint8Array> 
     if (i === -1) throw new Error("dataURL invalide (pas de base64,)");
     const b64 = imageUrlOrDataUrl.slice(i + "base64,".length);
     return Uint8Array.from(Buffer.from(b64, "base64"));
+  }
+  // Support relative public path like /uploads/...
+  if (imageUrlOrDataUrl.startsWith("/")) {
+    const rel = imageUrlOrDataUrl.replace(/^\//, "");
+    const filePath = path.join(process.cwd(), "public", rel);
+    if (!fs.existsSync(filePath)) throw new Error(`fichier introuvable: ${imageUrlOrDataUrl}`);
+    const buf = fs.readFileSync(filePath);
+    return new Uint8Array(buf);
   }
   const res = await fetch(imageUrlOrDataUrl);
   if (!res.ok) throw new Error(`Téléchargement image échoué: ${res.status} ${res.statusText}`);
