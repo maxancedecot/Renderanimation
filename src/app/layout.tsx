@@ -13,6 +13,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         {/* ✅ Fallback Tailwind via CDN : les styles s’appliquent immédiatement */}
         <script src="https://cdn.tailwindcss.com"></script>
+        <link
+          rel="icon"
+          href="https://pub-60f579eb256a4570ad9e0494f23007ac.r2.dev/Favicon.png"
+          type="image/png"
+        />
       </head>
       <body className="min-h-screen bg-gradient-to-br from-neutral-50 via-white to-neutral-100 text-neutral-900 antialiased">
         <Providers>

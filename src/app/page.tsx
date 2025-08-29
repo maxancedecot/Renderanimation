@@ -7,6 +7,13 @@ export default function Page() {
       <section className="rounded-3xl bg-white shadow-sm ring-1 ring-black/5 p-8 md:p-10">
         <div className="grid md:grid-cols-2 gap-10 items-center">
           <div className="space-y-4">
+            {/* Logo au-dessus du titre */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="https://pub-60f579eb256a4570ad9e0494f23007ac.r2.dev/logo%20ra.png"
+              alt="RenderAnimation"
+              className="h-8 w-auto mb-2"
+            />
             <h1 className="text-3xl md:text-4xl font-semibold leading-tight">
               Anime tes <span className="underline decoration-black/30">rendus 3D</span> en 3 clics
             </h1>
