@@ -15,11 +15,11 @@ export default function Page() {
               Parfait pour les promoteurs immobiliers qui souhaitent animer des rendus 3D statiques sans payer un prix exorbitant.
             </p>
           </div>
-          {/* Vidéo d'exemple à droite */}
-          <div className="rounded-2xl border bg-neutral-50 p-4">
+          {/* Vidéo d'exemple à droite (sans fond, légère ombre) */}
+          <div>
             <video
               src="https://pub-60f579eb256a4570ad9e0494f23007ac.r2.dev/exemple.mp4"
-              className="w-full rounded-xl ring-1 ring-black/5"
+              className="w-full rounded-2xl shadow-sm"
               autoPlay
               loop
               muted
