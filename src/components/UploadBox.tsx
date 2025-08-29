@@ -42,6 +42,7 @@ export default function UploadBox() {
   const [klingTaskId, setKlingTaskId] = useState<string | null>(null);
   const [finalVideoUrl, setFinalVideoUrl] = useState<string | null>(null);
   const [progress, setProgress] = useState(0);
+  const [showRemoveConfirm, setShowRemoveConfirm] = useState(false);
 
   /* Drag & drop */
   const onDrop = useCallback((e: React.DragEvent<HTMLLabelElement>) => {
@@ -342,7 +343,7 @@ export default function UploadBox() {
               <div className="flex flex-wrap gap-3">
                 <button
                   className="inline-flex items-center justify-center rounded-lg bg-rose-600 px-4 py-2 text-white hover:bg-rose-600/90 disabled:opacity-60"
-                  onClick={() => removePeople.mutate()}
+                  onClick={() => setShowRemoveConfirm(true)}
                   disabled={removePeople.isPending}
                 >
                   {removePeople.isPending ? "Retrait des personnes…" : "Retirer les personnes"}
@@ -418,6 +419,34 @@ export default function UploadBox() {
           )}
         </div>
       </div>
+
+      {/* Modal confirmation: retirer les personnes */}
+      {showRemoveConfirm && (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-black/30 p-4" role="dialog" aria-modal="true">
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl ring-1 ring-black/5">
+            <h3 className="text-lg font-semibold">Retirer les personnes ?</h3>
+            <p className="mt-2 text-sm text-neutral-600">
+              Cette opération peut modifier le ratio de l’image nettoyée. Veux-tu continuer ?
+            </p>
+            <div className="mt-4 flex justify-end gap-3">
+              <button
+                className="inline-flex items-center justify-center rounded-lg border px-4 py-2 hover:bg-neutral-50"
+                onClick={() => setShowRemoveConfirm(false)}
+                disabled={removePeople.isPending}
+              >
+                Annuler
+              </button>
+              <button
+                className="inline-flex items-center justify-center rounded-lg bg-rose-600 px-4 py-2 text-white hover:bg-rose-600/90 disabled:opacity-60"
+                onClick={() => { setShowRemoveConfirm(false); removePeople.mutate(); }}
+                disabled={removePeople.isPending}
+              >
+                Continuer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
