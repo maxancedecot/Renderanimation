@@ -313,10 +313,8 @@ export default function UploadBox() {
 
             {result && (
               <>
-                <h3 className="font-semibold">Prompt Kling (glide avant lent)</h3>
-                <pre className="whitespace-pre-wrap text-sm bg-neutral-50 p-4 rounded-lg ring-1 ring-black/5">
-                  {result.prompt}
-                </pre>
+                <h3 className="font-semibold">Image analysée — prête à être animée</h3>
+                <p className="text-sm text-neutral-600">Clique sur Générer la vidéo pour lancer l’animation.</p>
                 <div className="flex gap-2">
                   <button
                     className="inline-flex items-center justify-center rounded-lg bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-600/90 disabled:opacity-60"
@@ -324,12 +322,6 @@ export default function UploadBox() {
                     disabled={createKling.isPending || !!klingTaskId}
                   >
                     {createKling.isPending ? "Démarrage…" : (!!klingTaskId ? "En cours…" : "Générer la vidéo")}
-                  </button>
-                  <button
-                    className="inline-flex items-center justify-center rounded-lg border px-4 py-2 hover:bg-neutral-50"
-                    onClick={() => navigator.clipboard.writeText(result.prompt)}
-                  >
-                    Copier le prompt
                   </button>
                 </div>
               </>
