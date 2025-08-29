@@ -15,7 +15,11 @@ export default async function AccountPage() {
           <SignOutButton />
         </div>
       </div>
+      <div className="rounded-2xl border bg-white p-6 shadow-sm">
+        <h2 className="text-lg font-semibold">Administration</h2>
+        <p className="text-sm text-neutral-600 mt-1">Gérer les utilisateurs de la plateforme.</p>
+        <a href="/account/users" className="inline-flex items-center justify-center mt-4 rounded-lg border px-4 py-2 hover:bg-neutral-50">Ouvrir la gestion des utilisateurs</a>
+      </div>
     </div>
   );
 }
-
