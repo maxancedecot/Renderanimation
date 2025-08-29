@@ -23,7 +23,7 @@ export default function Page() {
             </p>
           </div>
           {/* Vidéo d'exemple à droite (sans fond, légère ombre) */}
-          <div>
+          <div className="relative">
             <video
               src="https://pub-60f579eb256a4570ad9e0494f23007ac.r2.dev/exemple.mp4"
               className="w-full rounded-2xl shadow-sm"
@@ -31,6 +31,13 @@ export default function Page() {
               loop
               muted
               playsInline
+            />
+            {/* Favicon en bas à gauche de la vidéo */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="https://pub-60f579eb256a4570ad9e0494f23007ac.r2.dev/Favicon.png"
+              alt="RenderAnimation"
+              className="absolute bottom-3 left-3 h-8 w-8 rounded-md shadow-md"
             />
           </div>
         </div>
