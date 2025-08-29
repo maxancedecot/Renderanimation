@@ -4,8 +4,8 @@ import { useState } from "react";
 import { signIn } from "next-auth/react";
 
 export default function SignInPage() {
-  const [email, setEmail] = useState("demo@client.test");
-  const [password, setPassword] = useState("demo1234");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
@@ -29,6 +29,7 @@ export default function SignInPage() {
           <input
             className="w-full border rounded-lg p-2 mt-1"
             type="email"
+            placeholder="email@exemple.com"
             value={email}
             onChange={e=>setEmail(e.target.value)}
             required
