@@ -19,16 +19,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           {/* Header */}
           <header className="sticky top-0 z-10 border-b bg-white/70 backdrop-blur supports-[backdrop-filter]:bg-white/60">
             <div className="mx-auto max-w-6xl px-6 py-4 flex items-center justify-between">
-              <a href="/" className="flex items-center gap-3 group">
-                <div className="h-8 w-8 rounded-xl bg-black text-white grid place-items-center font-semibold">
-                  RA
-                </div>
-                <div>
-                  <div className="text-lg font-semibold tracking-tight">RenderAnimation</div>
-                  <div className="text-xs text-neutral-500 group-hover:text-neutral-700 transition">
-                    Rendus 3D → Prompt → Vidéo
-                  </div>
-                </div>
+              <a href="/" className="flex items-center gap-3 group" aria-label="RenderAnimation">
+                {/* Replace text logo with image logo */}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src="/logo-ra.png"
+                  alt="RenderAnimation"
+                  className="h-8 w-auto"
+                />
               </a>
               <nav className="flex items-center gap-4 text-sm text-neutral-600">
                 <a href="/" className="hover:text-black">Accueil</a>
