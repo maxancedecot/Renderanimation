@@ -402,10 +402,6 @@ export default function UploadBox() {
                 alt="upload"
                 className="mt-4 w-full max-h-[420px] object-contain rounded-xl ring-1 ring-black/5"
               />
-              <div className="mt-2 text-xs text-neutral-600 space-y-1">
-                <div><span className="text-neutral-500">Source :</span> {cleanedUrl ? "Image nettoyée" : "Image originale"}</div>
-                <div className="break-all"><span className="text-neutral-500">URL :</span> {imageUrl}</div>
-              </div>
             </>
           )}
         </div>
