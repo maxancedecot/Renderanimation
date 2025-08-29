@@ -41,7 +41,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                 <img
                   src="https://pub-60f579eb256a4570ad9e0494f23007ac.r2.dev/Favicon.png"
                   alt="RenderAnimation"
-                  className="h-8 w-auto"
+                  className="h-8 w-auto invert-dark"
                 />
               </a>
               <nav className="flex items-center gap-4 text-sm text-neutral-600">

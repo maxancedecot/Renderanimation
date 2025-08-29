@@ -18,7 +18,7 @@ export default async function Page() {
             <img
               src="https://pub-60f579eb256a4570ad9e0494f23007ac.r2.dev/logo%20ra.png"
               alt="RenderAnimation"
-              className="h-8 w-auto mb-2"
+              className="h-8 w-auto mb-2 invert-dark"
             />
             <h1 className="text-3xl md:text-4xl font-semibold leading-tight">
               Anime tes <span className="underline decoration-black/30">rendus 3D</span> en 3 clics
@@ -43,7 +43,7 @@ export default async function Page() {
             <img
               src="https://pub-60f579eb256a4570ad9e0494f23007ac.r2.dev/Favicon.png"
               alt="RenderAnimation"
-              className="absolute bottom-3 left-3 h-8 w-8 rounded-md shadow-md"
+              className="absolute bottom-3 left-3 h-8 w-8 rounded-md shadow-md invert-dark"
             />
           </div>
         </div>
