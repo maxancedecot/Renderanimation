@@ -44,7 +44,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
           {/* Footer */}
           <footer className="mt-16 border-t py-8 text-center text-sm text-neutral-500">
-            © {new Date().getFullYear()} RenderAnimation — Propulsé par OpenAI + Kling
+            © {new Date().getFullYear()} RenderAnimation — Propulsé par Maxance Decot 🚀
           </footer>
         </Providers>
       </body>
