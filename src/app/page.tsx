@@ -1,7 +1,13 @@
 // src/app/page.tsx
 import UploadBox from "@/components/UploadBox";
+import { auth } from "@/src/lib/auth";
+import { redirect } from "next/navigation";
 
-export default function Page() {
+export default async function Page() {
+  const session = await auth();
+  if (!session?.user) {
+    redirect("/signin");
+  }
   return (
     <div className="space-y-10">
       <section className="rounded-3xl bg-white shadow-sm ring-1 ring-black/5 p-8 md:p-10">

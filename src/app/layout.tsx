@@ -1,13 +1,15 @@
 // src/app/layout.tsx
 import "./globals.css";
 import Providers from "@/components/Providers";
+import { auth } from "@/src/lib/auth";
 
 export const metadata = {
   title: "RenderAnimation",
   description: "Anime tes rendus 3D : Upload → Analyse (OpenAI) → Prompt Kling → Vidéo.",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const session = await auth();
   return (
     <html lang="fr" className="h-full">
       <head>
@@ -35,7 +37,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               </a>
               <nav className="flex items-center gap-4 text-sm text-neutral-600">
                 <a href="/" className="hover:text-black">Accueil</a>
-                <a href="/signin" className="hover:text-black">Connexion</a>
+                {session?.user ? (
+                  <>
+                    <a href="/account" className="hover:text-black">Espace</a>
+                  </>
+                ) : (
+                  <a href="/signin" className="hover:text-black">Connexion</a>
+                )}
               </nav>
             </div>
           </header>
