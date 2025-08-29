@@ -51,7 +51,10 @@ export default function SignInPage() {
         >
           {loading ? "Connexion…" : "Se connecter"}
         </button>
-        <p className="text-xs text-neutral-500 mt-2">Demo: demo@client.test / demo1234</p>
+        <div className="flex items-center justify-between text-xs mt-2">
+          <a href="/forgot" className="underline text-neutral-600 hover:text-neutral-800">Mot de passe oublié ?</a>
+          <span className="text-neutral-400">Demo: demo@client.test / demo1234</span>
+        </div>
       </form>
     </div>
   );

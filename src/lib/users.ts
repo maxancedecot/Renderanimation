@@ -2,7 +2,7 @@
 // Simple users store backed by Cloudflare R2 (JSON file)
 // Passwords are hashed using Node crypto scrypt
 
-import { GetObjectCommand, PutObjectCommand, HeadObjectCommand } from "@aws-sdk/client-s3";
+import { GetObjectCommand, PutObjectCommand, HeadObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
 import { randomBytes, scryptSync, timingSafeEqual } from "node:crypto";
 import { r2, R2_BUCKET } from "@/lib/r2";
 
@@ -15,6 +15,7 @@ export type UserRecord = {
 };
 
 const USERS_KEY = "users/users.json";
+const RESET_PREFIX = "users/reset/"; // tokens stored as users/reset/<token>.json
 
 async function readAll(): Promise<UserRecord[]> {
   try {
@@ -116,4 +117,48 @@ export async function ensureDefaultAdmin(): Promise<void> {
   };
   users.push(user);
   await writeAll(users);
+}
+
+export async function updateUserPassword(id: string, newPassword: string): Promise<boolean> {
+  const users = await readAll();
+  const idx = users.findIndex((u) => u.id === id);
+  if (idx === -1) return false;
+  users[idx].passwordHash = hashPassword(newPassword);
+  await writeAll(users);
+  return true;
+}
+
+type ResetRecord = { userId: string; email: string; exp: number };
+
+export async function createPasswordResetToken(userId: string, email: string, ttlSeconds = 3600): Promise<string> {
+  const token = randomBytes(24).toString("hex");
+  const rec: ResetRecord = { userId, email, exp: Math.floor(Date.now() / 1000) + ttlSeconds };
+  await r2.send(new PutObjectCommand({
+    Bucket: R2_BUCKET,
+    Key: `${RESET_PREFIX}${token}.json`,
+    Body: JSON.stringify(rec),
+    ContentType: "application/json",
+    CacheControl: "no-cache",
+  }));
+  return token;
+}
+
+export async function getPasswordResetRecord(token: string): Promise<ResetRecord | null> {
+  try {
+    const obj = await r2.send(new GetObjectCommand({ Bucket: R2_BUCKET, Key: `${RESET_PREFIX}${token}.json` }));
+    const body = await obj.Body?.transformToString();
+    if (!body) return null;
+    const rec = JSON.parse(body) as ResetRecord;
+    return rec || null;
+  } catch {
+    return null;
+  }
+}
+
+export async function consumePasswordResetToken(token: string): Promise<void> {
+  try {
+    await r2.send(new DeleteObjectCommand({ Bucket: R2_BUCKET, Key: `${RESET_PREFIX}${token}.json` }));
+  } catch {
+    // ignore
+  }
 }
