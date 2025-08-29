@@ -10,8 +10,6 @@ import { randomUUID } from "crypto";
 import fs from "node:fs";
 import path from "node:path";
 
-export const runtime = "nodejs";
-
 function guessMimeFromExt(p: string) {
   const ext = p.split(".").pop()?.toLowerCase();
   if (ext === "png") return "image/png";
