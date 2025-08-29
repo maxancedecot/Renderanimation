@@ -3,7 +3,6 @@ export const runtime = "nodejs";
 import { NextRequest, NextResponse } from "next/server";
 import { analyzeImageFromUrl, analyzeImageFromBase64 } from "@/src/lib/openaiVision";
 import { createPromptFromAnalysis } from "@/src/lib/klingPrompt";
-import { auth } from "@/src/lib/auth";
 import fs from "node:fs";
 import path from "node:path";
 
@@ -17,9 +16,6 @@ function guessMimeFromExt(p: string) {
 }
 
 export async function POST(req: NextRequest) {
-  const session = await auth();
-  if (!session?.user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-
   try {
     const { imageUrl } = await req.json();
     if (!imageUrl) return NextResponse.json({ error: "imageUrl requis" }, { status: 400 });
