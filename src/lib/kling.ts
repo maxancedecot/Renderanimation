@@ -4,7 +4,21 @@
 
 import { getKlingToken } from "@/lib/klingAuth";
 
-const KLING_BASE = process.env.KLING_API_BASE || "https://api-singapore.klingai.com";
+function getKlingBaseUrl(): string {
+  const raw = (process.env.KLING_API_BASE || "https://api-singapore.klingai.com").trim();
+  // Ensure protocol + no trailing slash; validate with URL()
+  const withProto = /^https?:\/\//i.test(raw) ? raw : `https://${raw}`;
+  const normalized = withProto.replace(/\/+$/, "");
+  try {
+    // Throws on invalid
+    new URL(normalized);
+    return normalized;
+  } catch {
+    throw new Error(
+      `KLING_API_BASE invalide: "${raw}". Exemple attendu: https://api-singapore.klingai.com`
+    );
+  }
+}
 
 export type CreateTaskInput = {
   imageUrl?: string;         // URL publique (R2)
@@ -51,7 +65,8 @@ export async function createImageToVideoTask(input: CreateTaskInput): Promise<Cr
     cfg_scale: input.cfgScale ?? 0.5
   };
 
-  const res = await fetch(`${KLING_BASE}/v1/videos/image2video`, {
+  const base = getKlingBaseUrl();
+  const res = await fetch(`${base}/v1/videos/image2video`, {
     method: "POST",
     headers: {
       "Authorization": `Bearer ${token}`,
@@ -75,7 +90,8 @@ export async function createImageToVideoTask(input: CreateTaskInput): Promise<Cr
 export async function getImageToVideoStatus(taskId: string): Promise<StatusResponse> {
   const token = getKlingToken();
 
-  const res = await fetch(`${KLING_BASE}/v1/videos/image2video/${encodeURIComponent(taskId)}`, {
+  const base = getKlingBaseUrl();
+  const res = await fetch(`${base}/v1/videos/image2video/${encodeURIComponent(taskId)}`, {
     method: "GET",
     headers: {
       "Authorization": `Bearer ${token}`,
