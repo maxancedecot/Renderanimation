@@ -23,7 +23,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 {/* Replace text logo with image logo */}
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                  src="/logo-ra.png"
+                  src="https://pub-60f579eb256a4570ad9e0494f23007ac.r2.dev/ra%20logo.png"
                   alt="RenderAnimation"
                   className="h-8 w-auto"
                 />
