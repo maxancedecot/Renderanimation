@@ -1,6 +1,7 @@
 // src/app/layout.tsx
 import "./globals.css";
 import Providers from "@/components/Providers";
+import ThemeToggle from "@/components/ThemeToggle";
 import { auth } from "@/src/lib/auth";
 
 export const metadata = {
@@ -15,6 +16,14 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <head>
         {/* ✅ Fallback Tailwind via CDN : les styles s’appliquent immédiatement */}
         <script src="https://cdn.tailwindcss.com"></script>
+        {/* Set initial theme before paint */}
+        <script dangerouslySetInnerHTML={{ __html: `
+          try {
+            const t = localStorage.getItem('theme');
+            const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+            if (t === 'dark' || (!t && prefersDark)) document.documentElement.classList.add('dark');
+          } catch {}
+        ` }} />
         <link
           rel="icon"
           href="https://pub-60f579eb256a4570ad9e0494f23007ac.r2.dev/Favicon.png"
@@ -44,6 +53,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                 ) : (
                   <a href="/signin" className="hover:text-black">Connexion</a>
                 )}
+                <ThemeToggle />
               </nav>
             </div>
           </header>
