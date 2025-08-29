@@ -1,6 +1,6 @@
 import { getServerSession, type NextAuthOptions } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
-import { findUserByEmail, verifyPassword } from "@/lib/users";
+import { findUserByEmail, verifyPassword, ensureDefaultAdmin } from "@/lib/users";
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -11,6 +11,8 @@ export const authOptions: NextAuthOptions = {
         password: { label: "Password", type: "password" }
       },
       async authorize(credentials) {
+        // Ensure default admin exists if configured
+        try { await ensureDefaultAdmin(); } catch {}
         const credEmail = credentials?.email || "";
         const credPass = credentials?.password || "";
         if (!credEmail || !credPass) return null;

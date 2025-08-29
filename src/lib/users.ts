@@ -3,7 +3,7 @@
 // Passwords are hashed using Node crypto scrypt
 
 import { GetObjectCommand, PutObjectCommand, HeadObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
-import { randomBytes, scryptSync, timingSafeEqual } from "node:crypto";
+import { randomBytes, scryptSync, timingSafeEqual, randomUUID } from "node:crypto";
 import { r2, R2_BUCKET } from "@/lib/r2";
 
 export type UserRecord = {
@@ -80,7 +80,7 @@ export async function addUser(params: { email: string; password: string; name?: 
     throw new Error("Utilisateur déjà existant");
   }
   const user: UserRecord = {
-    id: crypto.randomUUID(),
+    id: randomUUID(),
     email,
     name,
     passwordHash: hashPassword(params.password),
@@ -109,7 +109,7 @@ export async function ensureDefaultAdmin(): Promise<void> {
   const users = await readAll();
   if (users.some((u) => u.email.toLowerCase() === email.toLowerCase())) return;
   const user: UserRecord = {
-    id: crypto.randomUUID(),
+    id: randomUUID(),
     email: email.toLowerCase(),
     name: "Admin",
     passwordHash: hashPassword(password),
