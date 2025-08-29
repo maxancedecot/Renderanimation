@@ -298,6 +298,7 @@ export default function UploadBox() {
             className={clsx(
               "mt-4 block rounded-xl border-2 border-dashed p-8 text-center transition cursor-pointer",
               "bg-neutral-50 hover:bg-neutral-100",
+              "border-neutral-300 dark:border-neutral-700",
               isDragging && "border-indigo-500 bg-indigo-50"
             )}
           >
