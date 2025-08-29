@@ -2,10 +2,23 @@
 // NOTE: garde cette route seulement si ton front l'appelle encore.
 // Sinon, tu peux simplement la supprimer.
 
+export const runtime = "nodejs";
+
 import { NextResponse, NextRequest } from "next/server";
 import { createImageToVideoTask } from "@/lib/kling"; // ✅ nouvelle lib
 // ⛔️ ne plus importer generateKlingToken / mauvais alias @/src
 // import { generateKlingToken } from "@/src/lib/klingAuth";
+import fs from "node:fs";
+import path from "node:path";
+
+function guessMimeFromExt(p: string) {
+  const ext = p.split(".").pop()?.toLowerCase();
+  if (ext === "png") return "image/png";
+  if (ext === "webp") return "image/webp";
+  if (ext === "jpg" || ext === "jpeg") return "image/jpeg";
+  if (ext === "tif" || ext === "tiff") return "image/tiff";
+  return "image/png";
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -20,10 +33,24 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "durationSec invalide (5 ou 10)" }, { status: 400 });
     }
 
+    // Auto-convert relative public path to base64 if needed (e.g. /uploads/abc.png)
+    let finalImageDataUrl = imageDataUrl as string | undefined;
+    if (!finalImageDataUrl && typeof imageUrl === "string" && imageUrl.startsWith("/")) {
+      const rel = imageUrl.replace(/^\//, "");
+      const filePath = path.join(process.cwd(), "public", rel);
+      if (!fs.existsSync(filePath)) {
+        return NextResponse.json({ error: `fichier introuvable: ${imageUrl}` }, { status: 404 });
+      }
+      const buf = fs.readFileSync(filePath);
+      const b64 = buf.toString("base64");
+      const mime = guessMimeFromExt(filePath);
+      finalImageDataUrl = `data:${mime};base64,${b64}`;
+    }
+
     const { taskId } = await createImageToVideoTask({
       prompt,
       imageUrl,
-      imageDataUrl,
+      imageDataUrl: finalImageDataUrl,
       durationSec: dur,
       mode: "pro",
       cfgScale: 0.5,
