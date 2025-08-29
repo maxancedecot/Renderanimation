@@ -277,7 +277,7 @@ export default function UploadBox() {
               </div>
               <div className={boxClass(step3Done, step3Active)}>
                 <div className={numClass(step3Done, step3Active)}>3</div>
-                <div className="text-xs mt-1">Vidéo Kling</div>
+                <div className="text-xs mt-1">Génération de vidéo</div>
               </div>
             </div>
           );
