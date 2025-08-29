@@ -269,15 +269,15 @@ export default function UploadBox() {
           return (
             <div className="grid grid-cols-3 gap-3">
               <div className={boxClass(step1Done, step1Active)}>
-                <div className={numClass(step1Done, step1Active)}>1</div>
+                <div className={numClass(step1Done, step1Active) + " step-number"}>1</div>
                 <div className="text-xs mt-1">Upload</div>
               </div>
               <div className={boxClass(step2Done, step2Active)}>
-                <div className={numClass(step2Done, step2Active)}>2</div>
+                <div className={numClass(step2Done, step2Active) + " step-number"}>2</div>
                 <div className="text-xs mt-1">Analyse</div>
               </div>
               <div className={boxClass(step3Done, step3Active)}>
-                <div className={numClass(step3Done, step3Active)}>3</div>
+                <div className={numClass(step3Done, step3Active) + " step-number"}>3</div>
                 <div className="text-xs mt-1">Génération de vidéo</div>
               </div>
             </div>
@@ -309,7 +309,7 @@ export default function UploadBox() {
             />
             <div className="text-sm text-neutral-600">
               {file ? (
-                <span className="font-medium text-black">{file.name}</span>
+                <span className="font-medium text-black dark:text-white">{file.name}</span>
               ) : (
                 <>Glisse ton image ou <span className="underline">clique pour parcourir</span></>
               )}

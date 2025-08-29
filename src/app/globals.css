@@ -63,3 +63,6 @@ html, body { height: 100%; }
 /* Invert logos/images in dark mode (apply class 'invert-dark' on target images) */
 .invert-dark { transition: filter 150ms ease; }
 .dark .invert-dark { filter: invert(1) hue-rotate(180deg) brightness(1.05) contrast(0.95); }
+
+/* Stepper numbers forced white in dark */
+.dark .step-number { color: #ffffff !important; }
