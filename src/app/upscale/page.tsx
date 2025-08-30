@@ -79,12 +79,58 @@ export default function UpscaleTestPage() {
       // 1) Upload
       const publicUrl = await uploadToR2(file);
       setSrcUrl(publicUrl);
-      // 2) Topaz
+      // 2) Topaz — build payload similar to Topaz playground
+      const container = (file.name.split(".").pop() || "mp4").toLowerCase();
+      const width = await new Promise<number | null>((resolve) => {
+        try {
+          const url = URL.createObjectURL(file);
+          const v = document.createElement("video");
+          v.preload = "metadata";
+          v.src = url;
+          v.onloadedmetadata = () => { resolve(v.videoWidth || null); URL.revokeObjectURL(url); };
+          v.onerror = () => { resolve(null); URL.revokeObjectURL(url); };
+        } catch { resolve(null); }
+      });
+      const height = await new Promise<number | null>((resolve) => {
+        try {
+          const url = URL.createObjectURL(file);
+          const v = document.createElement("video");
+          v.preload = "metadata";
+          v.src = url;
+          v.onloadedmetadata = () => { resolve(v.videoHeight || null); URL.revokeObjectURL(url); };
+          v.onerror = () => { resolve(null); URL.revokeObjectURL(url); };
+        } catch { resolve(null); }
+      });
+      const dur = durationSec || 0;
+      const fps =  Math.min(60, Math.max(1, Math.round((dur ? (file.size / (1024*1024)) : 24)))) || 24; // fallback approx
+      const frames = dur ? Math.round(dur * fps) : undefined;
+
+      const topazBody = {
+        source: {
+          container,
+          size: file.size,
+          duration: dur || undefined,
+          frameCount: frames,
+          frameRate: fps,
+          resolution: width && height ? { width, height } : undefined,
+          input_url: publicUrl,
+        },
+        filters: [ { model: "prob-4" }, { model: "apo-8" } ],
+        output: {
+          frameRate: 30,
+          audioTransfer: "Copy",
+          audioCodec: "AAC",
+          videoEncoder: "H265",
+          videoProfile: "Main",
+          dynamicCompressionLevel: "Mid",
+          resolution: { width: 3840, height: 2160 },
+        }
+      };
       const p2 = toast.loading("Upscale 4K en cours…");
       const r = await fetch("/api/topaz/upscale", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ videoUrl: publicUrl })
+        body: JSON.stringify({ videoUrl: publicUrl, topazBody })
       }).then(r => r.json());
       if (r.error || !r.taskId) throw new Error(r.error || "taskId absent");
       setTaskId(r.taskId);

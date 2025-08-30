@@ -13,11 +13,11 @@ export async function POST(req: NextRequest) {
     if (missing.length) {
       return NextResponse.json({ error: `Topaz env manquantes: ${missing.join(", ")}` }, { status: 500 });
     }
-    const { videoUrl } = await req.json();
+    const { videoUrl, topazBody } = await req.json();
     if (!videoUrl || typeof videoUrl !== "string") {
       return NextResponse.json({ error: "videoUrl requis" }, { status: 400 });
     }
-    const { taskId } = await createTopazUpscaleTask(videoUrl);
+    const { taskId } = await createTopazUpscaleTask(videoUrl, topazBody && typeof topazBody === "object" ? topazBody : undefined);
     return NextResponse.json({ taskId });
   } catch (e: any) {
     return NextResponse.json({ error: e?.message || "Erreur Topaz" }, { status: 500 });

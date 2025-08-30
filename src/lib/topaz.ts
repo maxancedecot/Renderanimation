@@ -34,23 +34,31 @@ function getEnv(name: string, fallback?: string): string | undefined {
   return fallback;
 }
 
-export async function createTopazUpscaleTask(videoUrl: string): Promise<TopazCreateResponse> {
+export async function createTopazUpscaleTask(
+  videoUrl: string,
+  overrideBody?: Record<string, any>
+): Promise<TopazCreateResponse> {
   const key = requireEnv("TOPAZ_API_KEY");
   const createUrl = requireEnv("TOPAZ_CREATE_URL");
 
-  // Build payload dynamically so we can adapt to API without code changes
-  const inputField = getEnv("TOPAZ_INPUT_FIELD", "input_url")!;
-  const targetField = getEnv("TOPAZ_TARGET_FIELD", "target_resolution")!;
-  const targetValue = getEnv("TOPAZ_TARGET_VALUE", "4k")!;
-  const payload: Record<string, any> = { [inputField]: videoUrl, [targetField]: targetValue };
-  // Optional extra payload JSON to merge (e.g., model, preset). Should be a JSON object.
-  const extra = getEnv("TOPAZ_EXTRA_PAYLOAD_JSON");
-  if (extra) {
-    try {
-      const parsed = JSON.parse(extra);
-      if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) Object.assign(payload, parsed);
-    } catch {
-      // ignore invalid extra payload
+  // Build payload dynamically or use an override body (for exact Topaz schema)
+  let payload: Record<string, any>;
+  if (overrideBody && typeof overrideBody === "object") {
+    payload = overrideBody;
+  } else {
+    const inputField = getEnv("TOPAZ_INPUT_FIELD", "input_url")!;
+    const targetField = getEnv("TOPAZ_TARGET_FIELD", "target_resolution")!;
+    const targetValue = getEnv("TOPAZ_TARGET_VALUE", "4k")!;
+    payload = { [inputField]: videoUrl, [targetField]: targetValue };
+    // Optional extra payload JSON to merge (e.g., model, preset). Should be a JSON object.
+    const extra = getEnv("TOPAZ_EXTRA_PAYLOAD_JSON");
+    if (extra) {
+      try {
+        const parsed = JSON.parse(extra);
+        if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) Object.assign(payload, parsed);
+      } catch {
+        // ignore invalid extra payload
+      }
     }
   }
 
