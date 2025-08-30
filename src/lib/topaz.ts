@@ -68,6 +68,8 @@ export async function createTopazUpscaleTask(
       // Send both common auth header styles unless customized via gateway
       "Authorization": `Bearer ${key}`,
       "x-api-key": key,
+      "X-API-Key": key,
+      ...(process.env.TOPAZ_WORKSPACE_ID ? { "X-Workspace-Id": process.env.TOPAZ_WORKSPACE_ID } : {}),
       "Content-Type": "application/json",
       "Accept": "application/json",
     },
@@ -96,6 +98,8 @@ export async function getTopazUpscaleStatus(taskId: string): Promise<TopazStatus
     headers: {
       "Authorization": `Bearer ${key}`,
       "x-api-key": key,
+      "X-API-Key": key,
+      ...(process.env.TOPAZ_WORKSPACE_ID ? { "X-Workspace-Id": process.env.TOPAZ_WORKSPACE_ID } : {}),
       "Content-Type": "application/json",
       "Accept": "application/json",
     },
