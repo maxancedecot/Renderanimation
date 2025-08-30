@@ -51,19 +51,7 @@ export default async function AppPage() {
 
       <UploadBox />
 
-      {/* Section de test Topaz 4K (indépendant) */}
-      <section className="rounded-2xl border bg-white p-6 shadow-sm">
-        <h2 className="text-lg font-semibold">Tester l'upscale 4K (sans pipeline)</h2>
-        <p className="text-sm text-neutral-600 mt-2">
-          Besoin de tester Topaz sans passer par l'upload d'une image et la génération de vidéo ?
-          Utilisez la page de test dédiée pour téléverser directement un MP4 et lancer un upscale 4K.
-        </p>
-        <div className="mt-4">
-          <a href="/upscale" className="inline-flex items-center justify-center rounded-lg bg-black px-4 py-2 text-white hover:bg-black/90">
-            Ouvrir la page de test 4K
-          </a>
-        </div>
-      </section>
+      
     </div>
   );
 }
