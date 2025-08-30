@@ -343,7 +343,7 @@ export default function UploadBox() {
           );
         })()}
       </div>
-      {/* Colonne gauche : Upload + Nettoyage + Analyse + Kling */}
+      {/* Colonne gauche : Upload + Nettoyage + Analyse + Kling + 4K */}
       <div className="space-y-6">
         {/* Upload */}
         <div className="rounded-2xl border bg-white p-6 shadow-sm">
@@ -446,6 +446,32 @@ export default function UploadBox() {
             )}
           </div>
         )}
+
+        {/* Upscale 4K (gauche) */}
+        {finalVideoUrl && (
+          <div className="rounded-2xl border bg-white p-6 shadow-sm space-y-3">
+            <h2 className="text-lg font-semibold">Augmenter la résolution en 4K</h2>
+            <p className="text-sm text-neutral-600">Étape optionnelle après la génération: améliore la netteté pour la diffusion grand écran.</p>
+            <div className="flex items-center gap-3">
+              <button
+                className="inline-flex items-center justify-center rounded-lg bg-black px-4 py-2 text-white hover:bg-black/90 disabled:opacity-60"
+                onClick={() => createTopaz.mutate()}
+                disabled={createTopaz.isPending || !!topazTaskId}
+              >
+                {createTopaz.isPending ? "Upscale 4K…" : (!!topazTaskId ? "4K en cours…" : "Augmenter en 4K")}
+              </button>
+              {topazStatus?.status && (
+                <span className="text-sm text-neutral-600">{`Topaz: ${topazStatus.status}${topazStatus.message ? ` — ${topazStatus.message}` : ""}`}</span>
+              )}
+            </div>
+            {video4kUrl && (
+              <div className="pt-1">
+                <h3 className="font-semibold">Version 4K</h3>
+                <video src={video4kUrl} controls className="mt-2 w-full rounded-xl ring-1 ring-black/5" />
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Colonne droite : aperçu + vidéo */}
@@ -471,27 +497,7 @@ export default function UploadBox() {
           {!finalVideoUrl ? (
             <p className="text-sm text-neutral-600 mt-2">La vidéo apparaîtra ici une fois prête.</p>
           ) : (
-            <>
-              <video id="kling-video" src={finalVideoUrl} controls className="mt-4 w-full rounded-xl ring-1 ring-black/5" />
-              <div className="mt-4 flex items-center gap-3">
-                <button
-                  className="inline-flex items-center justify-center rounded-lg bg-black px-4 py-2 text-white hover:bg-black/90 disabled:opacity-60"
-                  onClick={() => createTopaz.mutate()}
-                  disabled={createTopaz.isPending || !!topazTaskId}
-                >
-                  {createTopaz.isPending ? "Upscale 4K…" : (!!topazTaskId ? "4K en cours…" : "Augmenter en 4K")}
-                </button>
-                {topazStatus?.status && (
-                  <span className="text-sm text-neutral-600">{`Topaz: ${topazStatus.status}${topazStatus.message ? ` — ${topazStatus.message}` : ""}`}</span>
-                )}
-              </div>
-              {video4kUrl && (
-                <div className="mt-4">
-                  <h3 className="font-semibold">Version 4K</h3>
-                  <video src={video4kUrl} controls className="mt-2 w-full rounded-xl ring-1 ring-black/5" />
-                </div>
-              )}
-            </>
+            <video id="kling-video" src={finalVideoUrl} controls className="mt-4 w-full rounded-xl ring-1 ring-black/5" />
           )}
         </div>
       </div>
