@@ -66,3 +66,12 @@ html, body { height: 100%; }
 
 /* Stepper numbers forced white in dark */
 .dark .step-number { color: #ffffff !important; }
+
+/* Logos marquee animation */
+@keyframes scroll-x {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+.animate-scroll-x {
+  animation: scroll-x 25s linear infinite;
+}

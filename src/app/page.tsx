@@ -77,6 +77,42 @@ export default function Page() {
         ))}
       </section>
 
+      {/* Logos (défilement automatique) */}
+      <section className="rounded-2xl border bg-white p-4 shadow-sm overflow-hidden">
+        <div className="relative w-full">
+          <div className="flex items-center gap-12 whitespace-nowrap animate-scroll-x will-change-transform">
+            {[
+              "Archimax",
+              "NeoBuild",
+              "Urbania",
+              "ProImmo",
+              "RenderLab",
+              "Habitat+",
+              "Vision3D",
+              "Skylines",
+            ].map((name, idx) => (
+              <div key={`logo1-${idx}`} className="shrink-0 h-10 px-5 grid place-items-center rounded-lg ring-1 ring-black/5 bg-white text-neutral-700 font-medium">
+                {name}
+              </div>
+            ))}
+            {[
+              "Archimax",
+              "NeoBuild",
+              "Urbania",
+              "ProImmo",
+              "RenderLab",
+              "Habitat+",
+              "Vision3D",
+              "Skylines",
+            ].map((name, idx) => (
+              <div key={`logo2-${idx}`} className="shrink-0 h-10 px-5 grid place-items-center rounded-lg ring-1 ring-black/5 bg-white text-neutral-700 font-medium">
+                {name}
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* Comment ça marche */}
       <section className="rounded-2xl border bg-white p-6 shadow-sm">
         <h2 className="text-lg font-semibold">Comment ça marche</h2>
@@ -120,12 +156,33 @@ export default function Page() {
         <p className="text-xs text-neutral-500">Prix HT indicatifs. Annulation à tout moment.</p>
       </section>
 
-      {/* Accès */}
+      {/* Avis clients */}
       <section className="rounded-2xl border bg-white p-6 shadow-sm">
-        <h2 className="text-lg font-semibold">Accès libre</h2>
-        <p className="text-sm text-neutral-600 mt-1">
-          Cette page de présentation est accessible à tous, sans compte. Pour utiliser la plateforme, créez un compte ou connectez-vous.
-        </p>
+        <h2 className="text-lg font-semibold">Avis clients</h2>
+        <div className="grid md:grid-cols-3 gap-6 mt-4">
+          {[
+            {
+              q: "En 10 minutes j’ai des vidéos propres pour nos lots – gain de temps énorme.",
+              a: "Nicolas R.",
+              r: "Directeur marketing, promoteur",
+            },
+            {
+              q: "Le rendu final respecte bien matériaux et éclairage, parfait pour nos présentations.",
+              a: "Sarah B.",
+              r: "Architecte associée",
+            },
+            {
+              q: "Idéal pour produire des assets 3D pour nos campagnes social à coût maîtrisé.",
+              a: "Mehdi K.",
+              r: "Head of Growth, agence",
+            },
+          ].map((t, i) => (
+            <figure key={i} className="rounded-xl bg-white p-5 ring-1 ring-black/5">
+              <blockquote className="text-sm text-neutral-700">“{t.q}”</blockquote>
+              <figcaption className="mt-3 text-xs text-neutral-500">{t.a} · {t.r}</figcaption>
+            </figure>
+          ))}
+        </div>
       </section>
 
       
