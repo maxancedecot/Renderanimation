@@ -45,7 +45,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                 />
               </a>
               <nav className="flex items-center gap-4 text-sm text-neutral-600">
-                <a href="/" className="hover:text-black">Accueil</a>
+                <a href="/landing" className="hover:text-black">Tarifs</a>
                 {session?.user ? (
                   <>
                     <a href="/account" className="hover:text-black">Espace</a>
