@@ -42,14 +42,19 @@ export async function createTopazUpscaleTask(videoUrl: string): Promise<TopazCre
   const res = await fetch(createUrl, {
     method: "POST",
     headers: {
+      // Send both common auth header styles unless customized via gateway
       "Authorization": `Bearer ${key}`,
+      "x-api-key": key,
       "Content-Type": "application/json",
+      "Accept": "application/json",
     },
     body: JSON.stringify(payload),
   });
-  const data = await res.json().catch(() => ({}));
+  let data: any = null;
+  const text = await res.text().catch(() => "");
+  try { data = text ? JSON.parse(text) : {}; } catch { data = { raw: text }; }
   if (!res.ok) {
-    const msg = data?.message || data?.error || `HTTP ${res.status}`;
+    const msg = data?.message || data?.error || text || `HTTP ${res.status}`;
     throw new Error(`Topaz create error: ${msg}`);
   }
   // Try common id keys
@@ -67,12 +72,16 @@ export async function getTopazUpscaleStatus(taskId: string): Promise<TopazStatus
     method: "GET",
     headers: {
       "Authorization": `Bearer ${key}`,
+      "x-api-key": key,
       "Content-Type": "application/json",
+      "Accept": "application/json",
     },
   });
-  const data = await res.json().catch(() => ({}));
+  let data: any = null;
+  const text = await res.text().catch(() => "");
+  try { data = text ? JSON.parse(text) : {}; } catch { data = { raw: text }; }
   if (!res.ok) {
-    const msg = data?.message || data?.error || `HTTP ${res.status}`;
+    const msg = data?.message || data?.error || text || `HTTP ${res.status}`;
     throw new Error(`Topaz status error: ${msg}`);
   }
 
@@ -89,4 +98,3 @@ export async function getTopazUpscaleStatus(taskId: string): Promise<TopazStatus
 
   return { status, message: message || null, videoUrl: out ? String(out) : null, raw: data };
 }
-
