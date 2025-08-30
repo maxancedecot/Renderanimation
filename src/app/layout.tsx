@@ -48,6 +48,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                 <a href="/landing" className="hover:text-black">Tarifs</a>
                 {session?.user ? (
                   <>
+                    <a href="/app" className="hover:text-black">App</a>
                     <a href="/account" className="hover:text-black">Espace</a>
                   </>
                 ) : (
