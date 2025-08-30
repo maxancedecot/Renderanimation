@@ -42,6 +42,8 @@ export default function UploadBox() {
   const [klingTaskId, setKlingTaskId] = useState<string | null>(null);
   const [finalVideoUrl, setFinalVideoUrl] = useState<string | null>(null);
   const [progress, setProgress] = useState(0);
+  const [topazTaskId, setTopazTaskId] = useState<string | null>(null);
+  const [video4kUrl, setVideo4kUrl] = useState<string | null>(null);
   const [showRemoveConfirm, setShowRemoveConfirm] = useState(false);
 
   /* Drag & drop */
@@ -237,6 +239,57 @@ export default function UploadBox() {
     }
   }, [statusData, qc, statusQueryKey]);
 
+  /* 5) Topaz upscale 4K */
+  const createTopaz = useMutation({
+    mutationFn: async () => {
+      if (!finalVideoUrl) throw new Error("Pas de vidéo disponible");
+      const r = await fetch("/api/topaz/upscale", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ videoUrl: finalVideoUrl })
+      }).then(r => r.json());
+      if (r.error || !r.taskId) throw new Error(r.error || "taskId absent");
+      return r.taskId as string;
+    },
+    onMutate: () => {
+      toast.loading("Upscale 4K lancé…", { id: "tu" });
+      setTopazTaskId(null);
+      setVideo4kUrl(null);
+    },
+    onSuccess: (taskId) => {
+      setTopazTaskId(taskId);
+      toast.success("Topaz a bien reçu la tâche", { id: "tu" });
+    },
+    onError: (e: any) => toast.error(e?.message || "Erreur Topaz", { id: "tu" })
+  });
+
+  const topazStatusKey = useMemo(() => ["topazStatus", topazTaskId], [topazTaskId]);
+  const { data: topazStatus } = useQuery({
+    queryKey: topazStatusKey,
+    enabled: !!topazTaskId,
+    queryFn: async () => {
+      const r = await fetch(`/api/topaz/status?taskId=${encodeURIComponent(topazTaskId!)}`).then(r => r.json());
+      if (r.error) throw new Error(r.error);
+      return r as { status?: string; videoUrl?: string | null; message?: string | null };
+    },
+    refetchInterval: 5000,
+    retry: false,
+  });
+
+  useEffect(() => {
+    if (!topazStatus) return;
+    if (topazStatus.status === "failed") {
+      toast.error(topazStatus.message || "Upscale 4K échoué", { id: "tus" });
+      setTopazTaskId(null);
+      qc.removeQueries({ queryKey: topazStatusKey });
+    } else if (topazStatus.status === "succeed" && topazStatus.videoUrl) {
+      toast.success("Vidéo 4K prête ✨", { id: "tus" });
+      setVideo4kUrl(topazStatus.videoUrl);
+      setTopazTaskId(null);
+      qc.removeQueries({ queryKey: topazStatusKey });
+    }
+  }, [topazStatus, qc, topazStatusKey]);
+
   return (
     <div className="grid lg:grid-cols-2 gap-8">
       {/* Étapes (progression) */}
@@ -418,27 +471,29 @@ export default function UploadBox() {
           {!finalVideoUrl ? (
             <p className="text-sm text-neutral-600 mt-2">La vidéo apparaîtra ici une fois prête.</p>
           ) : (
-            <video id="kling-video" src={finalVideoUrl} controls className="mt-4 w-full rounded-xl ring-1 ring-black/5" />
+            <>
+              <video id="kling-video" src={finalVideoUrl} controls className="mt-4 w-full rounded-xl ring-1 ring-black/5" />
+              <div className="mt-4 flex items-center gap-3">
+                <button
+                  className="inline-flex items-center justify-center rounded-lg bg-black px-4 py-2 text-white hover:bg-black/90 disabled:opacity-60"
+                  onClick={() => createTopaz.mutate()}
+                  disabled={createTopaz.isPending || !!topazTaskId}
+                >
+                  {createTopaz.isPending ? "Upscale 4K…" : (!!topazTaskId ? "4K en cours…" : "Augmenter en 4K")}
+                </button>
+                {topazStatus?.status && (
+                  <span className="text-sm text-neutral-600">{`Topaz: ${topazStatus.status}${topazStatus.message ? ` — ${topazStatus.message}` : ""}`}</span>
+                )}
+              </div>
+              {video4kUrl && (
+                <div className="mt-4">
+                  <h3 className="font-semibold">Version 4K</h3>
+                  <video src={video4kUrl} controls className="mt-2 w-full rounded-xl ring-1 ring-black/5" />
+                </div>
+              )}
+            </>
           )}
         </div>
-
-        {finalVideoUrl && (
-          <div className="rounded-2xl border bg-white p-6 shadow-sm">
-            <h2 className="text-lg font-semibold">Augmenter la résolution en 4K</h2>
-            <p className="text-sm text-neutral-600 mt-2">
-              Étape finale (optionnelle) après la génération: améliore la netteté et les détails pour une diffusion grand écran.
-            </p>
-            <div className="mt-4 flex gap-3">
-              <button
-                className="inline-flex items-center justify-center rounded-lg bg-black px-4 py-2 text-white opacity-70 cursor-not-allowed"
-                disabled
-                title="Bientôt disponible"
-              >
-                Augmenter en 4K (bientôt)
-              </button>
-            </div>
-          </div>
-        )}
       </div>
 
       {/* Modal confirmation: retirer les personnes */}
