@@ -28,16 +28,31 @@ function requireEnv(name: string): string {
   return v;
 }
 
+function getEnv(name: string, fallback?: string): string | undefined {
+  const v = process.env[name];
+  if (v) return v;
+  return fallback;
+}
+
 export async function createTopazUpscaleTask(videoUrl: string): Promise<TopazCreateResponse> {
   const key = requireEnv("TOPAZ_API_KEY");
   const createUrl = requireEnv("TOPAZ_CREATE_URL");
 
-  // Payload kept generic; adjust server-side without code changes by pointing
-  // TOPAZ_CREATE_URL to an adapter or by accepting these field names.
-  const payload = {
-    input_url: videoUrl,
-    target_resolution: "4k",
-  };
+  // Build payload dynamically so we can adapt to API without code changes
+  const inputField = getEnv("TOPAZ_INPUT_FIELD", "input_url")!;
+  const targetField = getEnv("TOPAZ_TARGET_FIELD", "target_resolution")!;
+  const targetValue = getEnv("TOPAZ_TARGET_VALUE", "4k")!;
+  const payload: Record<string, any> = { [inputField]: videoUrl, [targetField]: targetValue };
+  // Optional extra payload JSON to merge (e.g., model, preset). Should be a JSON object.
+  const extra = getEnv("TOPAZ_EXTRA_PAYLOAD_JSON");
+  if (extra) {
+    try {
+      const parsed = JSON.parse(extra);
+      if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) Object.assign(payload, parsed);
+    } catch {
+      // ignore invalid extra payload
+    }
+  }
 
   const res = await fetch(createUrl, {
     method: "POST",
