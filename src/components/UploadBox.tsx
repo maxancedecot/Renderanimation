@@ -243,10 +243,57 @@ export default function UploadBox() {
   const createTopaz = useMutation({
     mutationFn: async () => {
       if (!finalVideoUrl) throw new Error("Pas de vidéo disponible");
+
+      // Récupère quelques métadonnées de la vidéo finale pour construire
+      // un payload Topaz complet (source/filters/output), comme attendu par l'API.
+      const getMeta = (url: string) => new Promise<{ width?: number; height?: number; duration?: number }>((resolve) => {
+        try {
+          const v = document.createElement("video");
+          v.preload = "metadata";
+          v.src = url;
+          v.onloadedmetadata = () => {
+            resolve({ width: v.videoWidth || undefined, height: v.videoHeight || undefined, duration: v.duration || undefined });
+          };
+          v.onerror = () => resolve({});
+        } catch {
+          resolve({});
+        }
+      });
+      const meta = await getMeta(finalVideoUrl);
+      const ext = (() => {
+        try { const u = new URL(finalVideoUrl); const p = u.pathname; return (p.split(".").pop() || "mp4").toLowerCase(); } catch { return "mp4"; }
+      })();
+      const fps = 30; // valeur sûre par défaut côté sortie
+      const srcFps = 24; // estimation si FPS source inconnu
+      const frameCount = meta.duration ? Math.round(meta.duration * srcFps) : undefined;
+
+      const topazBody = {
+        source: {
+          container: ext,
+          // size: inconnu ici (hébergé R2); Topaz n'exige pas forcément ce champ
+          duration: meta.duration,
+          frameCount,
+          frameRate: srcFps,
+          resolution: meta.width && meta.height ? { width: meta.width, height: meta.height } : undefined,
+          url: finalVideoUrl,
+          input_url: finalVideoUrl,
+        },
+        filters: [ { model: "prob-4" }, { model: "apo-8" } ],
+        output: {
+          frameRate: fps,
+          audioTransfer: "Copy",
+          audioCodec: "AAC",
+          videoEncoder: "H265",
+          videoProfile: "Main",
+          dynamicCompressionLevel: "Mid",
+          resolution: { width: 3840, height: 2160 },
+        }
+      };
+
       const r = await fetch("/api/topaz/upscale", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ videoUrl: finalVideoUrl })
+        body: JSON.stringify({ videoUrl: finalVideoUrl, topazBody })
       }).then(r => r.json());
       if (r.error || !r.taskId) throw new Error(r.error || "taskId absent");
       return r.taskId as string;

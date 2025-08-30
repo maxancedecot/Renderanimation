@@ -116,6 +116,7 @@ export default function UpscaleTestPage() {
           frameCount: frames,
           frameRate: fps,
           resolution: width && height ? { width, height } : undefined,
+          url: publicUrl,
           input_url: publicUrl,
         },
         filters: [ { model: "prob-4" }, { model: "apo-8" } ],
