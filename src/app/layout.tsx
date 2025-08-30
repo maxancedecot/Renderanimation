@@ -46,6 +46,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               </a>
               <nav className="flex items-center gap-4 text-sm text-neutral-600">
                 <a href="/#pricing" className="hover:text-black">Tarifs</a>
+                <a href="/upscale" className="hover:text-black">Test 4K</a>
                 {session?.user ? (
                   <>
                     <a href="/app" className="hover:text-black">App</a>
