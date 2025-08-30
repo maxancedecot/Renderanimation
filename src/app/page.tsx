@@ -80,11 +80,12 @@ export default function Page() {
       {/* Comment ça marche */}
       <section className="rounded-2xl border bg-white p-6 shadow-sm">
         <h2 className="text-lg font-semibold">Comment ça marche</h2>
-        <div className="grid md:grid-cols-3 gap-4 text-center mt-4">
+        <div className="grid md:grid-cols-4 gap-4 text-center mt-4">
           {[
             { n: 1, t: "Upload", d: "Importez votre rendu (JPG/PNG)." },
             { n: 2, t: "Analyse", d: "L’image est analysée pour en extraire un prompt adapté." },
             { n: 3, t: "Génération", d: "Création automatique de la vidéo à partir du rendu." },
+            { n: 4, t: "4K (optionnel)", d: "Upscale finale pour plus de détails et netteté." },
           ].map((s) => (
             <div key={s.n} className="rounded-xl bg-white p-5 ring-1 ring-black/5">
               <div className="text-2xl font-semibold step-number">{s.n}</div>
@@ -127,14 +128,7 @@ export default function Page() {
         </p>
       </section>
 
-      {/* 4K Upscale */}
-      <section className="rounded-2xl border bg-white p-6 shadow-sm">
-        <h2 className="text-lg font-semibold">Augmenter la résolution en 4K</h2>
-        <p className="text-sm text-neutral-600 mt-2">
-          Étape finale (optionnelle) après la création de la vidéo. L’upscale 4K améliore les détails et la netteté pour l’affichage grand écran.
-        </p>
-        <div className="mt-3 text-xs text-neutral-500">Fonctionnalité en cours d’intégration.</div>
-      </section>
+      
     </div>
   );
 }

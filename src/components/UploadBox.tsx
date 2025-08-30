@@ -245,10 +245,12 @@ export default function UploadBox() {
           const step1Done = !!imageUrl; // après upload (ou nettoyage)
           const step2Done = !!result;   // après analyse OK
           const step3Done = !!finalVideoUrl; // vidéo prête
+          const step4Done = false; // Upscale 4K optionnel (à venir)
 
           const step1Active = uploadAndAnalyze.isPending && !step1Done;
           const step2Active = runAnalyze.isPending && !step2Done;
           const step3Active = (createKling.isPending || !!klingTaskId) && !step3Done;
+          const step4Active = false;
 
           const boxClass = (done: boolean, active: boolean) =>
             [
@@ -267,7 +269,7 @@ export default function UploadBox() {
             ].filter(Boolean).join(" ");
 
           return (
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-4 gap-3">
               <div className={boxClass(step1Done, step1Active)}>
                 <div className={numClass(step1Done, step1Active) + " step-number"}>1</div>
                 <div className="text-xs mt-1">Upload</div>
@@ -279,6 +281,10 @@ export default function UploadBox() {
               <div className={boxClass(step3Done, step3Active)}>
                 <div className={numClass(step3Done, step3Active) + " step-number"}>3</div>
                 <div className="text-xs mt-1">Génération de vidéo</div>
+              </div>
+              <div className={boxClass(step4Done, step4Active)}>
+                <div className={numClass(step4Done, step4Active) + " step-number"}>4</div>
+                <div className="text-xs mt-1">4K (optionnel)</div>
               </div>
             </div>
           );
