@@ -50,7 +50,15 @@ export default async function AppPage() {
       </section>
 
       <UploadBox />
+
+      {/* 4K Upscale info */}
+      <section className="rounded-2xl border bg-white p-6 shadow-sm">
+        <h2 className="text-lg font-semibold">Augmenter la résolution en 4K</h2>
+        <p className="text-sm text-neutral-600 mt-2">
+          Après la génération, une étape finale optionnelle permettra d’upscaler la vidéo en 4K pour une meilleure netteté.
+        </p>
+        <div className="mt-3 text-xs text-neutral-500">Bientôt disponible dans l’interface.</div>
+      </section>
     </div>
   );
 }
-

@@ -126,6 +126,15 @@ export default function Page() {
           Cette page de présentation est accessible à tous, sans compte. Pour utiliser la plateforme, créez un compte ou connectez-vous.
         </p>
       </section>
+
+      {/* 4K Upscale */}
+      <section className="rounded-2xl border bg-white p-6 shadow-sm">
+        <h2 className="text-lg font-semibold">Augmenter la résolution en 4K</h2>
+        <p className="text-sm text-neutral-600 mt-2">
+          Étape finale (optionnelle) après la création de la vidéo. L’upscale 4K améliore les détails et la netteté pour l’affichage grand écran.
+        </p>
+        <div className="mt-3 text-xs text-neutral-500">Fonctionnalité en cours d’intégration.</div>
+      </section>
     </div>
   );
 }

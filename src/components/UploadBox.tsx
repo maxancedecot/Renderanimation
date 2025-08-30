@@ -415,6 +415,24 @@ export default function UploadBox() {
             <video id="kling-video" src={finalVideoUrl} controls className="mt-4 w-full rounded-xl ring-1 ring-black/5" />
           )}
         </div>
+
+        {finalVideoUrl && (
+          <div className="rounded-2xl border bg-white p-6 shadow-sm">
+            <h2 className="text-lg font-semibold">Augmenter la résolution en 4K</h2>
+            <p className="text-sm text-neutral-600 mt-2">
+              Étape finale (optionnelle) après la génération: améliore la netteté et les détails pour une diffusion grand écran.
+            </p>
+            <div className="mt-4 flex gap-3">
+              <button
+                className="inline-flex items-center justify-center rounded-lg bg-black px-4 py-2 text-white opacity-70 cursor-not-allowed"
+                disabled
+                title="Bientôt disponible"
+              >
+                Augmenter en 4K (bientôt)
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Modal confirmation: retirer les personnes */}
