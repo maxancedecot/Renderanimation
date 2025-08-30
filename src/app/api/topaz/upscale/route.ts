@@ -17,8 +17,9 @@ export async function POST(req: NextRequest) {
     if (!videoUrl || typeof videoUrl !== "string") {
       return NextResponse.json({ error: "videoUrl requis" }, { status: 400 });
     }
-    const { taskId } = await createTopazUpscaleTask(videoUrl, topazBody && typeof topazBody === "object" ? topazBody : undefined);
-    return NextResponse.json({ taskId });
+    const { taskId, raw } = await createTopazUpscaleTask(videoUrl, topazBody && typeof topazBody === "object" ? topazBody : undefined);
+    // Include raw Topaz response to aid debugging in UI
+    return NextResponse.json({ taskId, raw });
   } catch (e: any) {
     return NextResponse.json({ error: e?.message || "Erreur Topaz" }, { status: 500 });
   }

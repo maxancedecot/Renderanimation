@@ -80,15 +80,15 @@ export async function createTopazUpscaleTask(
     const msg = data?.message || data?.error || text || `HTTP ${res.status}`;
     throw new Error(`Topaz create error: ${msg}`);
   }
-  // Try common id keys
-  const taskId = data?.task_id || data?.id || data?.job_id || data?.data?.id;
+  // Try common id keys, including 'requestId' from playground
+  const taskId = data?.task_id || data?.id || data?.job_id || data?.requestId || data?.data?.id;
   if (!taskId) throw new Error("Réponse Topaz invalide: identifiant de tâche manquant");
   return { taskId: String(taskId), raw: data };
 }
 
 export async function getTopazUpscaleStatus(taskId: string): Promise<TopazStatusResponse> {
   const key = requireEnv("TOPAZ_API_KEY");
-  const tmpl = requireEnv("TOPAZ_STATUS_URL_TEMPLATE");
+  const tmpl = getEnv("TOPAZ_STATUS_URL_TEMPLATE", "https://api.topazlabs.com/video/{taskId}")!;
   const url = tmpl.replace("{taskId}", encodeURIComponent(taskId));
 
   const res = await fetch(url, {
@@ -109,15 +109,15 @@ export async function getTopazUpscaleStatus(taskId: string): Promise<TopazStatus
   }
 
   // Heuristic extraction
-  const s = (data?.status || data?.state || data?.data?.status || "processing").toString().toLowerCase();
+  const s = (data?.status || data?.state || data?.jobStatus || data?.data?.status || "processing").toString().toLowerCase();
   let status: TopazStatus = "processing";
   if (["queued", "pending"].includes(s)) status = "queued";
   else if (["processing", "running", "in_progress"].includes(s)) status = "processing";
   else if (["succeed", "completed", "done", "success"].includes(s)) status = "succeed";
   else if (["failed", "error"].includes(s)) status = "failed";
 
-  const message = (data?.message || data?.status_msg || null) as string | null;
-  const out = data?.output_url || data?.result_url || data?.data?.output_url || null;
+  const message = (data?.message || data?.status_msg || data?.error || null) as string | null;
+  const out = data?.output_url || data?.result_url || data?.output?.url || data?.outputs?.[0]?.url || data?.data?.output_url || null;
 
   return { status, message: message || null, videoUrl: out ? String(out) : null, raw: data };
 }

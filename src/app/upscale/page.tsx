@@ -21,6 +21,9 @@ export default function UpscaleTestPage() {
   const [resultUrl, setResultUrl] = useState<string | null>(null);
   const [durationSec, setDurationSec] = useState<number | null>(null);
   const [uploadProgress, setUploadProgress] = useState<number>(0);
+  const [debugCreate, setDebugCreate] = useState<any>(null);
+  const [debugStatus, setDebugStatus] = useState<any>(null);
+  const [showDebug, setShowDebug] = useState(false);
 
   const statusKey = useMemo(() => ["topazStatus", taskId], [taskId]);
 
@@ -132,6 +135,7 @@ export default function UpscaleTestPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ videoUrl: publicUrl, topazBody })
       }).then(r => r.json());
+      setDebugCreate(r);
       if (r.error || !r.taskId) throw new Error(r.error || "taskId absent");
       setTaskId(r.taskId);
       toast.success("Tâche envoyée à Topaz", { id: p2 });
@@ -148,6 +152,7 @@ export default function UpscaleTestPage() {
     const poll = async () => {
       try {
         const st: TopazStatus = await fetch(`/api/topaz/status?taskId=${encodeURIComponent(taskId)}`).then(r => r.json());
+        setDebugStatus(st);
         if (!mounted) return;
         if (st.status === "failed") {
           toast.error(st.message || "Upscale 4K échoué");
@@ -204,6 +209,13 @@ export default function UpscaleTestPage() {
           >
             {taskId ? "4K en cours…" : "Lancer l’upscale 4K"}
           </button>
+          <button
+            className="inline-flex items-center justify-center rounded-lg border px-3 py-2 text-sm hover:bg-neutral-50 dark:hover:bg-neutral-800"
+            onClick={() => setShowDebug(v => !v)}
+            type="button"
+          >
+            {showDebug ? "Masquer debug" : "Voir debug"}
+          </button>
         </div>
         {file && (
           <div className="mt-3 text-xs text-neutral-600">
@@ -214,6 +226,14 @@ export default function UpscaleTestPage() {
           <div className="mt-3">
             <ProgressBar percent={uploadProgress} />
             <div className="mt-1 text-xs text-neutral-600">Upload: {Math.round(uploadProgress)}%</div>
+          </div>
+        )}
+        {showDebug && (
+          <div className="mt-4 rounded-lg bg-neutral-50 dark:bg-neutral-900 p-3 text-xs overflow-auto max-h-64 ring-1 ring-black/5">
+            <div className="font-semibold mb-1">Réponse création</div>
+            <pre className="whitespace-pre-wrap break-all">{JSON.stringify(debugCreate, null, 2)}</pre>
+            <div className="font-semibold mt-3 mb-1">Dernier statut</div>
+            <pre className="whitespace-pre-wrap break-all">{JSON.stringify(debugStatus, null, 2)}</pre>
           </div>
         )}
       </div>
