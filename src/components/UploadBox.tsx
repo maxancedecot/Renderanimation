@@ -178,8 +178,8 @@ export default function UploadBox() {
   });
 
   /* 3) Soumettre (Kling ou Runway) */
-  const createKling = useMutation({
-    mutationFn: async ({ prompt }: { prompt: string }) => {
+  const createKling = useMutation<{ taskId: string }, any, { prompt: string; provider?: "kling" | "runway" }>({
+    mutationFn: async ({ prompt, provider: provIn }: { prompt: string; provider?: "kling" | "runway" }) => {
       if (!imageUrl && !file) throw new Error("Aucune image dispo");
       // N'envoie PAS de base64 si on a déjà une URL publique (évite FUNCTION_PAYLOAD_TOO_LARGE)
       let imageDataUrl: string | undefined;
@@ -188,23 +188,26 @@ export default function UploadBox() {
         imageDataUrl = `data:${file.type};base64,${b64}`;
       }
       // Choisit l'API selon le provider
-      const endpoint = provider === "runway" ? "/api/runway/generate" : "/api/kling/generate";
+      const prov = provIn === "runway" ? "runway" : "kling";
+      const endpoint = prov === "runway" ? "/api/runway/generate" : "/api/kling/generate";
       const r = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ imageUrl, imageDataUrl, prompt, durationSec: 5 })
       }).then(r => r.json());
       if (r.error || !r.taskId) throw new Error(r.error || "taskId absent");
-      return r.taskId as string;
+      return { taskId: r.taskId as string };
     },
-    onMutate: () => {
+    onMutate: (vars) => {
       toast.loading("Tâche soumise…", { id: "kg" });
       setKlingTaskId(null);
       setFinalVideoUrl(null);
       setProgress(0);
+      // Mémorise le provider utilisé pour le polling
+      setProvider(vars?.provider === "runway" ? "runway" : "kling");
     },
-    onSuccess: (taskId) => {
-      setKlingTaskId(taskId);
+    onSuccess: (res) => {
+      setKlingTaskId(res.taskId);
       toast.success("Tâche reçue", { id: "kg" });
     },
     onError: (e: any) => toast.error(e?.message || "Erreur génération", { id: "kg" })
