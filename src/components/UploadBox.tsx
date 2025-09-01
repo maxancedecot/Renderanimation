@@ -47,6 +47,10 @@ export default function UploadBox() {
   const [runway4kUrl, setRunway4kUrl] = useState<string | null>(null);
   const [progress, setProgress] = useState(0);
   const [showRemoveConfirm, setShowRemoveConfirm] = useState(false);
+  // Runway debug (raw JSON)
+  const [showRunwayDebug, setShowRunwayDebug] = useState(false);
+  const [runwayDebugCreate, setRunwayDebugCreate] = useState<any>(null);
+  const [runwayDebugStatus, setRunwayDebugStatus] = useState<any>(null);
 
   /* Drag & drop */
   const onDrop = useCallback((e: React.DragEvent<HTMLLabelElement>) => {
@@ -195,6 +199,7 @@ export default function UploadBox() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ imageUrl, imageDataUrl, prompt, durationSec: 5 })
       }).then(r => r.json());
+      if (prov === "runway") setRunwayDebugCreate(r);
       if (r.error || !r.taskId) throw new Error(r.error || "taskId absent");
       return { taskId: r.taskId as string };
     },
@@ -221,6 +226,7 @@ export default function UploadBox() {
     queryFn: async () => {
       const statusUrl = provider === "runway" ? "/api/runway/status" : "/api/kling/status";
       const r = await fetch(`${statusUrl}?taskId=${encodeURIComponent(klingTaskId!)}`).then(r => r.json());
+      if (provider === "runway") setRunwayDebugStatus(r);
       if (r.error) throw new Error(r.error);
       return r as { status?: string; videoUrl?: string | null; message?: string | null };
     },
@@ -442,7 +448,23 @@ export default function UploadBox() {
                   >
                     {createKling.isPending ? "Démarrage…" : (!!klingTaskId ? "En cours…" : "Générer avec Runway")}
                   </button>
+                  <button
+                    type="button"
+                    className="inline-flex items-center justify-center rounded-lg border px-3 py-2 text-sm hover:bg-neutral-50"
+                    onClick={() => setShowRunwayDebug(v => !v)}
+                    title="Afficher le JSON brut (Runway)"
+                  >
+                    {showRunwayDebug ? "Masquer debug" : "Voir debug Runway"}
+                  </button>
                 </div>
+                {showRunwayDebug && (
+                  <div className="mt-3 rounded-lg bg-neutral-50 p-3 text-xs ring-1 ring-black/5 max-h-64 overflow-auto">
+                    <div className="font-semibold mb-1">Réponse création (Runway)</div>
+                    <pre className="whitespace-pre-wrap break-all">{JSON.stringify(runwayDebugCreate, null, 2)}</pre>
+                    <div className="font-semibold mt-3 mb-1">Dernier statut (Runway)</div>
+                    <pre className="whitespace-pre-wrap break-all">{JSON.stringify(runwayDebugStatus, null, 2)}</pre>
+                  </div>
+                )}
               </>
             )}
 

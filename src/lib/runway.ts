@@ -14,7 +14,7 @@ export type RWCreateInput = {
   durationSec?: number; // 5 or 10 typically
 };
 
-export type RWCreateResponse = { taskId: string };
+export type RWCreateResponse = { taskId: string; raw?: any };
 export type RWTaskStatus = "submitted" | "processing" | "succeed" | "failed";
 export type RWStatusResponse = { status: RWTaskStatus; videoUrl?: string | null; message?: string | null };
 
@@ -26,7 +26,14 @@ function baseUrl(): string {
 function authHeaders() {
   const key = process.env.RUNWAY_API_KEY;
   if (!key) throw new Error("RUNWAY_API_KEY manquante");
-  return { Authorization: `Bearer ${key}`, "Content-Type": "application/json" };
+  return {
+    Authorization: `Bearer ${key}`,
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+    // add common alt headers to maximize compatibility if gateway differs
+    "x-api-key": key,
+    "X-API-Key": key,
+  } as Record<string, string>;
 }
 
 export async function runwayCreateTask(input: RWCreateInput): Promise<RWCreateResponse> {
@@ -47,7 +54,12 @@ export async function runwayCreateTask(input: RWCreateInput): Promise<RWCreateRe
     try { Object.assign(body, JSON.parse(extra)); } catch {}
   }
 
-  const res = await fetch(url, { method: "POST", headers: authHeaders(), body: JSON.stringify(body) });
+  let res: Response;
+  try {
+    res = await fetch(url, { method: "POST", headers: authHeaders(), body: JSON.stringify(body) });
+  } catch (e: any) {
+    throw new Error(`Runway fetch error (create): ${e?.message || e} [url: ${url}]`);
+  }
   const data = await res.json().catch(() => ({}));
   if (!res.ok || (data && data.code && data.code !== 0)) {
     const msg = data?.message || data?.error || `HTTP ${res.status}`;
@@ -55,13 +67,18 @@ export async function runwayCreateTask(input: RWCreateInput): Promise<RWCreateRe
   }
   const id = data?.id || data?.task_id || data?.data?.id;
   if (!id) throw new Error("Réponse Runway invalide: task id manquant");
-  return { taskId: String(id) };
+  return { taskId: String(id), raw: data };
 }
 
 export async function runwayGetStatus(taskId: string): Promise<RWStatusResponse> {
   const tmpl = process.env.RUNWAY_STATUS_PATH_TEMPLATE || "/v1/videos/{taskId}";
   const url = `${baseUrl()}${tmpl.replace("{taskId}", encodeURIComponent(taskId))}`;
-  const res = await fetch(url, { headers: authHeaders() });
+  let res: Response;
+  try {
+    res = await fetch(url, { headers: authHeaders() });
+  } catch (e: any) {
+    throw new Error(`Runway fetch error (status): ${e?.message || e} [url: ${url}]`);
+  }
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
     const msg = data?.message || data?.error || `HTTP ${res.status}`;
@@ -86,7 +103,12 @@ export async function runwayUpscale4k(taskIdOrUrl: string): Promise<{ taskId: st
   if (extra) {
     try { Object.assign(body, JSON.parse(extra)); } catch {}
   }
-  const res = await fetch(url, { method: "POST", headers: authHeaders(), body: JSON.stringify(body) });
+  let res: Response;
+  try {
+    res = await fetch(url, { method: "POST", headers: authHeaders(), body: JSON.stringify(body) });
+  } catch (e: any) {
+    throw new Error(`Runway fetch error (upscale): ${e?.message || e} [url: ${url}]`);
+  }
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
     const msg = data?.message || data?.error || `HTTP ${res.status}`;
@@ -96,4 +118,3 @@ export async function runwayUpscale4k(taskIdOrUrl: string): Promise<{ taskId: st
   if (!id) throw new Error("Réponse Runway invalide (upscale): task id manquant");
   return { taskId: String(id) };
 }
-
