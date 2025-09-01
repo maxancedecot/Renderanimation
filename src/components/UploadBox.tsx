@@ -40,6 +40,7 @@ export default function UploadBox() {
   const [result, setResult] = useState<any>(null);
 
   const [klingTaskId, setKlingTaskId] = useState<string | null>(null);
+  const [provider, setProvider] = useState<"kling"|"runway">("kling");
   const [finalVideoUrl, setFinalVideoUrl] = useState<string | null>(null);
   const [progress, setProgress] = useState(0);
   const [showRemoveConfirm, setShowRemoveConfirm] = useState(false);
@@ -184,7 +185,7 @@ export default function UploadBox() {
         imageDataUrl = `data:${file.type};base64,${b64}`;
       }
       // Priorité à l'URL publique (imageUrl pointe déjà vers l’image nettoyée si le bouton a été utilisé)
-      const r = await fetch("/api/kling/generate", {
+      const r = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ imageUrl, imageDataUrl, prompt, durationSec: 5 })
@@ -193,16 +194,16 @@ export default function UploadBox() {
       return r.taskId as string;
     },
     onMutate: () => {
-      toast.loading("Tâche Kling soumise…", { id: "kg" });
+      toast.loading("Tâche soumise…", { id: "kg" });
       setKlingTaskId(null);
       setFinalVideoUrl(null);
       setProgress(0);
     },
     onSuccess: (taskId) => {
       setKlingTaskId(taskId);
-      toast.success("Kling a bien reçu la tâche", { id: "kg" });
+      toast.success("Tâche reçue", { id: "kg" });
     },
-    onError: (e: any) => toast.error(e?.message || "Erreur Kling", { id: "kg" })
+    onError: (e: any) => toast.error(e?.message || "Erreur génération", { id: "kg" })
   });
 
   /* 4) Poll Kling */
@@ -211,7 +212,7 @@ export default function UploadBox() {
     queryKey: statusQueryKey,
     enabled: !!klingTaskId,
     queryFn: async () => {
-      const r = await fetch(`/api/kling/status?taskId=${encodeURIComponent(klingTaskId!)}`).then(r => r.json());
+      const r = await fetch(`${statusUrl}?taskId=${encodeURIComponent(klingTaskId!)}`).then(r => r.json());
       if (r.error) throw new Error(r.error);
       return r as { status?: string; videoUrl?: string | null; message?: string | null };
     },
@@ -222,7 +223,7 @@ export default function UploadBox() {
   useEffect(() => {
     if (!statusData) return;
     if (statusData.status === "failed") {
-      toast.error(statusData.message || "Kling a échoué", { id: "ks" });
+      toast.error(statusData.message || "La génération a échoué", { id: "ks" });
       setKlingTaskId(null);
       setProgress(0);
       qc.removeQueries({ queryKey: statusQueryKey });
@@ -373,7 +374,7 @@ export default function UploadBox() {
                     onClick={() => createKling.mutate({ prompt: result.prompt })}
                     disabled={createKling.isPending || !!klingTaskId}
                   >
-                    {createKling.isPending ? "Démarrage…" : (!!klingTaskId ? "En cours…" : "Générer la vidéo")}
+                    {createKling.isPending ? "Démarrage…" : (!!klingTaskId ? "En cours…" : "Générer (" + provider + ")")}
                   </button>
                 </div>
               </>
