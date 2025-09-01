@@ -174,7 +174,7 @@ export default function UploadBox() {
     onError: (e: any) => toast.error(e?.message || "Erreur analyse", { id: "an" })
   });
 
-  /* 3) Soumettre à Kling (génération) */
+  /* 3) Soumettre (Kling ou Runway) */
   const createKling = useMutation({
     mutationFn: async ({ prompt }: { prompt: string }) => {
       if (!imageUrl && !file) throw new Error("Aucune image dispo");
@@ -184,7 +184,8 @@ export default function UploadBox() {
         const b64 = await fileToBase64(file);
         imageDataUrl = `data:${file.type};base64,${b64}`;
       }
-      // Priorité à l'URL publique (imageUrl pointe déjà vers l’image nettoyée si le bouton a été utilisé)
+      // Choisit l'API selon le provider
+      const endpoint = provider === "runway" ? "/api/runway/generate" : "/api/kling/generate";
       const r = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -212,6 +213,7 @@ export default function UploadBox() {
     queryKey: statusQueryKey,
     enabled: !!klingTaskId,
     queryFn: async () => {
+      const statusUrl = provider === "runway" ? "/api/runway/status" : "/api/kling/status";
       const r = await fetch(`${statusUrl}?taskId=${encodeURIComponent(klingTaskId!)}`).then(r => r.json());
       if (r.error) throw new Error(r.error);
       return r as { status?: string; videoUrl?: string | null; message?: string | null };
