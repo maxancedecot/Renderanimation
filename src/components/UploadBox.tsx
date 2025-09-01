@@ -488,8 +488,8 @@ export default function UploadBox() {
                 <button
                   className="inline-flex items-center justify-center rounded-lg bg-black px-4 py-2 text-white hover:bg-black/90 disabled:opacity-60"
                   onClick={() => createRunwayUpscale.mutate()}
-                  disabled={taskProvider !== "runway" || createRunwayUpscale.isPending || !!runwayUpscaleTaskId}
-                  title={taskProvider !== "runway" ? "Disponible pour les vidéos générées avec Runway" : undefined}
+                  disabled={provider !== "runway" || createRunwayUpscale.isPending || !!runwayUpscaleTaskId}
+                  title={provider !== "runway" ? "Disponible pour les vidéos générées avec Runway" : undefined}
                 >
                   {createRunwayUpscale.isPending ? "Upscale 4K…" : (!!runwayUpscaleTaskId ? "4K en cours…" : "Upscale 4K (Runway)")}
                 </button>
