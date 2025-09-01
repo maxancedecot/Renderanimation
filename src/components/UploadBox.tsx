@@ -42,6 +42,9 @@ export default function UploadBox() {
   const [klingTaskId, setKlingTaskId] = useState<string | null>(null);
   const [provider, setProvider] = useState<"kling"|"runway">("kling");
   const [finalVideoUrl, setFinalVideoUrl] = useState<string | null>(null);
+  // Runway 4K upscale states
+  const [runwayUpscaleTaskId, setRunwayUpscaleTaskId] = useState<string | null>(null);
+  const [runway4kUrl, setRunway4kUrl] = useState<string | null>(null);
   const [progress, setProgress] = useState(0);
   const [showRemoveConfirm, setShowRemoveConfirm] = useState(false);
 
@@ -240,6 +243,57 @@ export default function UploadBox() {
     }
   }, [statusData, qc, statusQueryKey]);
 
+  // Runway: Upscale 4K
+  const createRunwayUpscale = useMutation({
+    mutationFn: async () => {
+      if (!finalVideoUrl) throw new Error("Pas de vidéo disponible");
+      const r = await fetch("/api/runway/upscale", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ input: finalVideoUrl })
+      }).then(r => r.json());
+      if (r.error || !r.taskId) throw new Error(r.error || "taskId absent");
+      return r.taskId as string;
+    },
+    onMutate: () => {
+      toast.loading("Upscale 4K (Runway) lancé…", { id: "rw4k" });
+      setRunwayUpscaleTaskId(null);
+      setRunway4kUrl(null);
+    },
+    onSuccess: (taskId) => {
+      setRunwayUpscaleTaskId(taskId);
+      toast.success("Runway a bien reçu la tâche 4K", { id: "rw4k" });
+    },
+    onError: (e: any) => toast.error(e?.message || "Erreur Runway 4K", { id: "rw4k" })
+  });
+
+  const runwayUpscaleKey = useMemo(() => ["runwayUpscale", runwayUpscaleTaskId], [runwayUpscaleTaskId]);
+  const { data: runwayUpscaleStatus } = useQuery({
+    queryKey: runwayUpscaleKey,
+    enabled: !!runwayUpscaleTaskId,
+    queryFn: async () => {
+      const r = await fetch(`/api/runway/status?taskId=${encodeURIComponent(runwayUpscaleTaskId!)}`).then(r => r.json());
+      if (r.error) throw new Error(r.error);
+      return r as { status?: string; videoUrl?: string | null; message?: string | null };
+    },
+    refetchInterval: 5000,
+    retry: false,
+  });
+
+  useEffect(() => {
+    if (!runwayUpscaleStatus) return;
+    if (runwayUpscaleStatus.status === "failed") {
+      toast.error(runwayUpscaleStatus.message || "Upscale 4K (Runway) échoué", { id: "rw4ks" });
+      setRunwayUpscaleTaskId(null);
+      qc.removeQueries({ queryKey: runwayUpscaleKey });
+    } else if (runwayUpscaleStatus.status === "succeed" && runwayUpscaleStatus.videoUrl) {
+      toast.success("Version 4K prête ✨", { id: "rw4ks" });
+      setRunway4kUrl(runwayUpscaleStatus.videoUrl);
+      setRunwayUpscaleTaskId(null);
+      qc.removeQueries({ queryKey: runwayUpscaleKey });
+    }
+  }, [runwayUpscaleStatus, qc, runwayUpscaleKey]);
+
 
   return (
     <div className="grid lg:grid-cols-2 gap-8">
@@ -424,7 +478,29 @@ export default function UploadBox() {
           {!finalVideoUrl ? (
             <p className="text-sm text-neutral-600 mt-2">La vidéo apparaîtra ici une fois prête.</p>
           ) : (
-            <video id="kling-video" src={finalVideoUrl} controls className="mt-4 w-full rounded-xl ring-1 ring-black/5" />
+            <>
+              <video id="kling-video" src={finalVideoUrl} controls className="mt-4 w-full rounded-xl ring-1 ring-black/5" />
+              {/* Upscale 4K via Runway */}
+              <div className="mt-4 flex items-center gap-3">
+                <button
+                  className="inline-flex items-center justify-center rounded-lg bg-black px-4 py-2 text-white hover:bg-black/90 disabled:opacity-60"
+                  onClick={() => createRunwayUpscale.mutate()}
+                  disabled={taskProvider !== "runway" || createRunwayUpscale.isPending || !!runwayUpscaleTaskId}
+                  title={taskProvider !== "runway" ? "Disponible pour les vidéos générées avec Runway" : undefined}
+                >
+                  {createRunwayUpscale.isPending ? "Upscale 4K…" : (!!runwayUpscaleTaskId ? "4K en cours…" : "Upscale 4K (Runway)")}
+                </button>
+                {runwayUpscaleStatus?.status && (
+                  <span className="text-sm text-neutral-600">{`Runway 4K: ${runwayUpscaleStatus.status}${runwayUpscaleStatus.message ? ` — ${runwayUpscaleStatus.message}` : ""}`}</span>
+                )}
+              </div>
+              {runway4kUrl && (
+                <div className="mt-4">
+                  <h3 className="font-semibold">Version 4K (Runway)</h3>
+                  <video src={runway4kUrl} controls className="mt-2 w-full rounded-xl ring-1 ring-black/5" />
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>
