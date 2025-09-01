@@ -370,13 +370,20 @@ export default function UploadBox() {
               <>
                 <h3 className="font-semibold">Image analysée — prête à être animée</h3>
                 <p className="text-sm text-neutral-600">Clique sur Générer la vidéo pour lancer l’animation.</p>
-                <div className="flex gap-2">
+                <div className="flex gap-2 flex-wrap">
                   <button
                     className="inline-flex items-center justify-center rounded-lg bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-600/90 disabled:opacity-60"
-                    onClick={() => createKling.mutate({ prompt: result.prompt })}
+                    onClick={() => createKling.mutate({ prompt: result.prompt, provider: "kling" })}
                     disabled={createKling.isPending || !!klingTaskId}
                   >
-                    {createKling.isPending ? "Démarrage…" : (!!klingTaskId ? "En cours…" : "Générer (" + provider + ")")}
+                    {createKling.isPending ? "Démarrage…" : (!!klingTaskId ? "En cours…" : "Générer avec Kling")}
+                  </button>
+                  <button
+                    className="inline-flex items-center justify-center rounded-lg bg-black px-4 py-2 text-white hover:bg-black/90 disabled:opacity-60"
+                    onClick={() => createKling.mutate({ prompt: result.prompt, provider: "runway" })}
+                    disabled={createKling.isPending || !!klingTaskId}
+                  >
+                    {createKling.isPending ? "Démarrage…" : (!!klingTaskId ? "En cours…" : "Générer avec Runway")}
                   </button>
                 </div>
               </>
@@ -385,9 +392,7 @@ export default function UploadBox() {
             {!!klingTaskId && (
               <div className="space-y-2 pt-2">
                 <ProgressBar percent={progress} />
-                <p className="text-sm text-neutral-600">
-                  {`Tâche Kling: ${statusData?.status || "envoi…"}`}
-                </p>
+                <p className="text-sm text-neutral-600">{`Tâche ${taskProvider || ""}: ${statusData?.status || "envoi…"}`}</p>
                 {statusData?.message && <p className="text-xs text-neutral-500">{statusData.message}</p>}
               </div>
             )}
