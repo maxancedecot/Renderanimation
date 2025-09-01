@@ -449,7 +449,7 @@ export default function UploadBox() {
             {!!klingTaskId && (
               <div className="space-y-2 pt-2">
                 <ProgressBar percent={progress} />
-                <p className="text-sm text-neutral-600">{`Tâche ${taskProvider || ""}: ${statusData?.status || "envoi…"}`}</p>
+                <p className="text-sm text-neutral-600">{`Tâche ${provider}: ${statusData?.status || "envoi…"}`}</p>
                 {statusData?.message && <p className="text-xs text-neutral-500">{statusData.message}</p>}
               </div>
             )}
