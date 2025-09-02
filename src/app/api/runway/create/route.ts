@@ -13,13 +13,15 @@ export async function POST(req: NextRequest) {
     const { imageUrl, prompt, duration, orientation, model } = await req.json();
     if (!imageUrl || !prompt) return NextResponse.json({ error: "imageUrl et prompt requis" }, { status: 400 });
 
+    // Map incoming fields to Runway's expected schema
+    // According to docs, /v1/image_to_video expects promptImage and promptText
     const body = {
-      imageUrl,
-      prompt,
-      duration,
-      orientation,
+      promptImage: imageUrl,                // string URL (or data URL)
+      promptText: prompt,                   // textual prompt
+      duration: Number(duration ?? 5),
+      orientation: orientation || "landscape",
       model: model || "gen4_turbo",
-    };
+    } as Record<string, any>;
 
     const res = await fetch(`${RUNWAY_BASE}/v1/image_to_video`, {
       method: "POST",
@@ -45,4 +47,3 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: e?.message || "Erreur serveur" }, { status: 500 });
   }
 }
-
