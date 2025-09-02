@@ -1,8 +1,8 @@
 "use client";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useCallback, useState } from "react";
+import { useMutation } from "@tanstack/react-query";
 import toast from "react-hot-toast";
-import { createRunwayTask, pollRunwayStatus } from "@/lib/runwayClient";
+
 
 /* Helpers */
 function fileToBase64(file: File): Promise<string> {
@@ -21,38 +21,19 @@ function clsx(...xs: Array<string | false | null | undefined>) {
   return xs.filter(Boolean).join(" ");
 }
 
-function ProgressBar({ percent }: { percent: number }) {
-  const p = Math.max(0, Math.min(100, Math.round(percent)));
-  return (
-    <div className="w-full h-2 rounded bg-neutral-200">
-      <div className="h-2 rounded bg-indigo-600 transition-all" style={{ width: `${p}%` }} />
-    </div>
-  );
-}
 
 export default function UploadBox() {
-  const qc = useQueryClient();
-
-  const [file, setFile] = useState<File | null>(null);
+    const [file, setFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
 
   const [imageUrl, setImageUrl] = useState<string | null>(null);       // image originale OU nettoyée
   const [cleanedUrl, setCleanedUrl] = useState<string | null>(null);   // image sans personnes
   const [result, setResult] = useState<any>(null);
 
-  const [klingTaskId, setKlingTaskId] = useState<string | null>(null);
-  const [provider, setProvider] = useState<"kling"|"runway">("kling");
-  const [finalVideoUrl, setFinalVideoUrl] = useState<string | null>(null);
-  // Runway 4K upscale states
-  const [runwayUpscaleTaskId, setRunwayUpscaleTaskId] = useState<string | null>(null);
-  const [runway4kUrl, setRunway4kUrl] = useState<string | null>(null);
-  const [progress, setProgress] = useState(0);
-  const [showRemoveConfirm, setShowRemoveConfirm] = useState(false);
+        // Runway 4K upscale states
+        const [showRemoveConfirm, setShowRemoveConfirm] = useState(false);
   // Runway debug (raw JSON)
-  const [showRunwayDebug, setShowRunwayDebug] = useState(false);
-  const [runwayDebugCreate, setRunwayDebugCreate] = useState<any>(null);
-  const [runwayDebugStatus, setRunwayDebugStatus] = useState<any>(null);
-
+      
   /* Drag & drop */
   const onDrop = useCallback((e: React.DragEvent<HTMLLabelElement>) => {
     e.preventDefault();
@@ -66,8 +47,8 @@ export default function UploadBox() {
   }, []);
   const onDragLeave = useCallback(() => setIsDragging(false), []);
 
-  /* Indicative progress while Kling pending */
-  useEffect(() => {
+  /* Video generation removed */
+  /*
     if (!klingTaskId) return;
     let mounted = true;
     const start = Date.now();
@@ -81,7 +62,7 @@ export default function UploadBox() {
     };
     const id = requestAnimationFrame(tick);
     return () => { mounted = false; cancelAnimationFrame(id); };
-  }, [klingTaskId]);
+  */
 
   /* 1) Upload (R2) + analyse */
   const uploadAndAnalyze = useMutation({
@@ -112,9 +93,7 @@ export default function UploadBox() {
       setResult(null);
       setImageUrl(null);
       setCleanedUrl(null);
-      setFinalVideoUrl(null);
-      setKlingTaskId(null);
-      setProgress(0);
+      setResult(null);
       toast.loading("Upload en cours…", { id: "ua" });
     },
     onSuccess: (data) => {
@@ -159,20 +138,7 @@ export default function UploadBox() {
     onError: (e: any) => toast.error(e?.message || "Erreur suppression", { id: "rp" })
   });
 
-  /* 2) Analyse + prompt (sur l’image actuelle : nettoyée si dispo) */
-  const runAnalyze = useMutation({
-    mutationFn: async () => {
-      if (!imageUrl) throw new Error("Pas d'image disponible");
-      const res = await fetch("/api/analyze", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ imageUrl })
-      }).then(r => r.json());
-      if (res.error) throw new Error(res.error);
-      return res;
-    },
-    onMutate: () => {
-      toast.loading("Analyse en cours…", { id: "an" });
+    // Analysis removed
       setResult(null);
     },
     onSuccess: (data) => {
@@ -182,63 +148,8 @@ export default function UploadBox() {
     onError: (e: any) => toast.error(e?.message || "Erreur analyse", { id: "an" })
   });
 
-  /* 3) Soumettre (Kling ou Runway) */
-  const createKling = useMutation<{ taskId: string }, any, { prompt: string; provider?: "kling" | "runway" }>({
-    mutationFn: async ({ prompt, provider: provIn }: { prompt: string; provider?: "kling" | "runway" }) => {
-      if (!imageUrl && !file) throw new Error("Aucune image dispo");
-      // N'envoie PAS de base64 si on a déjà une URL publique (évite FUNCTION_PAYLOAD_TOO_LARGE)
-      let imageDataUrl: string | undefined;
-      if (!imageUrl && file) {
-        const b64 = await fileToBase64(file);
-        imageDataUrl = `data:${file.type};base64,${b64}`;
-      }
-      // Choisit l'API selon le provider
-      const prov = provIn === "runway" ? "runway" : "kling";
-      const endpoint = prov === "runway" ? "/api/runway/generate" : "/api/kling/generate";
-      const r = await fetch(endpoint, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ imageUrl, imageDataUrl, prompt, durationSec: 5 })
-      }).then(r => r.json());
-      if (prov === "runway") setRunwayDebugCreate(r);
-      if (r.error || !r.taskId) throw new Error(r.error || "taskId absent");
-      return { taskId: r.taskId as string };
-    },
-    onMutate: (vars) => {
-      toast.loading("Tâche soumise…", { id: "kg" });
-      setKlingTaskId(null);
-      setFinalVideoUrl(null);
-      setProgress(0);
-      // Mémorise le provider utilisé pour le polling
-      setProvider(vars?.provider === "runway" ? "runway" : "kling");
-    },
-    onSuccess: (res) => {
-      setKlingTaskId(res.taskId);
-      toast.success("Tâche reçue", { id: "kg" });
-    },
-    onError: (e: any) => toast.error(e?.message || "Erreur génération", { id: "kg" })
-  });
-
-  /* 4) Poll Kling */
-  const statusQueryKey = useMemo(() => ["klingStatus", klingTaskId], [klingTaskId]);
-  const { data: statusData } = useQuery({
-    queryKey: statusQueryKey,
-    enabled: !!klingTaskId,
-    queryFn: async () => {
-      const statusUrl = provider === "runway" ? "/api/runway/status" : "/api/kling/status";
-      const r = await fetch(`${statusUrl}?taskId=${encodeURIComponent(klingTaskId!)}`).then(r => r.json());
-      if (provider === "runway") setRunwayDebugStatus(r);
-      if (r.error) throw new Error(r.error);
-      return r as { status?: string; videoUrl?: string | null; message?: string | null };
-    },
-    refetchInterval: 4000,
-    retry: false,
-  });
-
-  useEffect(() => {
-    if (!statusData) return;
-    if (statusData.status === "failed") {
-      toast.error(statusData.message || "La génération a échoué", { id: "ks" });
+    // Generation removed
+    // Polling removed
       setKlingTaskId(null);
       setProgress(0);
       qc.removeQueries({ queryKey: statusQueryKey });
@@ -253,31 +164,7 @@ export default function UploadBox() {
     }
   }, [statusData, qc, statusQueryKey]);
 
-  // Runway: Upscale 4K
-  const createRunwayUpscale = useMutation({
-    mutationFn: async () => {
-      if (!finalVideoUrl) throw new Error("Pas de vidéo disponible");
-      const r = await fetch("/api/runway/upscale", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ input: finalVideoUrl })
-      }).then(r => r.json());
-      if (r.error || !r.taskId) throw new Error(r.error || "taskId absent");
-      return r.taskId as string;
-    },
-    onMutate: () => {
-      toast.loading("Upscale 4K (Runway) lancé…", { id: "rw4k" });
-      setRunwayUpscaleTaskId(null);
-      setRunway4kUrl(null);
-    },
-    onSuccess: (taskId) => {
-      setRunwayUpscaleTaskId(taskId);
-      toast.success("Runway a bien reçu la tâche 4K", { id: "rw4k" });
-    },
-    onError: (e: any) => toast.error(e?.message || "Erreur Runway 4K", { id: "rw4k" })
-  });
-
-  const runwayUpscaleKey = useMemo(() => ["runwayUpscale", runwayUpscaleTaskId], [runwayUpscaleTaskId]);
+    const runwayUpscaleKey = useMemo(() => ["runwayUpscale", runwayUpscaleTaskId], [runwayUpscaleTaskId]);
   const { data: runwayUpscaleStatus } = useQuery({
     queryKey: runwayUpscaleKey,
     enabled: !!runwayUpscaleTaskId,
@@ -405,7 +292,7 @@ export default function UploadBox() {
           </div>
         </div>
 
-        {/* Nettoyage personnes + Analyse + Kling */}
+        {/* Nettoyage personnes */}
         {imageUrl && (
           <div className="rounded-2xl border bg-white p-6 shadow-sm space-y-4">
             <h2 className="text-lg font-semibold">Préparation</h2>
@@ -420,24 +307,10 @@ export default function UploadBox() {
                   {removePeople.isPending ? "Retrait des personnes…" : "Retirer les personnes"}
                 </button>
 
-                <button
-                  className="inline-flex items-center justify-center rounded-lg bg-black px-4 py-2 text-white hover:bg-black/90 disabled:opacity-60"
-                  onClick={() => runAnalyze.mutate()}
-                  disabled={runAnalyze.isPending}
-                >
-                  {runAnalyze.isPending ? "Analyse…" : "Analyser l’image"}
-                </button>
               </div>
             )}
 
-            {result && (
-              <>
-                <h3 className="font-semibold">Image analysée — prête à être animée</h3>
-                <p className="text-sm text-neutral-600">Clique sur Générer la vidéo pour lancer l’animation.</p>
-                <div className="flex gap-2 flex-wrap">
-                  <button
-                    className="inline-flex items-center justify-center rounded-lg bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-600/90 disabled:opacity-60"
-                    onClick={() => createKling.mutate({ prompt: result.prompt, provider: "kling" })}
+            
                     disabled={createKling.isPending || !!klingTaskId}
                   >
                     {createKling.isPending ? "Démarrage…" : (!!klingTaskId ? "En cours…" : "Générer avec Kling")}
@@ -469,13 +342,7 @@ export default function UploadBox() {
               </>
             )}
 
-            {!!klingTaskId && (
-              <div className="space-y-2 pt-2">
-                <ProgressBar percent={progress} />
-                <p className="text-sm text-neutral-600">{`Tâche ${provider}: ${statusData?.status || "envoi…"}`}</p>
-                {statusData?.message && <p className="text-xs text-neutral-500">{statusData.message}</p>}
-              </div>
-            )}
+            
           </div>
         )}
 
@@ -499,37 +366,7 @@ export default function UploadBox() {
           )}
         </div>
 
-        <div className="rounded-2xl border bg-white p-6 shadow-sm">
-          <h2 className="text-lg font-semibold">Vidéo générée</h2>
-          {!finalVideoUrl ? (
-            <p className="text-sm text-neutral-600 mt-2">La vidéo apparaîtra ici une fois prête.</p>
-          ) : (
-            <>
-              <video id="kling-video" src={finalVideoUrl} controls className="mt-4 w-full rounded-xl ring-1 ring-black/5" />
-              {/* Upscale 4K via Runway */}
-              <div className="mt-4 flex items-center gap-3">
-                <button
-                  className="inline-flex items-center justify-center rounded-lg bg-black px-4 py-2 text-white hover:bg-black/90 disabled:opacity-60"
-                  onClick={() => createRunwayUpscale.mutate()}
-                  disabled={provider !== "runway" || createRunwayUpscale.isPending || !!runwayUpscaleTaskId}
-                  title={provider !== "runway" ? "Disponible pour les vidéos générées avec Runway" : undefined}
-                >
-                  {createRunwayUpscale.isPending ? "Upscale 4K…" : (!!runwayUpscaleTaskId ? "4K en cours…" : "Upscale 4K (Runway)")}
-                </button>
-                {runwayUpscaleStatus?.status && (
-                  <span className="text-sm text-neutral-600">{`Runway 4K: ${runwayUpscaleStatus.status}${runwayUpscaleStatus.message ? ` — ${runwayUpscaleStatus.message}` : ""}`}</span>
-                )}
-              </div>
-              {runway4kUrl && (
-                <div className="mt-4">
-                  <h3 className="font-semibold">Version 4K (Runway)</h3>
-                  <video src={runway4kUrl} controls className="mt-2 w-full rounded-xl ring-1 ring-black/5" />
-                </div>
-              )}
-            </>
-          )}
         </div>
-      </div>
 
       {/* Modal confirmation: retirer les personnes */}
       {showRemoveConfirm && (
