@@ -13,7 +13,9 @@ export async function GET(req: NextRequest) {
     const id = searchParams.get("id") || searchParams.get("taskId");
     if (!id) return NextResponse.json({ error: "id manquant" }, { status: 400 });
 
-    const res = await fetch(`${RUNWAY_BASE}/v1/tasks/${encodeURIComponent(id)}` , {
+    const url = `${RUNWAY_BASE}/v1/tasks/${encodeURIComponent(id)}`;
+    console.log("[runway/status] id:", id, "endpoint:", url);
+    const res = await fetch(url , {
       method: "GET",
       headers: {
         Authorization: `Bearer ${apiKey}`,

@@ -39,23 +39,40 @@ export async function POST(req: NextRequest) {
     const apiKey = process.env.RUNWAY_API_KEY;
     if (!apiKey) return NextResponse.json({ error: "RUNWAY_API_KEY manquante" }, { status: 500 });
 
+    const urlObj = new URL(req.url);
+    const debugFlag = urlObj.searchParams.get("debug") === "1";
+
     const { imageUrl, prompt, duration, orientation, model, promptImage } = await req.json();
 
-    // Construire promptImage final selon les règles
+    // Log input (sanitised)
+    const safeBody = {
+      imageUrl: typeof imageUrl === 'string' ? (imageUrl.startsWith('data:') ? 'data:...' : imageUrl) : undefined,
+      prompt,
+      duration,
+      orientation,
+      model,
+      promptImage: promptImage ? '[provided]' : undefined,
+    };
+    console.log("[runway/create] input:", safeBody);
+
+    // Mapping obligatoire de promptImage
     let finalPromptImage: any = undefined;
     if (promptImage) {
-      finalPromptImage = promptImage; // string ou array { uri, position }
-    } else if (typeof imageUrl === "string" && imageUrl.length > 0) {
-      if (imageUrl.startsWith("data:")) {
-        const b64 = extractBase64(imageUrl);
-        const buf = Buffer.from(b64, "base64");
-        finalPromptImage = await uploadToR2Public(buf, "image/png");
-      } else if (isHttpUrl(imageUrl)) {
+      finalPromptImage = promptImage;
+    } else if (typeof imageUrl === 'string' && imageUrl.length > 0) {
+      if (imageUrl.startsWith('http')) {
         finalPromptImage = imageUrl;
+      } else if (imageUrl.startsWith('data:')) {
+        if (process.env.DEBUG_RUNWAY === '1') {
+          finalPromptImage = 'https://picsum.photos/seed/ra-debug/1600/900';
+        } else {
+          return NextResponse.json({ error: "imageUrl est un data: URI — fournir une URL https publique ou activer DEBUG_RUNWAY=1 pour fallback." }, { status: 400 });
+        }
       }
     }
+    console.log("[runway/create] promptImage:", finalPromptImage);
     if (!finalPromptImage) {
-      return NextResponse.json({ error: "promptImage requis : fournir imageUrl https publique ou promptImage" }, { status: 400 });
+      return NextResponse.json({ error: "promptImage requis (URL https publique). Vérifie imageUrl ou fournis promptImage." }, { status: 400 });
     }
 
     const ratio = (orientation === "portrait") ? "768:1280" : "1280:768";
@@ -68,9 +85,15 @@ export async function POST(req: NextRequest) {
     };
 
     // Log debug côté serveur sans secrets
-    console.debug("[runway/create] payload:", JSON.stringify(body));
+    console.log("[runway/create] outgoing body:", body);
+    const endpoint = `${RUNWAY_BASE}/v1/image_to_video`;
+    console.log("[runway/create] endpoint:", endpoint);
 
-    const res = await fetch(`${RUNWAY_BASE}/v1/image_to_video`, {
+    if (debugFlag) {
+      return NextResponse.json({ debug: true, outgoing: body, endpoint });
+    }
+
+    const res = await fetch(endpoint, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${apiKey}`,
