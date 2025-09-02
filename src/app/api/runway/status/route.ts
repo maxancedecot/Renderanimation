@@ -13,7 +13,7 @@ export async function GET(req: NextRequest) {
     const id = searchParams.get("id") || searchParams.get("taskId");
     if (!id) return NextResponse.json({ error: "id manquant" }, { status: 400 });
 
-    const res = await fetch(f"{RUNWAY_BASE}/v1/tasks/{id}", {
+    const res = await fetch(`${RUNWAY_BASE}/v1/tasks/${encodeURIComponent(id)}` , {
       method: "GET",
       headers: {
         Authorization: `Bearer ${apiKey}`,
@@ -38,4 +38,3 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: e?.message || "Erreur serveur" }, { status: 500 });
   }
 }
-
