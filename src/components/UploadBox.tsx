@@ -398,3 +398,200 @@ export default function UploadBox() {
     </div>
   );
 }
+"use client";
+import { useCallback, useState } from "react";
+import { useMutation } from "@tanstack/react-query";
+import toast from "react-hot-toast";
+
+function fileToBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const res = reader.result as string;
+      const base64 = res.substring(res.indexOf(",") + 1);
+      resolve(base64);
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+function clsx(...xs: Array<string | false | null | undefined>) {
+  return xs.filter(Boolean).join(" ");
+}
+
+export default function UploadBox() {
+  const [file, setFile] = useState<File | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [cleanedUrl, setCleanedUrl] = useState<string | null>(null);
+  const [showRemoveConfirm, setShowRemoveConfirm] = useState(false);
+
+  const onDrop = useCallback((e: React.DragEvent<HTMLLabelElement>) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const f = e.dataTransfer.files?.[0];
+    if (f) setFile(f);
+  }, []);
+  const onDragOver = useCallback((e: React.DragEvent<HTMLLabelElement>) => {
+    e.preventDefault();
+    setIsDragging(true);
+  }, []);
+  const onDragLeave = useCallback(() => setIsDragging(false), []);
+
+  const upload = useMutation({
+    mutationFn: async (file: File) => {
+      const sign = await fetch("/api/uploads/sign", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ filename: file.name, contentType: file.type })
+      }).then(r => r.json());
+      if (sign?.error || !sign.uploadUrl || !sign.publicUrl) {
+        throw new Error(sign?.error || "Signature invalide");
+      }
+      const putRes = await fetch(sign.uploadUrl, {
+        method: "PUT",
+        headers: { "Content-Type": file.type },
+        body: file
+      });
+      if (!putRes.ok) {
+        const txt = await putRes.text().catch(() => "");
+        throw new Error(`R2 PUT failed: ${putRes.status} ${putRes.statusText} ${txt}`);
+      }
+      return { imagePublicUrl: sign.publicUrl as string };
+    },
+    onMutate: () => {
+      setImageUrl(null);
+      setCleanedUrl(null);
+      toast.loading("Upload en cours…", { id: "up" });
+    },
+    onSuccess: (d) => {
+      setImageUrl(d.imagePublicUrl);
+      toast.success("Image uploadée ✅", { id: "up" });
+    },
+    onError: (e: any) => toast.error(e?.message || "Erreur d’upload", { id: "up" })
+  });
+
+  const removePeople = useMutation({
+    mutationFn: async () => {
+      if (!imageUrl && !file) throw new Error("Aucune image disponible");
+      let imageDataUrl: string | undefined;
+      if (!imageUrl && file) {
+        const b64 = await fileToBase64(file);
+        imageDataUrl = `data:${file.type};base64,${b64}`;
+      }
+      const r = await fetch("/api/images/remove-people", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ imageUrl: imageUrl || undefined, imageDataUrl })
+      }).then(r => r.json());
+      if (r.error || !r.cleanedUrl) throw new Error(r.error || "Nettoyage échoué");
+      return r.cleanedUrl as string;
+    },
+    onMutate: () => {
+      toast.loading("Suppression des personnes…", { id: "rp" });
+      setCleanedUrl(null);
+    },
+    onSuccess: (url) => {
+      setCleanedUrl(url);
+      setImageUrl(url);
+      toast.success("Personnes retirées ✅", { id: "rp" });
+    },
+    onError: (e: any) => toast.error(e?.message || "Erreur suppression", { id: "rp" })
+  });
+
+  return (
+    <div className="grid lg:grid-cols-2 gap-8">
+      {/* Colonne gauche : Upload + Nettoyage */}
+      <div className="space-y-6">
+        <div className="rounded-2xl border bg-white p-6 shadow-sm">
+          <h2 className="text-lg font-semibold">Uploader un rendu 3D</h2>
+          <p className="text-sm text-neutral-600 mt-1">Formats JPG/PNG</p>
+
+          <label
+            onDrop={onDrop}
+            onDragOver={onDragOver}
+            onDragLeave={onDragLeave}
+            className={clsx(
+              "mt-4 block rounded-xl border-2 border-dashed p-8 text-center transition cursor-pointer",
+              "bg-neutral-50 hover:bg-neutral-100",
+              isDragging && "border-indigo-500 bg-indigo-50"
+            )}
+          >
+            <input type="file" accept="image/*" className="hidden" onChange={e => setFile(e.target.files?.[0] || null)} />
+            <div className="text-sm text-neutral-600">
+              {file ? (
+                <span className="font-medium text-black">{file.name}</span>
+              ) : (
+                <>Glisse ton image ou <span className="underline">clique pour parcourir</span></>
+              )}
+            </div>
+          </label>
+
+          <div className="mt-4 flex gap-3">
+            <button
+              className="inline-flex items-center justify-center rounded-lg bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-600/90 disabled:opacity-60"
+              onClick={() => file && upload.mutate(file)}
+              disabled={!file || upload.isPending}
+            >
+              {upload.isPending ? "Upload…" : "Uploader"}
+            </button>
+            <button
+              className="inline-flex items-center justify-center rounded-lg border px-4 py-2 hover:bg-neutral-50 disabled:opacity-50"
+              onClick={() => { setFile(null); setImageUrl(null); setCleanedUrl(null); }}
+              disabled={upload.isPending}
+            >
+              Réinitialiser
+            </button>
+          </div>
+        </div>
+
+        {imageUrl && (
+          <div className="rounded-2xl border bg-white p-6 shadow-sm space-y-4">
+            <h2 className="text-lg font-semibold">Préparation</h2>
+            <div className="flex flex-wrap gap-3">
+              <button
+                className="inline-flex items-center justify-center rounded-lg bg-rose-600 px-4 py-2 text-white hover:bg-rose-600/90 disabled:opacity-60"
+                onClick={() => setShowRemoveConfirm(true)}
+                disabled={removePeople.isPending}
+              >
+                {removePeople.isPending ? "Retrait des personnes…" : "Retirer les personnes"}
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Colonne droite : aperçu */}
+      <div className="space-y-6">
+        <div className="rounded-2xl border bg-white p-6 shadow-sm">
+          <h2 className="text-lg font-semibold">Aperçu</h2>
+          {!imageUrl ? (
+            <p className="text-sm text-neutral-600 mt-2">Aucune image pour le moment.</p>
+          ) : (
+            <>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={imageUrl}
+                alt="upload"
+                className="mt-4 w-full max-h-[420px] object-contain rounded-xl ring-1 ring-black/5"
+              />
+            </>
+          )}
+        </div>
+      </div>
+
+      {showRemoveConfirm && (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-black/30 p-4" role="dialog" aria-modal="true">
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl ring-1 ring-black/5">
+            <h3 className="text-lg font-semibold">Retirer les personnes ?</h3>
+            <p className="mt-2 text-sm text-neutral-600">Cette opération peut modifier le ratio de l’image nettoyée. Veux-tu continuer ?</p>
+            <div className="mt-4 flex justify-end gap-3">
+              <button className="inline-flex items-center justify-center rounded-lg border px-4 py-2 hover:bg-neutral-50" onClick={() => setShowRemoveConfirm(false)} disabled={removePeople.isPending}>Annuler</button>
+              <button className="inline-flex items-center justify-center rounded-lg bg-rose-600 px-4 py-2 text-white hover:bg-rose-600/90 disabled:opacity-60" onClick={() => { setShowRemoveConfirm(false); removePeople.mutate(); }} disabled={removePeople.isPending}>Continuer</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
