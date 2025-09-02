@@ -3,7 +3,6 @@ import { useCallback, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 
-
 /* Helpers */
 function fileToBase64(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -21,20 +20,13 @@ function clsx(...xs: Array<string | false | null | undefined>) {
   return xs.filter(Boolean).join(" ");
 }
 
-
 export default function UploadBox() {
-    const [file, setFile] = useState<File | null>(null);
+  const [file, setFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [cleanedUrl, setCleanedUrl] = useState<string | null>(null);
+  const [showRemoveConfirm, setShowRemoveConfirm] = useState(false);
 
-  const [imageUrl, setImageUrl] = useState<string | null>(null);       // image originale OU nettoyée
-  const [cleanedUrl, setCleanedUrl] = useState<string | null>(null);   // image sans personnes
-  const [result, setResult] = useState<any>(null);
-
-        // Runway 4K upscale states
-        const [showRemoveConfirm, setShowRemoveConfirm] = useState(false);
-  // Runway debug (raw JSON)
-      
-  /* Drag & drop */
   const onDrop = useCallback((e: React.DragEvent<HTMLLabelElement>) => {
     e.preventDefault();
     setIsDragging(false);
@@ -47,24 +39,7 @@ export default function UploadBox() {
   }, []);
   const onDragLeave = useCallback(() => setIsDragging(false), []);
 
-  /* Video generation removed */
-  /*
-    if (!klingTaskId) return;
-    let mounted = true;
-    const start = Date.now();
-    const maxMs = 10 * 60 * 1000;
-    const tick = () => {
-      if (!mounted) return;
-      const elapsed = Date.now() - start;
-      const v = Math.min(95, (elapsed / maxMs) * 85 + 8);
-      setProgress(v);
-      if (klingTaskId) requestAnimationFrame(tick);
-    };
-    const id = requestAnimationFrame(tick);
-    return () => { mounted = false; cancelAnimationFrame(id); };
-  */
-
-  /* 1) Upload (R2) + analyse */
+  // Upload vers R2
   const uploadAndAnalyze = useMutation({
     mutationFn: async (file: File) => {
       const sign = await fetch("/api/uploads/sign", {
@@ -86,14 +61,11 @@ export default function UploadBox() {
       }
       const imagePublicUrl: string = sign.publicUrl;
 
-      // On ne lance PAS l'analyse tout de suite — car on veut potentiellement retirer les personnes d'abord.
       return { imagePublicUrl };
     },
     onMutate: () => {
-      setResult(null);
       setImageUrl(null);
       setCleanedUrl(null);
-      setResult(null);
       toast.loading("Upload en cours…", { id: "ua" });
     },
     onSuccess: (data) => {
@@ -105,7 +77,7 @@ export default function UploadBox() {
     }
   });
 
-  /* 1.b) Retirer les personnes (OpenAI) */
+  /* Retirer les personnes (OpenAI) */
   const removePeople = useMutation({
     mutationFn: async () => {
       if (!imageUrl && !file) throw new Error("Aucune image disponible");
@@ -125,11 +97,7 @@ export default function UploadBox() {
       if (r.error || !r.cleanedUrl) throw new Error(r.error || "Nettoyage échoué");
       return r.cleanedUrl as string;
     },
-    onMutate: () => {
-      toast.loading("Suppression des personnes…", { id: "rp" });
-      setCleanedUrl(null);
-      setResult(null);
-    },
+    onMutate: () => { toast.loading("Suppression des personnes…", { id: "rp" }); setCleanedUrl(null); },
     onSuccess: (url) => {
       setCleanedUrl(url);
       setImageUrl(url); // on bascule sur l’image nettoyée
