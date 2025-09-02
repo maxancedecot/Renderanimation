@@ -30,6 +30,9 @@ function authHeaders() {
     Authorization: `Bearer ${key}`,
     "Content-Type": "application/json",
     "Accept": "application/json",
+    // Runway API requires an explicit version header
+    // Set RUNWAY_API_VERSION from docs (e.g. 2024-10-01)
+    "X-Runway-Version": process.env.RUNWAY_API_VERSION || "2024-10-01",
     // add common alt headers to maximize compatibility if gateway differs
     "x-api-key": key,
     "X-API-Key": key,
