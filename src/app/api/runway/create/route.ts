@@ -5,12 +5,12 @@ import { r2, R2_BUCKET } from "@/lib/r2";
 import { PutObjectCommand } from "@aws-sdk/client-s3";
 import { randomUUID } from "crypto";
 
-const RUNWAY_BASE = "https://api.runwayml.com";
+const RUNWAY_BASE = (process.env.RUNWAY_API_BASE || "https://api.runwayml.com").replace(/\/+$/, "");
 const RUNWAY_VERSION = "2024-11-06";
 
 
-function isHttpsUrl(x: string) {
-  try { const u = new URL(x); return u.protocol === "https:"; } catch { return false; }
+function isHttpUrl(x: string) {
+  try { const u = new URL(x); return u.protocol === "http:" || u.protocol === "https:"; } catch { return false; }
 }
 
 function extractBase64(dataUrl: string) {
@@ -40,7 +40,6 @@ export async function POST(req: NextRequest) {
     if (!apiKey) return NextResponse.json({ error: "RUNWAY_API_KEY manquante" }, { status: 500 });
 
     const { imageUrl, prompt, duration, orientation, model, promptImage } = await req.json();
-    if (!imageUrl || !prompt) return NextResponse.json({ error: "imageUrl et prompt requis" }, { status: 400 });
 
     // Construire promptImage final selon les règles
     let finalPromptImage: any = undefined;
@@ -51,12 +50,12 @@ export async function POST(req: NextRequest) {
         const b64 = extractBase64(imageUrl);
         const buf = Buffer.from(b64, "base64");
         finalPromptImage = await uploadToR2Public(buf, "image/png");
-      } else if (isHttpsUrl(imageUrl)) {
+      } else if (isHttpUrl(imageUrl)) {
         finalPromptImage = imageUrl;
       }
     }
     if (!finalPromptImage) {
-      return NextResponse.json({ error: "promptImage requis (URL https publique)" }, { status: 400 });
+      return NextResponse.json({ error: "promptImage requis : fournir imageUrl https publique ou promptImage" }, { status: 400 });
     }
 
     const ratio = (orientation === "portrait") ? "768:1280" : "1280:768";
@@ -71,7 +70,7 @@ export async function POST(req: NextRequest) {
     // Log debug côté serveur sans secrets
     console.debug("[runway/create] payload:", JSON.stringify(body));
 
-        const res = await fetch(`${RUNWAY_BASE}/v1/image_to_video`, {
+    const res = await fetch(`${RUNWAY_BASE}/v1/image_to_video`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${apiKey}`,
