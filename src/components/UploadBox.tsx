@@ -2,6 +2,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
+import { createRunwayTask, pollRunwayStatus } from "@/lib/runwayClient";
 
 /* Helpers */
 function fileToBase64(file: File): Promise<string> {

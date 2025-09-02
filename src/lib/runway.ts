@@ -46,12 +46,32 @@ export async function runwayCreateTask(input: RWCreateInput): Promise<RWCreateRe
   const image = input.imageDataUrl || input.imageUrl;
   if (!image) throw new Error("Aucune image fournie pour Runway");
 
-  const body = {
-    model: "gen-3.5",
-    duration: input.durationSec || 5,
+  const dur = input.durationSec || 5;
+  const model = process.env.RUNWAY_MODEL || "gen-3.5";
+  const aspect = process.env.RUNWAY_ASPECT_RATIO || "16:9";
+  const mode = process.env.RUNWAY_MODE || "image_to_video";
+  const wrap = (process.env.RUNWAY_BODY_WRAPPER || "flat").toLowerCase(); // "flat" | "input"
+
+  const inputFields: Record<string, any> = {
     prompt: input.prompt,
-    image,
-  } as Record<string, any>;
+    duration: dur,
+    duration_seconds: dur,
+    aspect_ratio: aspect,
+  };
+  // Provide image under multiple keys to satisfy different schemas
+  if (input.imageDataUrl) {
+    inputFields.image = input.imageDataUrl;
+    inputFields.input_image = input.imageDataUrl;
+    inputFields.images = [input.imageDataUrl];
+  } else if (input.imageUrl) {
+    inputFields.image = input.imageUrl;
+    inputFields.image_url = input.imageUrl;
+    inputFields.images = [input.imageUrl];
+  }
+
+  const body: Record<string, any> = wrap === "input"
+    ? { model, mode, input: inputFields }
+    : { model, mode, ...inputFields };
   const extra = process.env.RUNWAY_EXTRA_JSON;
   if (extra) {
     try { Object.assign(body, JSON.parse(extra)); } catch {}
@@ -65,8 +85,9 @@ export async function runwayCreateTask(input: RWCreateInput): Promise<RWCreateRe
   }
   const data = await res.json().catch(() => ({}));
   if (!res.ok || (data && data.code && data.code !== 0)) {
+    const details = JSON.stringify(data);
     const msg = data?.message || data?.error || `HTTP ${res.status}`;
-    throw new Error(`Runway create error: ${msg}`);
+    throw new Error(`Runway create error: ${msg} | details: ${details}`);
   }
   const id = data?.id || data?.task_id || data?.data?.id;
   if (!id) throw new Error("Réponse Runway invalide: task id manquant");

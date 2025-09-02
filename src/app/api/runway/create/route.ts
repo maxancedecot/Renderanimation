@@ -5,35 +5,42 @@ import { NextRequest, NextResponse } from "next/server";
 const RUNWAY_BASE = "https://api.runwayml.com";
 const RUNWAY_VERSION = "2024-11-06";
 
-export async function GET(req: NextRequest) {
+export async function POST(req: NextRequest) {
   try {
     const apiKey = process.env.RUNWAY_API_KEY;
     if (!apiKey) return NextResponse.json({ error: "RUNWAY_API_KEY manquante" }, { status: 500 });
-    const { searchParams } = new URL(req.url);
-    const id = searchParams.get("id") || searchParams.get("taskId");
-    if (!id) return NextResponse.json({ error: "id manquant" }, { status: 400 });
 
-    const res = await fetch(f"{RUNWAY_BASE}/v1/tasks/{id}", {
-      method: "GET",
+    const { imageUrl, prompt, duration, orientation, model } = await req.json();
+    if (!imageUrl || !prompt) return NextResponse.json({ error: "imageUrl et prompt requis" }, { status: 400 });
+
+    const body = {
+      imageUrl,
+      prompt,
+      duration,
+      orientation,
+      model: model || "gen4_turbo",
+    };
+
+    const res = await fetch(`${RUNWAY_BASE}/v1/image_to_video`, {
+      method: "POST",
       headers: {
         Authorization: `Bearer ${apiKey}`,
         "Content-Type": "application/json",
         "X-Runway-Version": RUNWAY_VERSION,
         Accept: "application/json",
       },
+      body: JSON.stringify(body),
     });
+
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
       const msg = data?.message || data?.error || `HTTP ${res.status}`;
       return NextResponse.json({ error: msg }, { status: 500 });
     }
 
-    const rawStatus = (data?.status || data?.state || "pending").toString().toLowerCase();
-    const status = ["pending","running","succeeded","failed"].includes(rawStatus)
-      ? rawStatus
-      : (rawStatus.includes("success") ? "succeeded" : (rawStatus.includes("fail") ? "failed" : rawStatus));
-    const videoUrl = data?.result?.url || data?.video_url || data?.outputs?.[0]?.url || null;
-    return NextResponse.json({ status, videoUrl });
+    const taskId = data?.id || data?.task_id || data?.data?.id;
+    if (!taskId) return NextResponse.json({ error: "taskId introuvable" }, { status: 500 });
+    return NextResponse.json({ taskId: String(taskId) });
   } catch (e: any) {
     return NextResponse.json({ error: e?.message || "Erreur serveur" }, { status: 500 });
   }
