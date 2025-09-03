@@ -39,9 +39,18 @@ export async function POST(req: NextRequest) {
     if (!apiKey) return NextResponse.json({ error: "RUNWAY_API_KEY manquante" }, { status: 500 });
 
     const { imageUrl, prompt, duration, orientation, model, promptImage } = await req.json();
+
     let finalPromptImage: any = undefined;
-    if (promptImage) {
+    if (Array.isArray(promptImage)) {
       finalPromptImage = promptImage;
+    } else if (typeof promptImage === "string" && promptImage.length > 0) {
+      if (promptImage.startsWith("data:")) {
+        const b64 = extractBase64(promptImage);
+        const buf = Buffer.from(b64, "base64");
+        finalPromptImage = await uploadToR2Public(buf, "image/png");
+      } else {
+        finalPromptImage = promptImage;
+      }
     } else if (typeof imageUrl === "string" && imageUrl.length > 0) {
       if (imageUrl.startsWith("data:")) {
         const b64 = extractBase64(imageUrl);
@@ -51,7 +60,8 @@ export async function POST(req: NextRequest) {
         finalPromptImage = imageUrl;
       }
     }
-    if (!finalPromptImage) {
+
+    if (finalPromptImage === undefined || (Array.isArray(finalPromptImage) && finalPromptImage.length === 0)) {
       return NextResponse.json({ error: "promptImage requis (URL https publique)" }, { status: 400 });
     }
 
@@ -59,10 +69,11 @@ export async function POST(req: NextRequest) {
     const outgoing: Record<string, any> = {
       model: model || "gen4_turbo",
       promptText: typeof prompt === "string" ? prompt : "Animate this still image into a subtle, smooth motion.",
-      promptImage: finalPromptImage,
       duration: Number(duration ?? 5),
       ratio,
     };
+
+    outgoing.promptImage = finalPromptImage;
 
     const res = await fetch(`${RUNWAY_BASE}/v1/image_to_video`, {
       method: "POST",
