@@ -10,6 +10,7 @@ type Item = {
   project?: string;
   tags?: string[];
   createdAt: string;
+  folderId?: string;
 };
 
 export default function LibraryGrid() {
@@ -20,12 +21,22 @@ export default function LibraryGrid() {
   const [confirmDelete, setConfirmDelete] = useState<{ id: string } | null>(null);
   const [topazStart, setTopazStart] = useState<Record<string, number>>({});
   const [tick, setTick] = useState(0);
+  const [selectedFolder, setSelectedFolder] = useState<string | "all">('all');
+  const [newFolderName, setNewFolderName] = useState('');
   const { data, isLoading, error } = useQuery({
     queryKey: ["library"],
     queryFn: async () => {
       const r = await fetch("/api/library/list").then(r => r.json());
       if (r.error) throw new Error(r.error);
       return (r.items || []) as Item[];
+    }
+  });
+  const { data: folderData } = useQuery({
+    queryKey: ["libraryFolders"],
+    queryFn: async () => {
+      const r = await fetch("/api/library/folders").then(r => r.json());
+      if (r.error) throw new Error(r.error);
+      return (r.folders || []) as Array<{ id: string; name: string; createdAt: string }>;
     }
   });
 
@@ -143,12 +154,46 @@ export default function LibraryGrid() {
   if (isLoading) return <p>Chargement…</p>;
   if (error) return <p className="text-red-600">Erreur: {(error as any)?.message}</p>;
   const items = data || [];
+  const folders = folderData || [];
+  const filtered = selectedFolder === 'all' ? items : items.filter(it => it.folderId === selectedFolder);
   if (items.length === 0) return <p>Aucune vidéo enregistrée pour le moment.</p>;
 
   return (
     <div>
-      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {items.map((it) => {
+    <div className="mb-4 flex items-center justify-between gap-3">
+      <div className="flex items-center gap-2">
+        <label className="text-sm text-neutral-600">Dossier:</label>
+        <select
+          className="rounded-md border px-2 py-1 text-sm"
+          value={selectedFolder}
+          onChange={(e) => setSelectedFolder(e.target.value as any)}
+        >
+          <option value="all">Tous</option>
+          {folders.map(f => (<option key={f.id} value={f.id}>{f.name}</option>))}
+        </select>
+      </div>
+      <div className="flex items-center gap-2">
+        <input
+          value={newFolderName}
+          onChange={(e) => setNewFolderName(e.target.value)}
+          placeholder="Nouveau dossier"
+          className="rounded-md border px-2 py-1 text-sm"
+        />
+        <button
+          className="inline-flex items-center justify-center rounded-lg border px-3 py-1.5 text-sm hover:bg-neutral-50"
+          onClick={async () => {
+            const name = newFolderName.trim();
+            if (!name) return;
+            const r = await fetch('/api/library/folders', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name }) }).then(r=>r.json());
+            if (r.error) return toast.error(r.error);
+            setNewFolderName('');
+            qc.invalidateQueries({ queryKey: ['libraryFolders'] });
+          }}
+        >Créer</button>
+      </div>
+    </div>
+    <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {filtered.map((it) => {
           const show4k = is4k[it.id] || (it.tags || []).includes('4k');
           return (
             <div key={it.id} className="relative rounded-xl border bg-white p-4 shadow-sm">
@@ -195,8 +240,21 @@ export default function LibraryGrid() {
                       {topaz[it.id]?.taskId ? '4K en cours…' : 'Upscale 4K'}
                     </button>
                   ) : null}
+                  <select
+                    className="rounded-md border px-2 py-2 text-sm"
+                    value={it.folderId || ''}
+                    onChange={async (e) => {
+                      const folderId = e.target.value || undefined;
+                      const r = await fetch('/api/library/move', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ itemId: it.id, folderId }) }).then(r=>r.json());
+                      if (r?.error) return toast.error(r.error);
+                      qc.invalidateQueries({ queryKey: ['library'] });
+                    }}
+                  >
+                    <option value=''>Sans dossier</option>
+                    {folders.map(f => (<option key={f.id} value={f.id}>{f.name}</option>))}
+                  </select>
+                </div>
               </div>
-            </div>
               {!!topaz[it.id]?.status ? (
                 <div className="mt-2">
                   {!!topaz[it.id]?.taskId && !topaz[it.id]?.url ? (

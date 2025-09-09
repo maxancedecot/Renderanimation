@@ -11,6 +11,14 @@ export type LibraryItem = {
   tags?: string[];
   videoUrl: string; // public URL
   createdAt: string; // ISO
+  folderId?: string; // optional folder
+};
+
+export type LibraryFolder = {
+  id: string;
+  userId: string;
+  name: string;
+  createdAt: string; // ISO
 };
 
 function indexKey(userId: string) {
@@ -19,6 +27,10 @@ function indexKey(userId: string) {
 
 function videosPrefix(userId: string) {
   return `videos/${userId}/`;
+}
+
+function foldersKey(userId: string) {
+  return `library/${userId}_folders.json`;
 }
 
 function guessContentTypeByUrl(url: string): string {
@@ -75,7 +87,7 @@ export async function listLibrary(userId: string): Promise<LibraryItem[]> {
   return items.sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
 }
 
-export async function saveVideoFromUrl(userId: string, sourceUrl: string, meta?: { title?: string; project?: string; tags?: string[] }): Promise<LibraryItem> {
+export async function saveVideoFromUrl(userId: string, sourceUrl: string, meta?: { title?: string; project?: string; tags?: string[]; folderId?: string }): Promise<LibraryItem> {
   // Download source
   const res = await fetch(sourceUrl);
   if (!res.ok || !res.body) {
@@ -104,6 +116,7 @@ export async function saveVideoFromUrl(userId: string, sourceUrl: string, meta?:
     tags: meta?.tags,
     videoUrl: toPublicUrl(key),
     createdAt: new Date().toISOString(),
+    folderId: meta?.folderId,
   };
   const items = await readIndex(userId);
   items.push(item);
@@ -133,4 +146,42 @@ export async function deleteLibraryItem(userId: string, id: string): Promise<boo
   items.splice(idx, 1);
   await writeIndex(userId, items);
   return true;
+}
+
+async function readFolders(userId: string): Promise<LibraryFolder[]> {
+  try {
+    await r2.send(new HeadObjectCommand({ Bucket: R2_BUCKET, Key: foldersKey(userId) }));
+  } catch {
+    return [];
+  }
+  const obj = await r2.send(new GetObjectCommand({ Bucket: R2_BUCKET, Key: foldersKey(userId) }));
+  const body = await obj.Body?.transformToString();
+  if (!body) return [];
+  try { const parsed = JSON.parse(body); return Array.isArray(parsed) ? parsed as LibraryFolder[] : []; } catch { return []; }
+}
+
+async function writeFolders(userId: string, folders: LibraryFolder[]): Promise<void> {
+  const body = JSON.stringify(folders, null, 2);
+  await r2.send(new PutObjectCommand({ Bucket: R2_BUCKET, Key: foldersKey(userId), Body: body, ContentType: 'application/json', CacheControl: 'no-cache' }));
+}
+
+export async function listFolders(userId: string): Promise<LibraryFolder[]> {
+  return readFolders(userId);
+}
+
+export async function createFolder(userId: string, name: string): Promise<LibraryFolder> {
+  const folders = await readFolders(userId);
+  const folder: LibraryFolder = { id: randomUUID(), userId, name: name.trim(), createdAt: new Date().toISOString() };
+  folders.push(folder);
+  await writeFolders(userId, folders);
+  return folder;
+}
+
+export async function moveItemToFolder(userId: string, itemId: string, folderId?: string | null): Promise<LibraryItem | null> {
+  const items = await readIndex(userId);
+  const idx = items.findIndex(i => i.id === itemId);
+  if (idx === -1) return null;
+  items[idx].folderId = folderId || undefined;
+  await writeIndex(userId, items);
+  return items[idx];
 }
