@@ -253,6 +253,20 @@ export default function UploadBox() {
     onSuccess: () => toast.success("Enregistré ✅", { id: "lib" }),
     onError: (e: any) => toast.error(e?.message || "Erreur", { id: "lib" }),
   });
+  const save4kToLibrary = useMutation({
+    mutationFn: async (url: string) => {
+      const r = await fetch("/api/library/save", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ videoUrl: url }),
+      }).then(r => r.json());
+      if (r.error) throw new Error(r.error);
+      return r.item;
+    },
+    onMutate: () => toast.loading("Enregistrement 4K…", { id: "lib4k" }),
+    onSuccess: () => toast.success("4K enregistrée ✅", { id: "lib4k" }),
+    onError: (e: any) => toast.error(e?.message || "Erreur", { id: "lib4k" }),
+  });
 
   // Évite les doublons: n'enregistre qu'une fois par URL
   const [savedUrl, setSavedUrl] = useState<string | null>(null);
@@ -263,6 +277,13 @@ export default function UploadBox() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [finalVideoUrl]);
+  const [saved4kUrl, setSaved4kUrl] = useState<string | null>(null);
+  useEffect(() => {
+    if (topaz4kUrl && saved4kUrl !== topaz4kUrl) {
+      save4kToLibrary.mutate(topaz4kUrl);
+      setSaved4kUrl(topaz4kUrl);
+    }
+  }, [topaz4kUrl, saved4kUrl, save4kToLibrary]);
 
   // 5) Upscale 4K via Topaz
   const [topazTaskId, setTopazTaskId] = useState<string | null>(null);

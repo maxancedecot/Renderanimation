@@ -14,7 +14,7 @@ type Item = {
 
 export default function LibraryGrid() {
   const qc = useQueryClient();
-  const [topaz, setTopaz] = useState<Record<string, { taskId?: string; status?: string; url?: string | null; message?: string | null }>>({});
+  const [topaz, setTopaz] = useState<Record<string, { taskId?: string; status?: string; url?: string | null; message?: string | null; saved?: boolean }>>({});
   const [tpzDebug, setTpzDebug] = useState<Record<string, any>>({});
   const { data, isLoading, error } = useQuery({
     queryKey: ["library"],
@@ -81,6 +81,19 @@ export default function LibraryGrid() {
           }
           if ((status === "succeeded" || status === "success") && url) {
             toast.success("Version 4K prête ✨", { id: `tpz-${itemId}` });
+            // Auto-save 4K once
+            const alreadySaved = !!topaz[itemId]?.saved;
+            if (!alreadySaved) {
+              try {
+                await fetch('/api/library/save', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ videoUrl: url })
+                });
+                setTopaz((m) => ({ ...m, [itemId]: { ...m[itemId], saved: true } }));
+                qc.invalidateQueries({ queryKey: ["library"] });
+              } catch {}
+            }
             return; // stop
           }
           setTimeout(poll, 5000);
