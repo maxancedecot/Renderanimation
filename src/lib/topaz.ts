@@ -18,21 +18,26 @@ function baseUrl(): string {
 }
 
 function authHeaders() {
-  const key = process.env.TOPAZ_API_KEY;
+  const key = process.env.TOPAZ_API_KEY || "";
   if (!key) throw new Error("TOPAZ_API_KEY manquante");
-  // Default to Topaz docs: X-API-Key with raw key, no scheme
-  const headerName = (process.env.TOPAZ_AUTH_HEADER || "X-API-Key").trim();
-  const scheme = (process.env.TOPAZ_AUTH_SCHEME ?? "").trim(); // e.g., "Bearer", "ApiKey", or "" for none
-  const value = scheme ? `${scheme} ${key}` : key;
+  const primaryHeader = (process.env.TOPAZ_AUTH_HEADER || 'X-API-Key').trim();
+  const scheme = (process.env.TOPAZ_AUTH_SCHEME || '').trim();
+  const authValue = scheme ? `${scheme} ${key}`.trim() : key;
+
+  // Send ONLY the primary header in strict mode
   const headers: Record<string, string> = {
-    [headerName]: value,
-    "Content-Type": "application/json",
-    Accept: "application/json",
+    accept: 'application/json',
+    'content-type': 'application/json',
+    [primaryHeader]: authValue,
   };
-  // Add common alternatives to maximize compatibility
-  headers["x-api-key"] = key;
-  headers["X-API-Key"] = key;
-  headers["Api-Key"] = key;
+
+  // If not strict, add common alternates
+  if (process.env.TOPAZ_STRICT_AUTH !== '1') {
+    headers['x-api-key'] = key;
+    headers['Api-Key'] = key;
+    headers['Authorization'] = authValue;
+  }
+
   return headers;
 }
 
@@ -66,7 +71,14 @@ async function topazCreateRequest(): Promise<{ requestId: string; raw: any }> {
   }
   let res: Response;
   try {
-    res = await fetch(url, { method: "POST", headers: authHeaders(), body: JSON.stringify(body) });
+    // Temporary outbound log with masked header values
+    const endpointEnv = `${process.env.TOPAZ_BASE || ''}${process.env.TOPAZ_CREATE_PATH || ''}`;
+    const hdrs = authHeaders();
+    console.log('topaz outbound', {
+      endpoint: endpointEnv,
+      headers: Object.fromEntries(Object.entries(hdrs).map(([k, v]) => [k, v ? '****' : '']))
+    });
+    res = await fetch(url, { method: "POST", headers: hdrs, body: JSON.stringify(body) });
   } catch (e: any) {
     throw new Error(`Topaz fetch error (create): ${e?.message || e} [url: ${url}]`);
   }
