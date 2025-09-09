@@ -1,7 +1,6 @@
 "use client";
-import React from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useCallback, useState } from "react";
 import toast from "react-hot-toast";
 
 type Item = {
@@ -19,6 +18,8 @@ export default function LibraryGrid() {
   // Debug Topaz removed
   const [is4k, setIs4k] = useState<Record<string, boolean>>({});
   const [confirmDelete, setConfirmDelete] = useState<{ id: string } | null>(null);
+  const [topazStart, setTopazStart] = useState<Record<string, number>>({});
+  const [tick, setTick] = useState(0);
   const { data, isLoading, error } = useQuery({
     queryKey: ["library"],
     queryFn: async () => {
@@ -65,6 +66,7 @@ export default function LibraryGrid() {
     onMutate: ({ itemId }) => {
       setTopaz((m) => ({ ...m, [itemId]: { status: "queued", url: null, message: null } }));
       toast.loading("Upscale RA 4K lancé…", { id: `tpz-${itemId}` });
+      setTopazStart((s) => ({ ...s, [itemId]: Date.now() }));
     },
     onSuccess: ({ taskId, itemId }) => {
       setTopaz((m) => ({ ...m, [itemId]: { ...m[itemId], taskId, status: "queued" } }));
@@ -112,6 +114,31 @@ export default function LibraryGrid() {
   });
 
   // Debug Topaz removed
+
+  // Global ticker for indicative progress refresh when any task in progress
+  useEffect(() => {
+    const inProgress = Object.values(topaz).some((v) => v?.taskId && !v?.url);
+    if (!inProgress) return;
+    const id = setInterval(() => setTick((t) => t + 1), 1000);
+    return () => clearInterval(id);
+  }, [topaz]);
+
+  function computeProgress(itemId: string): number {
+    const start = topazStart[itemId];
+    if (!start) return 0;
+    const elapsed = Date.now() - start;
+    const maxMs = 12 * 60 * 1000;
+    return Math.min(95, (elapsed / maxMs) * 85 + 8);
+  }
+
+  function ProgressBar({ percent }: { percent: number }) {
+    const p = Math.max(0, Math.min(100, Math.round(percent)));
+    return (
+      <div className="w-full h-2 rounded bg-neutral-200">
+        <div className="h-2 rounded bg-green-400/80 transition-all" style={{ width: `${p}%` }} />
+      </div>
+    );
+  }
 
   if (isLoading) return <p>Chargement…</p>;
   if (error) return <p className="text-red-600">Erreur: {(error as any)?.message}</p>;
@@ -168,10 +195,19 @@ export default function LibraryGrid() {
                       {topaz[it.id]?.taskId ? '4K en cours…' : 'Upscale 4K'}
                     </button>
                   ) : null}
-                </div>
               </div>
+            </div>
               {!!topaz[it.id]?.status ? (
-                <div className="mt-2 text-xs text-neutral-600">{`RA 4K: ${topaz[it.id]?.status}`}{topaz[it.id]?.message ? ` — ${topaz[it.id]?.message}` : ''}</div>
+                <div className="mt-2">
+                  {!!topaz[it.id]?.taskId && !topaz[it.id]?.url ? (
+                    <>
+                      <ProgressBar percent={computeProgress(it.id)} />
+                      <div className="mt-1 text-xs text-neutral-600">{`RA 4K: ${topaz[it.id]?.status}`}{topaz[it.id]?.message ? ` — ${topaz[it.id]?.message}` : ''}</div>
+                    </>
+                  ) : (
+                    <div className="text-xs text-neutral-600">{`RA 4K: ${topaz[it.id]?.status}`}{topaz[it.id]?.message ? ` — ${topaz[it.id]?.message}` : ''}</div>
+                  )}
+                </div>
               ) : null}
               {/* Removed extra 4K download link under buttons */}
               {it.project ? (<div className="mt-1 text-xs text-neutral-600">Projet: {it.project}</div>) : null}

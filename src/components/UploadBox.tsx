@@ -273,6 +273,7 @@ export default function UploadBox() {
   const [topaz4kUrl, setTopaz4kUrl] = useState<string | null>(null);
   
   const [topazMeta, setTopazMeta] = useState<{ resolution?: { width: number; height: number }; duration?: number; frameRate?: number } | null>(null);
+  const [topazProgress, setTopazProgress] = useState(0);
 
   // Évite les doublons: n'enregistre qu'une fois par URL
   const [savedUrl, setSavedUrl] = useState<string | null>(null);
@@ -307,6 +308,7 @@ export default function UploadBox() {
       toast.loading("Upscale RA 4K lancé…", { id: "tpz" });
       setTopazTaskId(null);
       setTopaz4kUrl(null);
+      setTopazProgress(0);
     },
     onSuccess: (taskId) => {
       setTopazTaskId(taskId);
@@ -340,9 +342,27 @@ export default function UploadBox() {
       toast.success("Version 4K prête ✨", { id: "tpzs" });
       setTopaz4kUrl(topazStatus.videoUrl);
       setTopazTaskId(null);
+      setTopazProgress(100);
       qc.removeQueries({ queryKey: topazKey });
     }
   }, [topazStatus, qc, topazKey]);
+
+  // Indicative progress while RA 4K pending
+  useEffect(() => {
+    if (!topazTaskId) return;
+    let mounted = true;
+    const start = Date.now();
+    const maxMs = 12 * 60 * 1000; // 12 minutes
+    const tick = () => {
+      if (!mounted) return;
+      const elapsed = Date.now() - start;
+      const v = Math.min(95, (elapsed / maxMs) * 85 + 8);
+      setTopazProgress(v);
+      if (topazTaskId) requestAnimationFrame(tick);
+    };
+    const id = requestAnimationFrame(tick);
+    return () => { mounted = false; cancelAnimationFrame(id); };
+  }, [topazTaskId]);
 
 
 
@@ -543,7 +563,10 @@ export default function UploadBox() {
                 <MetadataCapture videoId="kling-video" onMeta={(m) => setTopazMeta(m)} />
               )}
               {!!topazTaskId && (
-                <div className="mt-2 text-sm text-neutral-600">{`RA 4K: ${topazStatus?.status || 'envoi…'}`}{topazStatus?.message ? ` — ${topazStatus.message}` : ''}</div>
+                <div className="mt-2">
+                  <ProgressBar percent={topazProgress} />
+                  <div className="mt-1 text-sm text-neutral-600">{`RA 4K: ${topazStatus?.status || 'envoi…'}`}{topazStatus?.message ? ` — ${topazStatus.message}` : ''}</div>
+                </div>
               )}
               {/* Debug Topaz section removed */}
               {topaz4kUrl && (
