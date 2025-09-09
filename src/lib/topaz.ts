@@ -81,36 +81,31 @@ async function probeInputHead(inputUrl: string): Promise<{ size?: number; conten
 
 export async function buildTopazCreateBody(inputUrl: string): Promise<Record<string, any>> {
   const head = await probeInputHead(inputUrl);
-  // Default values matching Topaz docs example; can be overridden by env JSON
-  const defaultSource = {
-    resolution: { width: 800, height: 448 },
+  // Default values aligned to the working cURL example you shared
+  // Keep source minimal unless env overrides provide exact metadata
+  const defaultSource: any = {
     container: head.container,
     ...(head.size ? { size: head.size } : {}),
-    duration: 4,
-    frameRate: 24,
-    frameCount: 97,
+    // duration/frameRate/frameCount/resolution can be provided via env overrides if needed
   };
-  const defaultOutput = {
-    resolution: { width: 3840, height: 2160 },
-    audioCodec: 'AAC',
-    audioTransfer: 'Copy',
+  const defaultOutput: any = {
     frameRate: 60,
-    dynamicCompressionLevel: 'High',
+    audioTransfer: 'Copy',
+    audioCodec: 'AAC',
+    videoEncoder: 'H265',
+    videoProfile: 'Main',
+    dynamicCompressionLevel: 'Mid',
+    resolution: { width: 3840, height: 2160 },
     container: 'mp4',
   };
-  const defaultFilters = [
-    {
-      model: 'apo-8',
-      slowmo: 1,
-      fps: 60,
-      duplicate: true,
-      duplicateThreshold: 0.1,
-    },
+  const defaultFilters: any = [
+    { model: 'prob-4' },
+    { model: 'chf-3' },
   ];
 
-  let source = defaultSource as any;
-  let output = defaultOutput as any;
-  let filters = defaultFilters as any;
+  let source = defaultSource;
+  let output = defaultOutput;
+  let filters = defaultFilters;
 
   // Allow overriding via env JSON for quick iteration from dashboard
   if (process.env.TOPAZ_SOURCE_JSON) {
