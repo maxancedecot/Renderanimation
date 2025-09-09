@@ -2,7 +2,7 @@ export const runtime = "nodejs";
 
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/src/lib/auth";
-import { topazCreateUpscale } from "@/lib/topaz";
+import { topazCreateUpscale, buildTopazCreateBody } from "@/lib/topaz";
 
 export async function POST(req: NextRequest) {
   // Tiny temporary env check: return basic config if ?debug=1
@@ -31,38 +31,9 @@ export async function POST(req: NextRequest) {
     // Debug mode: return outgoing request without calling provider
     if (debug === true || debugFlag) {
       const base = (process.env.TOPAZ_BASE || "https://api.topazlabs.com").replace(/\/+$/, "");
-      const path = process.env.TOPAZ_CREATE_PATH || "/v1/video/jobs";
+      const path = process.env.TOPAZ_CREATE_PATH || "/video/";
       const endpoint = `${base}${path}`;
-      const body: Record<string, any> = {
-        input_url: inputUrl,
-        operations: {
-          upscale: {
-            model: "proteus",
-            scale: 2,
-            noise: 0,
-            recover_detail: 100,
-            focus_fix: false,
-            grain: 0,
-            mode: "dynamic",
-            fix_compression: 0,
-            improve_details: 100,
-            sharpen: 0,
-            reduce_noise: 0,
-            dehalo: 0,
-            anti_alias_deblur: 100,
-          },
-          frame_interpolation: {
-            fps: 60,
-            ai_model: "chronos_fast",
-            duplicate_frames: "replace",
-            sensitivity: 10,
-          },
-        },
-      };
-      const extra = process.env.TOPAZ_EXTRA_JSON;
-      if (extra) {
-        try { Object.assign(body, JSON.parse(extra)); } catch {}
-      }
+      const body = await buildTopazCreateBody(inputUrl);
       return NextResponse.json({ debug: true, endpoint, body });
     }
     const { taskId } = await topazCreateUpscale(inputUrl);

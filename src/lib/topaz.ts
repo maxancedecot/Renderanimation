@@ -58,17 +58,66 @@ function extractFirstUrl(obj: any): string | null {
   return null;
 }
 
-async function topazCreateRequest(): Promise<{ requestId: string; raw: any }> {
-  const path = process.env.TOPAZ_CREATE_PATH || "/video/";
-  const url = `${baseUrl()}${path}`;
+function guessContainerFromUrl(url: string): string {
+  const u = url.split('?')[0].toLowerCase();
+  if (u.endsWith('.webm')) return 'webm';
+  if (u.endsWith('.mov')) return 'mov';
+  if (u.endsWith('.mkv')) return 'mkv';
+  if (u.endsWith('.avi')) return 'avi';
+  return 'mp4';
+}
+
+async function probeInputHead(inputUrl: string): Promise<{ size?: number; contentType?: string; container: string }> {
+  try {
+    const r = await fetch(inputUrl, { method: 'HEAD' });
+    const cl = r.headers.get('content-length');
+    const ct = r.headers.get('content-type') || undefined;
+    const size = cl ? Number(cl) : undefined;
+    return { size, contentType: ct, container: guessContainerFromUrl(inputUrl) };
+  } catch {
+    return { container: guessContainerFromUrl(inputUrl) };
+  }
+}
+
+export async function buildTopazCreateBody(inputUrl: string): Promise<Record<string, any>> {
+  const head = await probeInputHead(inputUrl);
   const body: Record<string, any> = {
-    // Minimal body; Topaz will infer from uploaded media
-    // You can extend via TOPAZ_EXTRA_JSON
+    source: {
+      // If unknown, leave some fields out; Topaz derives details after upload
+      container: head.container,
+      ...(head.size ? { size: head.size } : {}),
+    },
+    output: {
+      // Target 4K (2x typical from 1080p)
+      resolution: { width: 3840, height: 2160 },
+      audioCodec: 'AAC',
+      audioTransfer: 'Copy',
+      frameRate: 60,
+      dynamicCompressionLevel: 'High',
+      container: 'mp4',
+    },
+    filters: [
+      {
+        // Example per docs; you can override via TOPAZ_EXTRA_JSON
+        model: 'apo-8',
+        slowmo: 1,
+        fps: 60,
+        duplicate: true,
+        duplicateThreshold: 0.1,
+      },
+    ],
   };
   const extra = process.env.TOPAZ_EXTRA_JSON;
   if (extra) {
     try { Object.assign(body, JSON.parse(extra)); } catch {}
   }
+  return body;
+}
+
+async function topazCreateRequest(inputUrl: string): Promise<{ requestId: string; raw: any }> {
+  const path = process.env.TOPAZ_CREATE_PATH || "/video/";
+  const url = `${baseUrl()}${path}`;
+  const body = await buildTopazCreateBody(inputUrl);
   let res: Response;
   try {
     // Temporary outbound log with masked header values
@@ -146,8 +195,8 @@ async function topazCompleteUpload(requestId: string, parts: Array<{ partNum: nu
 }
 
 export async function topazCreateUpscale(inputUrl: string): Promise<{ taskId: string; raw?: any }> {
-  // 1) Create request
-  const { requestId } = await topazCreateRequest();
+  // 1) Create request with proper body
+  const { requestId } = await topazCreateRequest(inputUrl);
   // 2) Accept to get upload URL(s)
   const { uploadUrl } = await topazAccept(requestId);
   // 3) Download source
