@@ -237,7 +237,7 @@ export default function UploadBox() {
     }
   }, [statusData, qc, statusQueryKey]);
 
-  // Enregistrer dans la bibliothèque
+  // Enregistrer automatiquement dans la bibliothèque
   const saveToLibrary = useMutation({
     mutationFn: async (vars: { title?: string; project?: string; tags?: string[] }) => {
       if (!finalVideoUrl) throw new Error("Aucune vidéo à sauvegarder");
@@ -253,6 +253,16 @@ export default function UploadBox() {
     onSuccess: () => toast.success("Enregistré ✅", { id: "lib" }),
     onError: (e: any) => toast.error(e?.message || "Erreur", { id: "lib" }),
   });
+
+  // Évite les doublons: n'enregistre qu'une fois par URL
+  const [savedUrl, setSavedUrl] = useState<string | null>(null);
+  useEffect(() => {
+    if (finalVideoUrl && savedUrl !== finalVideoUrl) {
+      saveToLibrary.mutate({});
+      setSavedUrl(finalVideoUrl);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [finalVideoUrl]);
 
 
 
@@ -435,11 +445,11 @@ export default function UploadBox() {
             <>
               <video id="kling-video" src={finalVideoUrl} controls className="mt-4 w-full rounded-xl ring-1 ring-black/5" />
               <div className="mt-4 flex items-center gap-3">
-                <button
-                  className="inline-flex items-center justify-center rounded-lg bg-black px-4 py-2 text-white hover:bg-black/90 disabled:opacity-60"
-                  onClick={() => saveToLibrary.mutate({ title: result?.prompt?.slice(0, 80) })}
-                  disabled={saveToLibrary.isPending}
-                >{saveToLibrary.isPending ? 'Enregistrement…' : 'Enregistrer dans la bibliothèque'}</button>
+                <a
+                  href={finalVideoUrl}
+                  download
+                  className="inline-flex items-center justify-center rounded-lg bg-black px-4 py-2 text-white hover:bg-black/90"
+                >Télécharger</a>
                 <a href="/library" className="text-sm rounded-md border px-3 py-2 hover:bg-neutral-50">Voir la bibliothèque</a>
               </div>
             </>

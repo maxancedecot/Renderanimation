@@ -43,17 +43,23 @@ export default function LibraryGrid() {
             <video src={it.videoUrl} controls className="w-full h-full object-cover" />
           </div>
           <div className="mt-3">
-            <div className="flex items-center justify-between">
+            <div className="flex items-start justify-between gap-3">
               <div>
-                <div className="font-medium">{it.title || 'Sans titre'}</div>
                 <div className="text-xs text-neutral-500">{new Date(it.createdAt).toLocaleString()}</div>
               </div>
-              <button
-                onClick={() => del.mutate(it.id)}
-                className="text-xs rounded-md border px-2 py-1 hover:bg-neutral-50"
-                disabled={del.isPending}
-                title="Supprimer"
-              >Supprimer</button>
+              <div className="flex flex-col items-end gap-2">
+                <a
+                  href={it.videoUrl}
+                  download
+                  className="text-xs rounded-md border px-2 py-1 hover:bg-neutral-50"
+                >Télécharger</a>
+                <button
+                  onClick={() => del.mutate(it.id)}
+                  className="text-xs rounded-md border px-2 py-1 hover:bg-neutral-50"
+                  disabled={del.isPending}
+                  title="Supprimer"
+                >Supprimer</button>
+              </div>
             </div>
             {it.project && <div className="mt-1 text-xs text-neutral-600">Projet: {it.project}</div>}
             {!!it.tags?.length && (
@@ -69,4 +75,3 @@ export default function LibraryGrid() {
     </div>
   );
 }
-
