@@ -269,13 +269,14 @@ export default function UploadBox() {
   const [topaz4kUrl, setTopaz4kUrl] = useState<string | null>(null);
   const [showTopazDebug, setShowTopazDebug] = useState(false);
   const [topazDebugPayload, setTopazDebugPayload] = useState<any>(null);
+  const [topazMeta, setTopazMeta] = useState<{ resolution?: { width: number; height: number }; duration?: number; frameRate?: number } | null>(null);
   const createTopazUpscale = useMutation({
     mutationFn: async () => {
       if (!finalVideoUrl) throw new Error("Pas de vidéo disponible");
       const r = await fetch("/api/topaz/upscale", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ inputUrl: finalVideoUrl })
+        body: JSON.stringify({ inputUrl: finalVideoUrl, meta: topazMeta || undefined })
       }).then(r => r.json());
       if (r.error || !r.taskId) throw new Error(r.error || "taskId absent");
       return r.taskId as string;
@@ -298,7 +299,7 @@ export default function UploadBox() {
       const r = await fetch("/api/topaz/upscale?debug=1", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ inputUrl: finalVideoUrl, debug: true })
+        body: JSON.stringify({ inputUrl: finalVideoUrl, debug: true, meta: topazMeta || undefined })
       }).then(r => r.json());
       if (r.error || !r.debug) throw new Error(r.error || "Réponse debug invalide");
       return r;
@@ -543,6 +544,10 @@ export default function UploadBox() {
                   title="Voir la requête envoyée à Topaz"
                 >{showTopazDebug ? 'Rafraîchir debug' : 'Debug Topaz'}</button>
               </div>
+              {/* Capture metadata once */}
+              {finalVideoUrl && (
+                <MetadataCapture videoId="kling-video" onMeta={(m) => setTopazMeta(m)} />
+              )}
               {!!topazTaskId && (
                 <div className="mt-2 text-sm text-neutral-600">{`Topaz 4K: ${topazStatus?.status || 'envoi…'}`}{topazStatus?.message ? ` — ${topazStatus.message}` : ''}</div>
               )}
@@ -595,4 +600,22 @@ export default function UploadBox() {
       )}
     </div>
   );
+}
+
+function MetadataCapture({ videoId, onMeta }: { videoId: string; onMeta: (m: { resolution?: { width: number; height: number }; duration?: number; frameRate?: number }) => void }) {
+  useEffect(() => {
+    const v = document.getElementById(videoId) as HTMLVideoElement | null;
+    if (!v) return;
+    const handler = () => {
+      const width = v.videoWidth;
+      const height = v.videoHeight;
+      const duration = isFinite(v.duration) ? v.duration : undefined;
+      // We often don't know exact frameRate from browser; leave undefined
+      onMeta({ resolution: width && height ? { width, height } : undefined, duration });
+    };
+    if (v.readyState >= 1) handler();
+    v.addEventListener('loadedmetadata', handler);
+    return () => v.removeEventListener('loadedmetadata', handler);
+  }, [videoId, onMeta]);
+  return null;
 }

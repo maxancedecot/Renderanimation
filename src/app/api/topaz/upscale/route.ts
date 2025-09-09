@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
   try {
     const urlObj = new URL(req.url);
     const debugFlag = urlObj.searchParams.get("debug") === "1";
-    const { inputUrl, debug } = await req.json();
+    const { inputUrl, debug, meta } = await req.json();
     if (!inputUrl || typeof inputUrl !== 'string') {
       return NextResponse.json({ error: 'inputUrl requis (URL publique vidéo)' }, { status: 400 });
     }
@@ -33,10 +33,10 @@ export async function POST(req: NextRequest) {
       const base = (process.env.TOPAZ_BASE || "https://api.topazlabs.com").replace(/\/+$/, "");
       const path = process.env.TOPAZ_CREATE_PATH || "/video/";
       const endpoint = `${base}${path}`;
-      const body = await buildTopazCreateBody(inputUrl);
+      const body = await buildTopazCreateBody(inputUrl, meta);
       return NextResponse.json({ debug: true, endpoint, body });
     }
-    const { taskId } = await topazCreateUpscale(inputUrl);
+    const { taskId } = await topazCreateUpscale(inputUrl, meta);
     return NextResponse.json({ taskId });
   } catch (e: any) {
     return NextResponse.json({ error: e?.message || 'upscale failed' }, { status: 400 });

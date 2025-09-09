@@ -79,13 +79,26 @@ async function probeInputHead(inputUrl: string): Promise<{ size?: number; conten
   }
 }
 
-export async function buildTopazCreateBody(inputUrl: string): Promise<Record<string, any>> {
+export type TopazSourceMeta = {
+  resolution?: { width: number; height: number };
+  frameRate?: number;
+  duration?: number;
+  frameCount?: number;
+  size?: number;
+};
+
+export async function buildTopazCreateBody(inputUrl: string, meta?: TopazSourceMeta): Promise<Record<string, any>> {
   const head = await probeInputHead(inputUrl);
   // Default values aligned to the working cURL example you shared
   // Keep source minimal unless env overrides provide exact metadata
   const defaultSource: any = {
     container: head.container,
     ...(head.size ? { size: head.size } : {}),
+    ...(meta?.size ? { size: meta.size } : {}),
+    ...(meta?.duration ? { duration: meta.duration } : {}),
+    ...(meta?.frameRate ? { frameRate: meta.frameRate } : {}),
+    ...(meta?.frameCount ? { frameCount: meta.frameCount } : {}),
+    ...(meta?.resolution ? { resolution: meta.resolution } : {}),
     // duration/frameRate/frameCount/resolution can be provided via env overrides if needed
   };
   const defaultOutput: any = {
@@ -126,10 +139,10 @@ export async function buildTopazCreateBody(inputUrl: string): Promise<Record<str
   return body;
 }
 
-async function topazCreateRequest(inputUrl: string): Promise<{ requestId: string; raw: any }> {
+async function topazCreateRequest(inputUrl: string, meta?: TopazSourceMeta): Promise<{ requestId: string; raw: any }> {
   const path = process.env.TOPAZ_CREATE_PATH || "/video/";
   const url = `${baseUrl()}${path}`;
-  const body = await buildTopazCreateBody(inputUrl);
+  const body = await buildTopazCreateBody(inputUrl, meta);
   let res: Response;
   try {
     // Temporary outbound log with masked header values
@@ -206,9 +219,9 @@ async function topazCompleteUpload(requestId: string, parts: Array<{ partNum: nu
   return data;
 }
 
-export async function topazCreateUpscale(inputUrl: string): Promise<{ taskId: string; raw?: any }> {
+export async function topazCreateUpscale(inputUrl: string, meta?: TopazSourceMeta): Promise<{ taskId: string; raw?: any }> {
   // 1) Create request with proper body
-  const { requestId } = await topazCreateRequest(inputUrl);
+  const { requestId } = await topazCreateRequest(inputUrl, meta);
   // 2) Accept to get upload URL(s)
   const { uploadUrl } = await topazAccept(requestId);
   // 3) Download source

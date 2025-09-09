@@ -36,10 +36,25 @@ export default function LibraryGrid() {
 
   const upscale = useMutation({
     mutationFn: async (vars: { itemId: string; url: string }) => {
+      // Try to read metadata client-side by loading video element
+      const meta = await (async () => {
+        try {
+          const v = document.createElement('video');
+          v.src = vars.url;
+          await new Promise<void>((resolve, reject) => {
+            v.onloadedmetadata = () => resolve();
+            v.onerror = () => resolve();
+          });
+          const width = v.videoWidth;
+          const height = v.videoHeight;
+          const duration = isFinite(v.duration) ? v.duration : undefined;
+          return { resolution: width && height ? { width, height } : undefined, duration };
+        } catch { return {}; }
+      })();
       const r = await fetch("/api/topaz/upscale", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ inputUrl: vars.url }),
+        body: JSON.stringify({ inputUrl: vars.url, meta }),
       }).then(r => r.json());
       if (r.error || !r.taskId) throw new Error(r.error || "taskId absent");
       return { taskId: r.taskId, itemId: vars.itemId } as { taskId: string; itemId: string };
