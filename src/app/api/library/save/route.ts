@@ -6,7 +6,8 @@ import { saveVideoFromUrl } from "@/lib/library";
 
 export async function POST(req: NextRequest) {
   const session = await auth();
-  if (!session?.user?.id) {
+  const uid = session?.user?.email;
+  if (!uid) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
   try {
@@ -14,7 +15,7 @@ export async function POST(req: NextRequest) {
     if (!videoUrl || typeof videoUrl !== 'string') {
       return NextResponse.json({ error: 'videoUrl requis' }, { status: 400 });
     }
-    const item = await saveVideoFromUrl(String(session.user.id), videoUrl, {
+    const item = await saveVideoFromUrl(String(uid), videoUrl, {
       title: typeof title === 'string' ? title : undefined,
       project: typeof project === 'string' ? project : undefined,
       tags: Array.isArray(tags) ? tags.filter((x: any) => typeof x === 'string') : undefined,
@@ -24,4 +25,3 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: e?.message || 'save failed' }, { status: 400 });
   }
 }
-

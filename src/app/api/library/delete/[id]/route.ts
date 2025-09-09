@@ -6,11 +6,11 @@ import { deleteLibraryItem } from "@/lib/library";
 
 export async function DELETE(_req: NextRequest, { params }: { params: { id: string } }) {
   const session = await auth();
-  if (!session?.user?.id) {
+  const uid = session?.user?.email;
+  if (!uid) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
-  const ok = await deleteLibraryItem(String(session.user.id), params.id);
+  const ok = await deleteLibraryItem(String(uid), params.id);
   if (!ok) return NextResponse.json({ error: 'not found' }, { status: 404 });
   return NextResponse.json({ ok: true });
 }
-

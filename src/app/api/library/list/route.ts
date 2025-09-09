@@ -6,10 +6,10 @@ import { listLibrary } from "@/lib/library";
 
 export async function GET() {
   const session = await auth();
-  if (!session?.user?.id) {
+  const uid = session?.user?.email;
+  if (!uid) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
-  const items = await listLibrary(String(session.user.id));
+  const items = await listLibrary(String(uid));
   return NextResponse.json({ items });
 }
-
