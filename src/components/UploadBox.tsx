@@ -237,7 +237,23 @@ export default function UploadBox() {
     }
   }, [statusData, qc, statusQueryKey]);
 
-  
+  // Enregistrer dans la bibliothèque
+  const saveToLibrary = useMutation({
+    mutationFn: async (vars: { title?: string; project?: string; tags?: string[] }) => {
+      if (!finalVideoUrl) throw new Error("Aucune vidéo à sauvegarder");
+      const r = await fetch("/api/library/save", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ videoUrl: finalVideoUrl, ...vars }),
+      }).then(r => r.json());
+      if (r.error) throw new Error(r.error);
+      return r.item;
+    },
+    onMutate: () => toast.loading("Enregistrement dans la bibliothèque…", { id: "lib" }),
+    onSuccess: () => toast.success("Enregistré ✅", { id: "lib" }),
+    onError: (e: any) => toast.error(e?.message || "Erreur", { id: "lib" }),
+  });
+
 
 
   return (
@@ -418,7 +434,14 @@ export default function UploadBox() {
           ) : (
             <>
               <video id="kling-video" src={finalVideoUrl} controls className="mt-4 w-full rounded-xl ring-1 ring-black/5" />
-              {/* Upscale 4K retiré */}
+              <div className="mt-4 flex items-center gap-3">
+                <button
+                  className="inline-flex items-center justify-center rounded-lg bg-black px-4 py-2 text-white hover:bg-black/90 disabled:opacity-60"
+                  onClick={() => saveToLibrary.mutate({ title: result?.prompt?.slice(0, 80) })}
+                  disabled={saveToLibrary.isPending}
+                >{saveToLibrary.isPending ? 'Enregistrement…' : 'Enregistrer dans la bibliothèque'}</button>
+                <a href="/library" className="text-sm rounded-md border px-3 py-2 hover:bg-neutral-50">Voir la bibliothèque</a>
+              </div>
             </>
           )}
         </div>
