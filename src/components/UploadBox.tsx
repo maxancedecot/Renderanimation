@@ -268,6 +268,13 @@ export default function UploadBox() {
     onError: (e: any) => toast.error(e?.message || "Erreur", { id: "lib4k" }),
   });
 
+  // 5) Upscale 4K via Topaz (state)
+  const [topazTaskId, setTopazTaskId] = useState<string | null>(null);
+  const [topaz4kUrl, setTopaz4kUrl] = useState<string | null>(null);
+  const [showTopazDebug, setShowTopazDebug] = useState(false);
+  const [topazDebugPayload, setTopazDebugPayload] = useState<any>(null);
+  const [topazMeta, setTopazMeta] = useState<{ resolution?: { width: number; height: number }; duration?: number; frameRate?: number } | null>(null);
+
   // Évite les doublons: n'enregistre qu'une fois par URL
   const [savedUrl, setSavedUrl] = useState<string | null>(null);
   useEffect(() => {
@@ -286,11 +293,6 @@ export default function UploadBox() {
   }, [topaz4kUrl, saved4kUrl, save4kToLibrary]);
 
   // 5) Upscale 4K via Topaz
-  const [topazTaskId, setTopazTaskId] = useState<string | null>(null);
-  const [topaz4kUrl, setTopaz4kUrl] = useState<string | null>(null);
-  const [showTopazDebug, setShowTopazDebug] = useState(false);
-  const [topazDebugPayload, setTopazDebugPayload] = useState<any>(null);
-  const [topazMeta, setTopazMeta] = useState<{ resolution?: { width: number; height: number }; duration?: number; frameRate?: number } | null>(null);
   const createTopazUpscale = useMutation({
     mutationFn: async () => {
       if (!finalVideoUrl) throw new Error("Pas de vidéo disponible");
