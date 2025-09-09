@@ -267,6 +267,8 @@ export default function UploadBox() {
   // 5) Upscale 4K via Topaz
   const [topazTaskId, setTopazTaskId] = useState<string | null>(null);
   const [topaz4kUrl, setTopaz4kUrl] = useState<string | null>(null);
+  const [showTopazDebug, setShowTopazDebug] = useState(false);
+  const [topazDebugPayload, setTopazDebugPayload] = useState<any>(null);
   const createTopazUpscale = useMutation({
     mutationFn: async () => {
       if (!finalVideoUrl) throw new Error("Pas de vidéo disponible");
@@ -288,6 +290,29 @@ export default function UploadBox() {
       toast.success("Topaz a bien reçu la tâche 4K", { id: "tpz" });
     },
     onError: (e: any) => toast.error(e?.message || "Erreur Topaz 4K", { id: "tpz" })
+  });
+
+  const debugTopaz = useMutation({
+    mutationFn: async () => {
+      if (!finalVideoUrl) throw new Error("Pas de vidéo disponible");
+      const r = await fetch("/api/topaz/upscale?debug=1", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ inputUrl: finalVideoUrl, debug: true })
+      }).then(r => r.json());
+      if (r.error || !r.debug) throw new Error(r.error || "Réponse debug invalide");
+      return r;
+    },
+    onMutate: () => {
+      toast.loading("Préparation payload Topaz…", { id: "tpzdbg" });
+      setShowTopazDebug(true);
+      setTopazDebugPayload(null);
+    },
+    onSuccess: (resp) => {
+      setTopazDebugPayload(resp);
+      toast.success("Payload prêt", { id: "tpzdbg" });
+    },
+    onError: (e: any) => toast.error(e?.message || "Erreur debug Topaz", { id: "tpzdbg" })
   });
 
   const topazKey = useMemo(() => ["topazUpscale", topazTaskId], [topazTaskId]);
@@ -510,9 +535,22 @@ export default function UploadBox() {
                   disabled={createTopazUpscale.isPending || !!topazTaskId}
                   title="Upscale 4K avec Topaz Labs"
                 >{createTopazUpscale.isPending ? 'Upscale 4K…' : (!!topazTaskId ? '4K en cours…' : 'Upscale 4K (Topaz)')}</button>
+                <button
+                  type="button"
+                  className="text-sm rounded-md border px-3 py-2 hover:bg-neutral-50 disabled:opacity-60"
+                  onClick={() => debugTopaz.mutate()}
+                  disabled={debugTopaz.isPending}
+                  title="Voir la requête envoyée à Topaz"
+                >{showTopazDebug ? 'Rafraîchir debug' : 'Debug Topaz'}</button>
               </div>
               {!!topazTaskId && (
                 <div className="mt-2 text-sm text-neutral-600">{`Topaz 4K: ${topazStatus?.status || 'envoi…'}`}{topazStatus?.message ? ` — ${topazStatus.message}` : ''}</div>
+              )}
+              {showTopazDebug && (
+                <div className="mt-3 rounded-lg bg-neutral-50 p-3 text-xs ring-1 ring-black/5 max-h-64 overflow-auto">
+                  <div className="font-semibold mb-1">Topaz debug</div>
+                  <pre className="whitespace-pre-wrap break-all">{JSON.stringify(topazDebugPayload, null, 2)}</pre>
+                </div>
               )}
               {topaz4kUrl && (
                 <div className="mt-6">
