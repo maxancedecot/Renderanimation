@@ -141,7 +141,7 @@ export default function LibraryGrid() {
             )}
             <button
               aria-label="Supprimer"
-              className="absolute top-2 right-2 rounded-full bg-rose-600 text-white hover:bg-rose-600/90 p-1.5 shadow"
+              className="absolute top-2 right-2 rounded-full bg-rose-100/70 text-rose-800 hover:bg-rose-200/80 p-1.5 ring-1 ring-rose-300 shadow-sm"
               onClick={() => setConfirmDelete({ id: it.id })}
               title="Supprimer"
             >
