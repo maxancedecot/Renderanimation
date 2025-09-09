@@ -244,7 +244,7 @@ export default function UploadBox() {
       const r = await fetch("/api/library/save", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ videoUrl: finalVideoUrl, posterUrl: imageUrl || undefined, ...vars }),
+        body: JSON.stringify({ videoUrl: finalVideoUrl, ...vars }),
       }).then(r => r.json());
       if (r.error) throw new Error(r.error);
       return r.item;
@@ -258,7 +258,7 @@ export default function UploadBox() {
       const r = await fetch("/api/library/save", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ videoUrl: url, posterUrl: imageUrl || undefined, tags: ["4k"] }),
+        body: JSON.stringify({ videoUrl: url, tags: ["4k"] }),
       }).then(r => r.json());
       if (r.error) throw new Error(r.error);
       return r.item;

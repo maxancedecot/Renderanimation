@@ -11,7 +11,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
   try {
-    const { videoUrl, title, project, tags, posterUrl } = await req.json();
+    const { videoUrl, title, project, tags } = await req.json();
     if (!videoUrl || typeof videoUrl !== 'string') {
       return NextResponse.json({ error: 'videoUrl requis' }, { status: 400 });
     }
@@ -19,7 +19,6 @@ export async function POST(req: NextRequest) {
       title: typeof title === 'string' ? title : undefined,
       project: typeof project === 'string' ? project : undefined,
       tags: Array.isArray(tags) ? tags.filter((x: any) => typeof x === 'string') : undefined,
-      posterUrl: typeof posterUrl === 'string' ? posterUrl : undefined,
     });
     return NextResponse.json({ item }, { status: 201 });
   } catch (e: any) {
