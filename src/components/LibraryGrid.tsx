@@ -23,6 +23,7 @@ export default function LibraryGrid() {
   const [tick, setTick] = useState(0);
   const [selectedFolder, setSelectedFolder] = useState<string | "all">('all');
   const [newFolderName, setNewFolderName] = useState('');
+  const [confirmDeleteFolder, setConfirmDeleteFolder] = useState<string | null>(null);
   const { data, isLoading, error } = useQuery({
     queryKey: ["library"],
     queryFn: async () => {
@@ -171,6 +172,11 @@ export default function LibraryGrid() {
           <option value="all">Tous</option>
           {folders.map(f => (<option key={f.id} value={f.id}>{f.name}</option>))}
         </select>
+        <button
+          className="inline-flex items-center justify-center rounded-lg border px-3 py-1.5 text-sm hover:bg-neutral-50 disabled:opacity-50"
+          disabled={selectedFolder === 'all'}
+          onClick={() => { if (selectedFolder !== 'all') setConfirmDeleteFolder(selectedFolder); }}
+        >Supprimer le dossier</button>
       </div>
       <div className="flex items-center gap-2">
         <input
@@ -184,6 +190,11 @@ export default function LibraryGrid() {
           onClick={async () => {
             const name = newFolderName.trim();
             if (!name) return;
+            // client-side duplicate prevention
+            if (folders.some(f => f.name.trim().toLowerCase() === name.toLowerCase())) {
+              toast.error('Un dossier avec ce nom existe déjà');
+              return;
+            }
             const r = await fetch('/api/library/folders', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name }) }).then(r=>r.json());
             if (r.error) return toast.error(r.error);
             setNewFolderName('');
@@ -319,6 +330,37 @@ export default function LibraryGrid() {
                 className="inline-flex items-center justify-center rounded-lg bg-rose-600 px-4 py-2 text-white hover:bg-rose-600/90 disabled:opacity-60"
                 onClick={() => { if (confirmDelete) { del.mutate(confirmDelete.id); setConfirmDelete(null); } }}
                 disabled={del.isPending}
+              >
+                Oui
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+      {confirmDeleteFolder ? (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-black/30 p-4" role="dialog" aria-modal="true">
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl ring-1 ring-black/5">
+            <h3 className="text-lg font-semibold">Supprimer ce dossier ?</h3>
+            <p className="mt-2 text-sm text-neutral-600">Les vidéos du dossier ne seront pas supprimées et resteront sans dossier.</p>
+            <div className="mt-4 flex justify-end gap-3">
+              <button
+                className="inline-flex items-center justify-center rounded-lg border px-4 py-2 hover:bg-neutral-50"
+                onClick={() => setConfirmDeleteFolder(null)}
+              >
+                Non
+              </button>
+              <button
+                className="inline-flex items-center justify-center rounded-lg bg-rose-600 px-4 py-2 text-white hover:bg-rose-600/90 disabled:opacity-60"
+                onClick={async () => {
+                  const id = confirmDeleteFolder;
+                  setConfirmDeleteFolder(null);
+                  if (!id) return;
+                  const r = await fetch(`/api/library/folders/${encodeURIComponent(id)}`, { method: 'DELETE' }).then(r=>r.json());
+                  if (r?.error) return toast.error(r.error);
+                  setSelectedFolder('all');
+                  qc.invalidateQueries({ queryKey: ['libraryFolders'] });
+                  qc.invalidateQueries({ queryKey: ['library'] });
+                }}
               >
                 Oui
               </button>

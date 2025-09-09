@@ -171,10 +171,31 @@ export async function listFolders(userId: string): Promise<LibraryFolder[]> {
 
 export async function createFolder(userId: string, name: string): Promise<LibraryFolder> {
   const folders = await readFolders(userId);
-  const folder: LibraryFolder = { id: randomUUID(), userId, name: name.trim(), createdAt: new Date().toISOString() };
+  const trimmed = name.trim();
+  if (!trimmed) throw new Error('nom invalide');
+  // Prevent duplicate names (case-insensitive)
+  const exists = folders.some(f => f.name.trim().toLowerCase() === trimmed.toLowerCase());
+  if (exists) throw new Error('un dossier avec ce nom existe déjà');
+  const folder: LibraryFolder = { id: randomUUID(), userId, name: trimmed, createdAt: new Date().toISOString() };
   folders.push(folder);
   await writeFolders(userId, folders);
   return folder;
+}
+
+export async function deleteFolder(userId: string, folderId: string): Promise<boolean> {
+  const folders = await readFolders(userId);
+  const idx = folders.findIndex(f => f.id === folderId);
+  if (idx === -1) return false;
+  folders.splice(idx, 1);
+  await writeFolders(userId, folders);
+  // Unassign folder from any items referencing it
+  const items = await readIndex(userId);
+  let changed = false;
+  for (const it of items) {
+    if (it.folderId === folderId) { it.folderId = undefined; changed = true; }
+  }
+  if (changed) await writeIndex(userId, items);
+  return true;
 }
 
 export async function moveItemToFolder(userId: string, itemId: string, folderId?: string | null): Promise<LibraryItem | null> {

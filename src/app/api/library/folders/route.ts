@@ -25,4 +25,3 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: e?.message || 'create failed' }, { status: 400 });
   }
 }
-
