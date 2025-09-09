@@ -272,7 +272,11 @@ export async function topazGetStatus(taskId: string): Promise<TopazStatusRespons
     : raw.includes("success") || raw.includes("complete") || raw === "succeeded" ? "succeeded"
     : raw.includes("process") || raw === "running" ? "processing"
     : "queued";
-  const videoUrl = data?.output_url || data?.result?.url || data?.outputs?.[0]?.url || data?.downloadUrl || null;
+  let videoUrl = data?.output_url || data?.result?.url || data?.outputs?.[0]?.url || data?.downloadUrl || null;
+  // Fallback: pick the first http(s) URL anywhere in the payload when succeeded
+  if (!videoUrl && status === 'succeeded') {
+    try { videoUrl = extractFirstUrl(data); } catch {}
+  }
   const message = data?.message || data?.status_msg || null;
   return { status, videoUrl, message };
 }
