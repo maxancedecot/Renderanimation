@@ -20,8 +20,9 @@ function baseUrl(): string {
 function authHeaders() {
   const key = process.env.TOPAZ_API_KEY;
   if (!key) throw new Error("TOPAZ_API_KEY manquante");
-  const headerName = (process.env.TOPAZ_AUTH_HEADER || "Authorization").trim();
-  const scheme = (process.env.TOPAZ_AUTH_SCHEME || "Bearer").trim(); // e.g., "Bearer", "ApiKey", or "" for none
+  // Default to Topaz docs: X-API-Key with raw key, no scheme
+  const headerName = (process.env.TOPAZ_AUTH_HEADER || "X-API-Key").trim();
+  const scheme = (process.env.TOPAZ_AUTH_SCHEME ?? "").trim(); // e.g., "Bearer", "ApiKey", or "" for none
   const value = scheme ? `${scheme} ${key}` : key;
   const headers: Record<string, string> = {
     [headerName]: value,
