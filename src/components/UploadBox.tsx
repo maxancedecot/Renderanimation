@@ -264,6 +264,59 @@ export default function UploadBox() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [finalVideoUrl]);
 
+  // 5) Upscale 4K via Topaz
+  const [topazTaskId, setTopazTaskId] = useState<string | null>(null);
+  const [topaz4kUrl, setTopaz4kUrl] = useState<string | null>(null);
+  const createTopazUpscale = useMutation({
+    mutationFn: async () => {
+      if (!finalVideoUrl) throw new Error("Pas de vidéo disponible");
+      const r = await fetch("/api/topaz/upscale", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ inputUrl: finalVideoUrl })
+      }).then(r => r.json());
+      if (r.error || !r.taskId) throw new Error(r.error || "taskId absent");
+      return r.taskId as string;
+    },
+    onMutate: () => {
+      toast.loading("Upscale 4K (Topaz) lancé…", { id: "tpz" });
+      setTopazTaskId(null);
+      setTopaz4kUrl(null);
+    },
+    onSuccess: (taskId) => {
+      setTopazTaskId(taskId);
+      toast.success("Topaz a bien reçu la tâche 4K", { id: "tpz" });
+    },
+    onError: (e: any) => toast.error(e?.message || "Erreur Topaz 4K", { id: "tpz" })
+  });
+
+  const topazKey = useMemo(() => ["topazUpscale", topazTaskId], [topazTaskId]);
+  const { data: topazStatus } = useQuery({
+    queryKey: topazKey,
+    enabled: !!topazTaskId,
+    queryFn: async () => {
+      const r = await fetch(`/api/topaz/status?taskId=${encodeURIComponent(topazTaskId!)}`).then(r => r.json());
+      if (r.error) throw new Error(r.error);
+      return r as { status?: string; videoUrl?: string | null; message?: string | null };
+    },
+    refetchInterval: 5000,
+    retry: false,
+  });
+
+  useEffect(() => {
+    if (!topazStatus) return;
+    if (topazStatus.status === "failed") {
+      toast.error(topazStatus.message || "Upscale 4K (Topaz) échoué", { id: "tpzs" });
+      setTopazTaskId(null);
+      qc.removeQueries({ queryKey: topazKey });
+    } else if ((topazStatus.status === "succeeded" || topazStatus.status === "success") && topazStatus.videoUrl) {
+      toast.success("Version 4K prête ✨", { id: "tpzs" });
+      setTopaz4kUrl(topazStatus.videoUrl);
+      setTopazTaskId(null);
+      qc.removeQueries({ queryKey: topazKey });
+    }
+  }, [topazStatus, qc, topazKey]);
+
 
 
   return (
@@ -274,12 +327,12 @@ export default function UploadBox() {
           const step1Done = !!imageUrl; // après upload (ou nettoyage)
           const step2Done = !!result;   // après analyse OK
           const step3Done = !!finalVideoUrl; // vidéo prête
-          const step4Done = false; // Upscale 4K optionnel (à venir)
+          const step4Done = !!topaz4kUrl; // Upscale 4K (Topaz)
 
           const step1Active = uploadAndAnalyze.isPending && !step1Done;
           const step2Active = runAnalyze.isPending && !step2Done;
           const step3Active = (createKling.isPending || !!klingTaskId) && !step3Done;
-          const step4Active = false;
+          const step4Active = (!!topazTaskId);
 
           const boxClass = (done: boolean, active: boolean) =>
             [
@@ -315,7 +368,7 @@ export default function UploadBox() {
           );
         })()}
       </div>
-      {/* Colonne gauche : Upload + Nettoyage + Analyse + Génération */}
+      {/* Colonne gauche : Upload + Nettoyage + Analyse + Génération + Upscale */}
       <div className="space-y-6">
         {/* Upload */}
         <div className="rounded-2xl border bg-white p-6 shadow-sm">
@@ -451,7 +504,25 @@ export default function UploadBox() {
                   className="inline-flex items-center justify-center rounded-lg bg-black px-4 py-2 text-white hover:bg-black/90"
                 >Télécharger</a>
                 <a href="/library" className="text-sm rounded-md border px-3 py-2 hover:bg-neutral-50">Voir la bibliothèque</a>
+                <button
+                  className="inline-flex items-center justify-center rounded-lg border px-4 py-2 hover:bg-neutral-50 disabled:opacity-60"
+                  onClick={() => createTopazUpscale.mutate()}
+                  disabled={createTopazUpscale.isPending || !!topazTaskId}
+                  title="Upscale 4K avec Topaz Labs"
+                >{createTopazUpscale.isPending ? 'Upscale 4K…' : (!!topazTaskId ? '4K en cours…' : 'Upscale 4K (Topaz)')}</button>
               </div>
+              {!!topazTaskId && (
+                <div className="mt-2 text-sm text-neutral-600">{`Topaz 4K: ${topazStatus?.status || 'envoi…'}`}{topazStatus?.message ? ` — ${topazStatus.message}` : ''}</div>
+              )}
+              {topaz4kUrl && (
+                <div className="mt-6">
+                  <h3 className="font-semibold">Version 4K</h3>
+                  <video src={topaz4kUrl} controls className="mt-2 w-full rounded-xl ring-1 ring-black/5" />
+                  <div className="mt-3 flex items-center gap-2">
+                    <a href={topaz4kUrl} download className="inline-flex items-center justify-center rounded-lg bg-black px-4 py-2 text-white hover:bg-black/90">Télécharger</a>
+                  </div>
+                </div>
+              )}
             </>
           )}
         </div>
