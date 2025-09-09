@@ -202,10 +202,28 @@ export default function LibraryGrid() {
                   {!!topaz[it.id]?.taskId && !topaz[it.id]?.url ? (
                     <>
                       <ProgressBar percent={computeProgress(it.id)} />
-                      <div className="mt-1 text-xs text-neutral-600">{`RA 4K: ${topaz[it.id]?.status}`}{topaz[it.id]?.message ? ` — ${topaz[it.id]?.message}` : ''}</div>
+                      <div className="mt-1 text-xs text-neutral-600">
+                        {(() => {
+                          const s = topaz[it.id]?.status;
+                          const m = topaz[it.id]?.message;
+                          if (s === 'processing' || s === 'queued') {
+                            return 'RA 4K: en cours — Cela peut prendre jusqu’à 5 minutes.';
+                          }
+                          return `RA 4K: ${s}${m ? ` — ${m}` : ''}`;
+                        })()}
+                      </div>
                     </>
                   ) : (
-                    <div className="text-xs text-neutral-600">{`RA 4K: ${topaz[it.id]?.status}`}{topaz[it.id]?.message ? ` — ${topaz[it.id]?.message}` : ''}</div>
+                    <div className="text-xs text-neutral-600">
+                      {(() => {
+                        const s = topaz[it.id]?.status;
+                        const m = topaz[it.id]?.message;
+                        if (s === 'processing' || s === 'queued') {
+                          return 'RA 4K: en cours — Cela peut prendre jusqu’à 5 minutes.';
+                        }
+                        return `RA 4K: ${s}${m ? ` — ${m}` : ''}`;
+                      })()}
+                    </div>
                   )}
                 </div>
               ) : null}

@@ -565,7 +565,18 @@ export default function UploadBox() {
               {!!topazTaskId && (
                 <div className="mt-2">
                   <ProgressBar percent={topazProgress} />
-                  <div className="mt-1 text-sm text-neutral-600">{`RA 4K: ${topazStatus?.status || 'envoi…'}`}{topazStatus?.message ? ` — ${topazStatus.message}` : ''}</div>
+                  <div className="mt-1 text-sm text-neutral-600">
+                    {(() => {
+                      const s = topazStatus?.status;
+                      if (s === 'processing' || s === 'queued') {
+                        return 'RA 4K: en cours — Cela peut prendre jusqu’à 5 minutes.';
+                      }
+                      if (s) {
+                        return `RA 4K: ${s}${topazStatus?.message ? ` — ${topazStatus.message}` : ''}`;
+                      }
+                      return 'RA 4K: envoi…';
+                    })()}
+                  </div>
                 </div>
               )}
               {/* Debug Topaz section removed */}
