@@ -222,37 +222,41 @@ export default function LibraryGrid() {
                 </button>
               </div>
               <div className="mt-3">
-                <div className="flex items-center gap-2">
-                  <a
-                    href={it.videoUrl}
-                    download
-                    className="inline-flex items-center justify-center rounded-lg bg-black px-4 py-2 text-white hover:bg-black/90 whitespace-nowrap"
-                  >
-                    Télécharger
-                  </a>
-                  {!show4k ? (
-                    <button
-                      onClick={() => upscale.mutate({ itemId: it.id, url: it.videoUrl })}
-                      className="inline-flex items-center justify-center rounded-lg bg-green-100 px-4 py-2 text-green-800 ring-1 ring-green-300 hover:bg-green-100/80 disabled:opacity-60 whitespace-nowrap"
-                      disabled={!!topaz[it.id]?.taskId || upscale.isPending}
-                      title="Upscale 4K"
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-center gap-2">
+                    <a
+                      href={it.videoUrl}
+                      download
+                      className="inline-flex items-center justify-center rounded-lg bg-black px-4 py-2 text-white hover:bg-black/90 whitespace-nowrap"
                     >
-                      {topaz[it.id]?.taskId ? '4K en cours…' : 'Upscale 4K'}
-                    </button>
-                  ) : null}
-                  <select
-                    className="rounded-md border px-2 py-2 text-sm"
-                    value={it.folderId || ''}
-                    onChange={async (e) => {
-                      const folderId = e.target.value || undefined;
-                      const r = await fetch('/api/library/move', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ itemId: it.id, folderId }) }).then(r=>r.json());
-                      if (r?.error) return toast.error(r.error);
-                      qc.invalidateQueries({ queryKey: ['library'] });
-                    }}
-                  >
-                    <option value=''>Sans dossier</option>
-                    {folders.map(f => (<option key={f.id} value={f.id}>{f.name}</option>))}
-                  </select>
+                      Télécharger
+                    </a>
+                    {!show4k ? (
+                      <button
+                        onClick={() => upscale.mutate({ itemId: it.id, url: it.videoUrl })}
+                        className="inline-flex items-center justify-center rounded-lg bg-green-100 px-4 py-2 text-green-800 ring-1 ring-green-300 hover:bg-green-100/80 disabled:opacity-60 whitespace-nowrap"
+                        disabled={!!topaz[it.id]?.taskId || upscale.isPending}
+                        title="Upscale 4K"
+                      >
+                        {topaz[it.id]?.taskId ? '4K en cours…' : 'Upscale 4K'}
+                      </button>
+                    ) : null}
+                  </div>
+                  <div>
+                    <select
+                      className="rounded-md border px-2 py-2 text-sm"
+                      value={it.folderId || ''}
+                      onChange={async (e) => {
+                        const folderId = e.target.value || undefined;
+                        const r = await fetch('/api/library/move', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ itemId: it.id, folderId }) }).then(r=>r.json());
+                        if (r?.error) return toast.error(r.error);
+                        qc.invalidateQueries({ queryKey: ['library'] });
+                      }}
+                    >
+                      <option value=''>Sans dossier</option>
+                      {folders.map(f => (<option key={f.id} value={f.id}>{f.name}</option>))}
+                    </select>
+                  </div>
                 </div>
               </div>
               {!!topaz[it.id]?.status ? (
