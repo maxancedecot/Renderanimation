@@ -17,6 +17,7 @@ export default function LibraryGrid() {
   const [topaz, setTopaz] = useState<Record<string, { taskId?: string; status?: string; url?: string | null; message?: string | null; saved?: boolean }>>({});
   // Debug Topaz removed
   const [is4k, setIs4k] = useState<Record<string, boolean>>({});
+  const [confirmDelete, setConfirmDelete] = useState<{ id: string } | null>(null);
   const { data, isLoading, error } = useQuery({
     queryKey: ["library"],
     queryFn: async () => {
@@ -119,7 +120,15 @@ export default function LibraryGrid() {
   return (
     <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
       {items.map(it => (
-        <div key={it.id} className="rounded-xl border bg-white p-4 shadow-sm">
+        <div key={it.id} className="relative rounded-xl border bg-white p-4 shadow-sm">
+          <button
+            aria-label="Supprimer"
+            className="absolute top-2 right-2 rounded-full bg-white/90 text-neutral-700 hover:bg-white p-1.5 ring-1 ring-black/10 shadow"
+            onClick={() => setConfirmDelete({ id: it.id })}
+            title="Supprimer"
+          >
+            ×
+          </button>
           <div className="aspect-video rounded-lg overflow-hidden ring-1 ring-black/5 relative">
             <video
               src={it.videoUrl}
@@ -141,7 +150,7 @@ export default function LibraryGrid() {
           <div className="mt-3">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <div className="text-xs text-neutral-500">{new Date(it.createdAt).toLocaleString()}</div>
+              <div className="text-xs text-neutral-500">{new Date(it.createdAt).toLocaleString()}</div>
               </div>
               <div className="flex items-center gap-2">
                 <a
@@ -149,18 +158,14 @@ export default function LibraryGrid() {
                   download
                   className="inline-flex items-center justify-center rounded-lg bg-black px-4 py-2 text-white hover:bg-black/90"
                 >Télécharger</a>
-                <button
-                  onClick={() => upscale.mutate({ itemId: it.id, url: it.videoUrl })}
-                  className="inline-flex items-center justify-center rounded-lg border px-4 py-2 hover:bg-neutral-50 disabled:opacity-60"
-                  disabled={!!topaz[it.id]?.taskId || upscale.isPending}
-                  title="Upscale 4K"
-                >{topaz[it.id]?.taskId ? "4K en cours…" : "Upscale 4K"}</button>
-                <button
-                  onClick={() => del.mutate(it.id)}
-                  className="inline-flex items-center justify-center rounded-lg border px-4 py-2 hover:bg-neutral-50"
-                  disabled={del.isPending}
-                  title="Supprimer"
-                >Supprimer</button>
+                {!(is4k[it.id] || (it.tags || []).includes('4k')) && (
+                  <button
+                    onClick={() => upscale.mutate({ itemId: it.id, url: it.videoUrl })}
+                    className="inline-flex items-center justify-center rounded-lg border px-4 py-2 hover:bg-neutral-50 disabled:opacity-60"
+                    disabled={!!topaz[it.id]?.taskId || upscale.isPending}
+                    title="Upscale 4K"
+                  >{topaz[it.id]?.taskId ? "4K en cours…" : "Upscale 4K"}</button>
+                )}
               </div>
             </div>
             {/* Debug Topaz panel removed */}
@@ -188,5 +193,25 @@ export default function LibraryGrid() {
         </div>
       ))}
     </div>
+    {confirmDelete && (
+      <div className="fixed inset-0 z-50 grid place-items-center bg-black/30 p-4" role="dialog" aria-modal="true">
+        <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl ring-1 ring-black/5">
+          <h3 className="text-lg font-semibold">Confirmer la suppression</h3>
+          <p className="mt-2 text-sm text-neutral-600">Êtes-vous sûr de vouloir supprimer la vidéo ? Cette action est irréversible.</p>
+          <div className="mt-4 flex justify-end gap-3">
+            <button
+              className="inline-flex items-center justify-center rounded-lg border px-4 py-2 hover:bg-neutral-50"
+              onClick={() => setConfirmDelete(null)}
+              disabled={del.isPending}
+            >Non</button>
+            <button
+              className="inline-flex items-center justify-center rounded-lg bg-rose-600 px-4 py-2 text-white hover:bg-rose-600/90 disabled:opacity-60"
+              onClick={() => { if (confirmDelete) { del.mutate(confirmDelete.id); setConfirmDelete(null); } }}
+              disabled={del.isPending}
+            >Oui</button>
+          </div>
+        </div>
+      </div>
+    )}
   );
 }
