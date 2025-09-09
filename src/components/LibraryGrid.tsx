@@ -173,17 +173,7 @@ export default function LibraryGrid() {
               {!!topaz[it.id]?.status ? (
                 <div className="mt-2 text-xs text-neutral-600">{`RA 4K: ${topaz[it.id]?.status}`}{topaz[it.id]?.message ? ` — ${topaz[it.id]?.message}` : ''}</div>
               ) : null}
-              {!!topaz[it.id]?.url ? (
-                <div className="mt-2">
-                  <a
-                    href={topaz[it.id]?.url || undefined}
-                    download
-                    className="inline-flex items-center justify-center rounded-lg bg-black px-4 py-2 text-white hover:bg-black/90"
-                  >
-                    Télécharger 4K
-                  </a>
-                </div>
-              ) : null}
+              {/* Removed extra 4K download link under buttons */}
               {it.project ? (<div className="mt-1 text-xs text-neutral-600">Projet: {it.project}</div>) : null}
               {!!it.tags?.length ? (
                 <div className="mt-2 flex gap-1 flex-wrap">
