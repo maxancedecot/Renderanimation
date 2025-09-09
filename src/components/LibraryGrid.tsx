@@ -122,14 +122,6 @@ export default function LibraryGrid() {
     <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
       {items.map(it => (
         <div key={it.id} className="relative rounded-xl border bg-white p-4 shadow-sm">
-          <button
-            aria-label="Supprimer"
-            className="absolute top-2 right-2 rounded-full bg-white/90 text-neutral-700 hover:bg-white p-1.5 ring-1 ring-black/10 shadow"
-            onClick={() => setConfirmDelete({ id: it.id })}
-            title="Supprimer"
-          >
-            ×
-          </button>
           <div className="aspect-video rounded-lg overflow-hidden ring-1 ring-black/5 relative">
             <video
               src={it.videoUrl}
@@ -147,6 +139,14 @@ export default function LibraryGrid() {
                 4K
               </span>
             )}
+            <button
+              aria-label="Supprimer"
+              className="absolute top-2 right-2 rounded-full bg-rose-600 text-white hover:bg-rose-600/90 p-1.5 shadow"
+              onClick={() => setConfirmDelete({ id: it.id })}
+              title="Supprimer"
+            >
+              ×
+            </button>
           </div>
           <div className="mt-3">
             <div className="flex items-start justify-between gap-3">
