@@ -51,11 +51,11 @@ export default function LibraryGrid() {
                 <a
                   href={it.videoUrl}
                   download
-                  className="text-xs rounded-md border px-2 py-1 hover:bg-neutral-50"
+                  className="inline-flex items-center justify-center rounded-lg bg-black px-4 py-2 text-white hover:bg-black/90"
                 >Télécharger</a>
                 <button
                   onClick={() => del.mutate(it.id)}
-                  className="text-xs rounded-md border px-2 py-1 hover:bg-neutral-50"
+                  className="inline-flex items-center justify-center rounded-lg border px-4 py-2 hover:bg-neutral-50"
                   disabled={del.isPending}
                   title="Supprimer"
                 >Supprimer</button>
