@@ -89,7 +89,7 @@ export default function LibraryGrid() {
                 await fetch('/api/library/save', {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ videoUrl: url })
+                  body: JSON.stringify({ videoUrl: url, tags: ['4k'] })
                 });
                 setTopaz((m) => ({ ...m, [itemId]: { ...m[itemId], saved: true } }));
                 qc.invalidateQueries({ queryKey: ["library"] });
@@ -132,7 +132,7 @@ export default function LibraryGrid() {
                 setIs4k((m) => ({ ...m, [it.id]: is }));
               }}
             />
-            {is4k[it.id] && (
+            {(is4k[it.id] || (it.tags || []).includes('4k')) && (
               <span className="absolute top-2 left-2 rounded-md bg-green-600 px-2 py-1 text-[11px] font-semibold text-white shadow">
                 4K
               </span>

@@ -258,7 +258,7 @@ export default function UploadBox() {
       const r = await fetch("/api/library/save", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ videoUrl: url }),
+        body: JSON.stringify({ videoUrl: url, tags: ["4k"] }),
       }).then(r => r.json());
       if (r.error) throw new Error(r.error);
       return r.item;
