@@ -10,6 +10,7 @@ export type LibraryItem = {
   project?: string;
   tags?: string[];
   videoUrl: string; // public URL
+  posterUrl?: string; // optional fallback image (initial uploaded photo)
   createdAt: string; // ISO
 };
 
@@ -75,7 +76,7 @@ export async function listLibrary(userId: string): Promise<LibraryItem[]> {
   return items.sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
 }
 
-export async function saveVideoFromUrl(userId: string, sourceUrl: string, meta?: { title?: string; project?: string; tags?: string[] }): Promise<LibraryItem> {
+export async function saveVideoFromUrl(userId: string, sourceUrl: string, meta?: { title?: string; project?: string; tags?: string[]; posterUrl?: string }): Promise<LibraryItem> {
   // Download source
   const res = await fetch(sourceUrl);
   if (!res.ok || !res.body) {
@@ -103,6 +104,7 @@ export async function saveVideoFromUrl(userId: string, sourceUrl: string, meta?:
     project: meta?.project,
     tags: meta?.tags,
     videoUrl: toPublicUrl(key),
+    posterUrl: meta?.posterUrl,
     createdAt: new Date().toISOString(),
   };
   const items = await readIndex(userId);
@@ -134,4 +136,3 @@ export async function deleteLibraryItem(userId: string, id: string): Promise<boo
   await writeIndex(userId, items);
   return true;
 }
-

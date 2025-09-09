@@ -7,6 +7,7 @@ import toast from "react-hot-toast";
 type Item = {
   id: string;
   videoUrl: string;
+  posterUrl?: string;
   title?: string;
   project?: string;
   tags?: string[];
@@ -126,10 +127,15 @@ export default function LibraryGrid() {
           return (
             <div key={it.id} className="relative rounded-xl border bg-white p-4 shadow-sm">
               <div className="aspect-video rounded-lg overflow-hidden ring-1 ring-black/5 relative">
+                {/* Mobile fallback: show poster image if available */}
+                {it.posterUrl ? (
+                  <img src={it.posterUrl} alt="aperçu" className="block sm:hidden w-full h-full object-cover" />
+                ) : null}
                 <video
                   src={it.videoUrl}
                   controls
-                  className="w-full h-full object-cover"
+                  poster={it.posterUrl || undefined}
+                  className="hidden sm:block w-full h-full object-cover"
                   onLoadedMetadata={(e) => {
                     const v = e.currentTarget as HTMLVideoElement;
                     const w = v.videoWidth, h = v.videoHeight;
