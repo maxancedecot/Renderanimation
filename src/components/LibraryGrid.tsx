@@ -118,7 +118,7 @@ export default function LibraryGrid() {
   if (items.length === 0) return <p>Aucune vidéo enregistrée pour le moment.</p>;
 
   return (
-    <>
+    <div>
     <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
       {items.map(it => (
         <div key={it.id} className="relative rounded-xl border bg-white p-4 shadow-sm">
@@ -210,6 +210,6 @@ export default function LibraryGrid() {
         </div>
       </div>
     )}
-    </>
+    </div>
   );
 }
