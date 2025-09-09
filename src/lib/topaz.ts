@@ -18,11 +18,19 @@ function baseUrl(): string {
 function authHeaders() {
   const key = process.env.TOPAZ_API_KEY;
   if (!key) throw new Error("TOPAZ_API_KEY manquante");
-  return {
-    Authorization: `Bearer ${key}`,
+  const headerName = (process.env.TOPAZ_AUTH_HEADER || "Authorization").trim();
+  const scheme = (process.env.TOPAZ_AUTH_SCHEME || "Bearer").trim(); // e.g., "Bearer", "ApiKey", or "" for none
+  const value = scheme ? `${scheme} ${key}` : key;
+  const headers: Record<string, string> = {
+    [headerName]: value,
     "Content-Type": "application/json",
     Accept: "application/json",
-  } as Record<string, string>;
+  };
+  // Add common alternatives to maximize compatibility
+  headers["x-api-key"] = key;
+  headers["X-API-Key"] = key;
+  headers["Api-Key"] = key;
+  return headers;
 }
 
 export async function topazCreateUpscale(inputUrl: string): Promise<{ taskId: string; raw?: any }> {
@@ -101,4 +109,3 @@ export async function topazGetStatus(taskId: string): Promise<TopazStatusRespons
   const message = data?.message || data?.status_msg || null;
   return { status, videoUrl, message };
 }
-
