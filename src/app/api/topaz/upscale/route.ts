@@ -5,6 +5,20 @@ import { auth } from "@/src/lib/auth";
 import { topazCreateUpscale } from "@/lib/topaz";
 
 export async function POST(req: NextRequest) {
+  // Tiny temporary env check: return basic config if ?debug=1
+  {
+    const u = new URL(req.url);
+    if (u.searchParams.get("debug") === "1") {
+      const hasKey = !!process.env.TOPAZ_API_KEY;
+      const authHeader = process.env.TOPAZ_AUTH_HEADER || "X-API-Key";
+      const scheme = process.env.TOPAZ_AUTH_SCHEME ? "<set>" : "<empty>";
+      const base = (process.env.TOPAZ_BASE || "https://api.topazlabs.com").replace(/\/+$/, "");
+      const path = process.env.TOPAZ_CREATE_PATH || "/video/";
+      const endpoint = `${base}${path}`;
+      return NextResponse.json({ hasKey, authHeader, scheme, endpoint });
+    }
+  }
+
   const session = await auth();
   if (!session?.user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   try {
