@@ -64,11 +64,11 @@ export default function LibraryGrid() {
     },
     onMutate: ({ itemId }) => {
       setTopaz((m) => ({ ...m, [itemId]: { status: "queued", url: null, message: null } }));
-      toast.loading("Upscale 4K (Topaz) lancé…", { id: `tpz-${itemId}` });
+      toast.loading("Upscale RA 4K lancé…", { id: `tpz-${itemId}` });
     },
     onSuccess: ({ taskId, itemId }) => {
       setTopaz((m) => ({ ...m, [itemId]: { ...m[itemId], taskId, status: "queued" } }));
-      toast.success("Tâche envoyée à Topaz", { id: `tpz-${itemId}` });
+      toast.success("RA 4K: tâche envoyée", { id: `tpz-${itemId}` });
       // start polling
       const poll = async () => {
         try {
@@ -101,13 +101,13 @@ export default function LibraryGrid() {
           }
           setTimeout(poll, 5000);
         } catch (e: any) {
-          toast.error(e?.message || "Erreur statu Topaz", { id: `tpz-${itemId}` });
+          toast.error(e?.message || "Erreur statut RA 4K", { id: `tpz-${itemId}` });
         }
       };
       poll();
     },
     onError: (e: any, vars) => {
-      if (vars?.itemId) toast.error(e?.message || "Erreur Topaz 4K", { id: `tpz-${vars.itemId}` });
+      if (vars?.itemId) toast.error(e?.message || "Erreur RA 4K", { id: `tpz-${vars.itemId}` });
     },
   });
 
@@ -171,7 +171,7 @@ export default function LibraryGrid() {
                 </div>
               </div>
               {!!topaz[it.id]?.status ? (
-                <div className="mt-2 text-xs text-neutral-600">{`Topaz 4K: ${topaz[it.id]?.status}`}{topaz[it.id]?.message ? ` — ${topaz[it.id]?.message}` : ''}</div>
+                <div className="mt-2 text-xs text-neutral-600">{`RA 4K: ${topaz[it.id]?.status}`}{topaz[it.id]?.message ? ` — ${topaz[it.id]?.message}` : ''}</div>
               ) : null}
               {!!topaz[it.id]?.url ? (
                 <div className="mt-2">

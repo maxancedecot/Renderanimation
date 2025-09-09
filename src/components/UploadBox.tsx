@@ -304,15 +304,15 @@ export default function UploadBox() {
       return r.taskId as string;
     },
     onMutate: () => {
-      toast.loading("Upscale 4K (Topaz) lancé…", { id: "tpz" });
+      toast.loading("Upscale RA 4K lancé…", { id: "tpz" });
       setTopazTaskId(null);
       setTopaz4kUrl(null);
     },
     onSuccess: (taskId) => {
       setTopazTaskId(taskId);
-      toast.success("Topaz a bien reçu la tâche 4K", { id: "tpz" });
+      toast.success("RA 4K: tâche reçue", { id: "tpz" });
     },
-    onError: (e: any) => toast.error(e?.message || "Erreur Topaz 4K", { id: "tpz" })
+    onError: (e: any) => toast.error(e?.message || "Erreur RA 4K", { id: "tpz" })
   });
 
   // Debug Topaz removed
@@ -333,7 +333,7 @@ export default function UploadBox() {
   useEffect(() => {
     if (!topazStatus) return;
     if (topazStatus.status === "failed") {
-      toast.error(topazStatus.message || "Upscale 4K (Topaz) échoué", { id: "tpzs" });
+      toast.error(topazStatus.message || "Upscale RA 4K échoué", { id: "tpzs" });
       setTopazTaskId(null);
       qc.removeQueries({ queryKey: topazKey });
     } else if ((topazStatus.status === "succeeded" || topazStatus.status === "success") && topazStatus.videoUrl) {
@@ -543,7 +543,7 @@ export default function UploadBox() {
                 <MetadataCapture videoId="kling-video" onMeta={(m) => setTopazMeta(m)} />
               )}
               {!!topazTaskId && (
-                <div className="mt-2 text-sm text-neutral-600">{`Topaz 4K: ${topazStatus?.status || 'envoi…'}`}{topazStatus?.message ? ` — ${topazStatus.message}` : ''}</div>
+                <div className="mt-2 text-sm text-neutral-600">{`RA 4K: ${topazStatus?.status || 'envoi…'}`}{topazStatus?.message ? ` — ${topazStatus.message}` : ''}</div>
               )}
               {/* Debug Topaz section removed */}
               {topaz4kUrl && (
