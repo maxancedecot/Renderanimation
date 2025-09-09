@@ -81,32 +81,49 @@ async function probeInputHead(inputUrl: string): Promise<{ size?: number; conten
 
 export async function buildTopazCreateBody(inputUrl: string): Promise<Record<string, any>> {
   const head = await probeInputHead(inputUrl);
-  const body: Record<string, any> = {
-    source: {
-      // If unknown, leave some fields out; Topaz derives details after upload
-      container: head.container,
-      ...(head.size ? { size: head.size } : {}),
-    },
-    output: {
-      // Target 4K (2x typical from 1080p)
-      resolution: { width: 3840, height: 2160 },
-      audioCodec: 'AAC',
-      audioTransfer: 'Copy',
-      frameRate: 60,
-      dynamicCompressionLevel: 'High',
-      container: 'mp4',
-    },
-    filters: [
-      {
-        // Example per docs; you can override via TOPAZ_EXTRA_JSON
-        model: 'apo-8',
-        slowmo: 1,
-        fps: 60,
-        duplicate: true,
-        duplicateThreshold: 0.1,
-      },
-    ],
+  // Default values matching Topaz docs example; can be overridden by env JSON
+  const defaultSource = {
+    resolution: { width: 800, height: 448 },
+    container: head.container,
+    ...(head.size ? { size: head.size } : {}),
+    duration: 4,
+    frameRate: 24,
+    frameCount: 97,
   };
+  const defaultOutput = {
+    resolution: { width: 3840, height: 2160 },
+    audioCodec: 'AAC',
+    audioTransfer: 'Copy',
+    frameRate: 60,
+    dynamicCompressionLevel: 'High',
+    container: 'mp4',
+  };
+  const defaultFilters = [
+    {
+      model: 'apo-8',
+      slowmo: 1,
+      fps: 60,
+      duplicate: true,
+      duplicateThreshold: 0.1,
+    },
+  ];
+
+  let source = defaultSource as any;
+  let output = defaultOutput as any;
+  let filters = defaultFilters as any;
+
+  // Allow overriding via env JSON for quick iteration from dashboard
+  if (process.env.TOPAZ_SOURCE_JSON) {
+    try { source = JSON.parse(process.env.TOPAZ_SOURCE_JSON as string); } catch {}
+  }
+  if (process.env.TOPAZ_OUTPUT_JSON) {
+    try { output = JSON.parse(process.env.TOPAZ_OUTPUT_JSON as string); } catch {}
+  }
+  if (process.env.TOPAZ_FILTERS_JSON) {
+    try { filters = JSON.parse(process.env.TOPAZ_FILTERS_JSON as string); } catch {}
+  }
+
+  const body: Record<string, any> = { source, output, filters };
   const extra = process.env.TOPAZ_EXTRA_JSON;
   if (extra) {
     try { Object.assign(body, JSON.parse(extra)); } catch {}
@@ -133,8 +150,8 @@ async function topazCreateRequest(inputUrl: string): Promise<{ requestId: string
   }
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
-    const msg = data?.message || data?.error || `HTTP ${res.status}`;
-    throw new Error(`Topaz create error: ${msg}`);
+    const msg = data?.message || data?.error || data?.errors || `HTTP ${res.status}`;
+    throw new Error(`Topaz create error: ${typeof msg === 'string' ? msg : JSON.stringify(msg)}`);
   }
   const id = data?.id || data?.requestId || data?.request_id || data?.job_id;
   if (!id) throw new Error("Réponse Topaz invalide (create): id manquant");
