@@ -1,5 +1,7 @@
 "use client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useCallback, useState } from "react";
+import toast from "react-hot-toast";
 
 type Item = {
   id: string;
@@ -12,6 +14,7 @@ type Item = {
 
 export default function LibraryGrid() {
   const qc = useQueryClient();
+  const [topaz, setTopaz] = useState<Record<string, { taskId?: string; status?: string; url?: string | null; message?: string | null }>>({});
   const { data, isLoading, error } = useQuery({
     queryKey: ["library"],
     queryFn: async () => {
@@ -28,6 +31,52 @@ export default function LibraryGrid() {
       return true;
     },
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["library"] }); }
+  });
+
+  const upscale = useMutation({
+    mutationFn: async (vars: { itemId: string; url: string }) => {
+      const r = await fetch("/api/topaz/upscale", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ inputUrl: vars.url }),
+      }).then(r => r.json());
+      if (r.error || !r.taskId) throw new Error(r.error || "taskId absent");
+      return { taskId: r.taskId, itemId: vars.itemId } as { taskId: string; itemId: string };
+    },
+    onMutate: ({ itemId }) => {
+      setTopaz((m) => ({ ...m, [itemId]: { status: "queued", url: null, message: null } }));
+      toast.loading("Upscale 4K (Topaz) lancé…", { id: `tpz-${itemId}` });
+    },
+    onSuccess: ({ taskId, itemId }) => {
+      setTopaz((m) => ({ ...m, [itemId]: { ...m[itemId], taskId, status: "queued" } }));
+      toast.success("Tâche envoyée à Topaz", { id: `tpz-${itemId}` });
+      // start polling
+      const poll = async () => {
+        try {
+          const r = await fetch(`/api/topaz/status?taskId=${encodeURIComponent(taskId)}`).then(r => r.json());
+          if (r.error) throw new Error(r.error);
+          const status = r.status || "processing";
+          const url = r.videoUrl || null;
+          const message = r.message || null;
+          setTopaz((m) => ({ ...m, [itemId]: { ...m[itemId], status, url, message } }));
+          if (status === "failed") {
+            toast.error(message || "Upscale 4K échoué", { id: `tpz-${itemId}` });
+            return; // stop
+          }
+          if ((status === "succeeded" || status === "success") && url) {
+            toast.success("Version 4K prête ✨", { id: `tpz-${itemId}` });
+            return; // stop
+          }
+          setTimeout(poll, 5000);
+        } catch (e: any) {
+          toast.error(e?.message || "Erreur statu Topaz", { id: `tpz-${itemId}` });
+        }
+      };
+      poll();
+    },
+    onError: (e: any, vars) => {
+      if (vars?.itemId) toast.error(e?.message || "Erreur Topaz 4K", { id: `tpz-${vars.itemId}` });
+    },
   });
 
   if (isLoading) return <p>Chargement…</p>;
@@ -54,6 +103,12 @@ export default function LibraryGrid() {
                   className="inline-flex items-center justify-center rounded-lg bg-black px-4 py-2 text-white hover:bg-black/90"
                 >Télécharger</a>
                 <button
+                  onClick={() => upscale.mutate({ itemId: it.id, url: it.videoUrl })}
+                  className="inline-flex items-center justify-center rounded-lg border px-4 py-2 hover:bg-neutral-50 disabled:opacity-60"
+                  disabled={!!topaz[it.id]?.taskId || upscale.isPending}
+                  title="Upscale 4K avec Topaz Labs"
+                >{topaz[it.id]?.taskId ? "4K en cours…" : "Upscale 4K (Topaz)"}</button>
+                <button
                   onClick={() => del.mutate(it.id)}
                   className="inline-flex items-center justify-center rounded-lg border px-4 py-2 hover:bg-neutral-50"
                   disabled={del.isPending}
@@ -61,6 +116,18 @@ export default function LibraryGrid() {
                 >Supprimer</button>
               </div>
             </div>
+            {!!topaz[it.id]?.status && (
+              <div className="mt-2 text-xs text-neutral-600">{`Topaz 4K: ${topaz[it.id]?.status}`}{topaz[it.id]?.message ? ` — ${topaz[it.id]?.message}` : ''}</div>
+            )}
+            {!!topaz[it.id]?.url && (
+              <div className="mt-2">
+                <a
+                  href={topaz[it.id]?.url || undefined}
+                  download
+                  className="inline-flex items-center justify-center rounded-lg bg-black px-4 py-2 text-white hover:bg-black/90"
+                >Télécharger 4K</a>
+              </div>
+            )}
             {it.project && <div className="mt-1 text-xs text-neutral-600">Projet: {it.project}</div>}
             {!!it.tags?.length && (
               <div className="mt-2 flex gap-1 flex-wrap">
