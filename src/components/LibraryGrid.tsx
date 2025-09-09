@@ -47,7 +47,7 @@ export default function LibraryGrid() {
               <div>
                 <div className="text-xs text-neutral-500">{new Date(it.createdAt).toLocaleString()}</div>
               </div>
-              <div className="flex flex-col items-end gap-2">
+              <div className="flex items-center gap-2">
                 <a
                   href={it.videoUrl}
                   download
