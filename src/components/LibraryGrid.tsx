@@ -135,7 +135,7 @@ export default function LibraryGrid() {
               }}
             />
             {(is4k[it.id] || (it.tags || []).includes('4k')) && (
-              <span className="absolute top-2 left-2 rounded-md bg-green-600 px-2 py-1 text-[11px] font-semibold text-white shadow">
+              <span className="absolute top-2 left-2 rounded-md bg-green-100 px-2 py-1 text-[11px] font-semibold text-green-800 ring-1 ring-green-300 shadow-sm">
                 4K
               </span>
             )}
