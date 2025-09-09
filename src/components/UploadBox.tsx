@@ -532,7 +532,7 @@ export default function UploadBox() {
                 >Télécharger</a>
                 <a href="/library" className="text-sm rounded-md border px-3 py-2 hover:bg-neutral-50">Voir la bibliothèque</a>
                 <button
-                  className="inline-flex items-center justify-center rounded-lg border px-4 py-2 hover:bg-neutral-50 disabled:opacity-60"
+                  className="inline-flex items-center justify-center rounded-lg bg-green-100 px-4 py-2 text-green-800 ring-1 ring-green-300 hover:bg-green-100/80 disabled:opacity-60 whitespace-nowrap"
                   onClick={() => createTopazUpscale.mutate()}
                   disabled={createTopazUpscale.isPending || !!topazTaskId}
                   title="Upscale 4K"

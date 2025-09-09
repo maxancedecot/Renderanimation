@@ -161,7 +161,7 @@ export default function LibraryGrid() {
                   {!show4k ? (
                     <button
                       onClick={() => upscale.mutate({ itemId: it.id, url: it.videoUrl })}
-                      className="inline-flex items-center justify-center rounded-lg border px-4 py-2 hover:bg-neutral-50 disabled:opacity-60 whitespace-nowrap"
+                      className="inline-flex items-center justify-center rounded-lg bg-green-100 px-4 py-2 text-green-800 ring-1 ring-green-300 hover:bg-green-100/80 disabled:opacity-60 whitespace-nowrap"
                       disabled={!!topaz[it.id]?.taskId || upscale.isPending}
                       title="Upscale 4K"
                     >
