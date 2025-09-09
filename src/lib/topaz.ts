@@ -89,17 +89,30 @@ export type TopazSourceMeta = {
 
 export async function buildTopazCreateBody(inputUrl: string, meta?: TopazSourceMeta): Promise<Record<string, any>> {
   const head = await probeInputHead(inputUrl);
+  const inW = meta?.resolution?.width;
+  const inH = meta?.resolution?.height;
+  const fpsIn = meta?.frameRate ?? 24;
+  const dur = meta?.duration;
+  const estFrameCount = (dur && fpsIn) ? Math.max(1, Math.round(dur * fpsIn)) : undefined;
+  // Compute 2x upscaled resolution, capped to 3840x2160 keeping aspect
+  let outW = 3840, outH = 2160;
+  if (inW && inH) {
+    let tw = inW * 2, th = inH * 2;
+    const wr = 3840 / tw, hr = 2160 / th;
+    const r = Math.min(1, wr, hr);
+    tw = Math.round(tw * r); th = Math.round(th * r);
+    outW = tw; outH = th;
+  }
   // Default values aligned to the working cURL example you shared
   // Keep source minimal unless env overrides provide exact metadata
   const defaultSource: any = {
     container: head.container,
     ...(head.size ? { size: head.size } : {}),
     ...(meta?.size ? { size: meta.size } : {}),
-    ...(meta?.duration ? { duration: meta.duration } : {}),
-    ...(meta?.frameRate ? { frameRate: meta.frameRate } : {}),
-    ...(meta?.frameCount ? { frameCount: meta.frameCount } : {}),
+    ...(dur ? { duration: dur } : {}),
+    ...(fpsIn ? { frameRate: fpsIn } : {}),
+    ...(meta?.frameCount ? { frameCount: meta.frameCount } : (estFrameCount ? { frameCount: estFrameCount } : {})),
     ...(meta?.resolution ? { resolution: meta.resolution } : {}),
-    // duration/frameRate/frameCount/resolution can be provided via env overrides if needed
   };
   const defaultOutput: any = {
     frameRate: 60,
@@ -108,7 +121,7 @@ export async function buildTopazCreateBody(inputUrl: string, meta?: TopazSourceM
     videoEncoder: 'H265',
     videoProfile: 'Main',
     dynamicCompressionLevel: 'Mid',
-    resolution: { width: 3840, height: 2160 },
+    resolution: { width: outW, height: outH },
     container: 'mp4',
   };
   const defaultFilters: any = [
