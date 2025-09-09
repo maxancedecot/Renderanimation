@@ -15,7 +15,8 @@ type Item = {
 export default function LibraryGrid() {
   const qc = useQueryClient();
   const [topaz, setTopaz] = useState<Record<string, { taskId?: string; status?: string; url?: string | null; message?: string | null; saved?: boolean }>>({});
-  const [tpzDebug, setTpzDebug] = useState<Record<string, any>>({});
+  // Debug Topaz removed
+  const [is4k, setIs4k] = useState<Record<string, boolean>>({});
   const { data, isLoading, error } = useQuery({
     queryKey: ["library"],
     queryFn: async () => {
@@ -108,26 +109,7 @@ export default function LibraryGrid() {
     },
   });
 
-  const debugUpscale = useMutation({
-    mutationFn: async (vars: { itemId: string; url: string }) => {
-      const r = await fetch("/api/topaz/upscale?debug=1", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ inputUrl: vars.url, debug: true })
-      }).then(r => r.json());
-      if (r.error || !r.debug) throw new Error(r.error || "Réponse debug invalide");
-      return { itemId: vars.itemId, data: r } as { itemId: string; data: any };
-    },
-    onMutate: ({ itemId }) => {
-      toast.loading("Préparation payload Topaz…", { id: `tpzdbg-${itemId}` });
-      setTpzDebug((m) => ({ ...m, [itemId]: null }));
-    },
-    onSuccess: ({ itemId, data }) => {
-      setTpzDebug((m) => ({ ...m, [itemId]: data }));
-      toast.success("Payload prêt", { id: `tpzdbg-${itemId}` });
-    },
-    onError: (e: any, vars) => toast.error(e?.message || "Erreur debug Topaz", { id: `tpzdbg-${vars.itemId}` }),
-  });
+  // Debug Topaz removed
 
   if (isLoading) return <p>Chargement…</p>;
   if (error) return <p className="text-red-600">Erreur: {(error as any)?.message}</p>;
@@ -138,8 +120,23 @@ export default function LibraryGrid() {
     <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
       {items.map(it => (
         <div key={it.id} className="rounded-xl border bg-white p-4 shadow-sm">
-          <div className="aspect-video rounded-lg overflow-hidden ring-1 ring-black/5">
-            <video src={it.videoUrl} controls className="w-full h-full object-cover" />
+          <div className="aspect-video rounded-lg overflow-hidden ring-1 ring-black/5 relative">
+            <video
+              src={it.videoUrl}
+              controls
+              className="w-full h-full object-cover"
+              onLoadedMetadata={(e) => {
+                const v = e.currentTarget as HTMLVideoElement;
+                const w = v.videoWidth, h = v.videoHeight;
+                const is = w >= 3840 || h >= 2160;
+                setIs4k((m) => ({ ...m, [it.id]: is }));
+              }}
+            />
+            {is4k[it.id] && (
+              <span className="absolute top-2 left-2 rounded-md bg-green-600 px-2 py-1 text-[11px] font-semibold text-white shadow">
+                4K
+              </span>
+            )}
           </div>
           <div className="mt-3">
             <div className="flex items-start justify-between gap-3">
@@ -153,17 +150,11 @@ export default function LibraryGrid() {
                   className="inline-flex items-center justify-center rounded-lg bg-black px-4 py-2 text-white hover:bg-black/90"
                 >Télécharger</a>
                 <button
-                  onClick={() => debugUpscale.mutate({ itemId: it.id, url: it.videoUrl })}
-                  className="inline-flex items-center justify-center rounded-lg border px-4 py-2 hover:bg-neutral-50 disabled:opacity-60"
-                  disabled={debugUpscale.isPending}
-                  title="Voir la requête envoyée à Topaz"
-                >{tpzDebug[it.id] ? 'Rafraîchir debug' : 'Debug Topaz'}</button>
-                <button
                   onClick={() => upscale.mutate({ itemId: it.id, url: it.videoUrl })}
                   className="inline-flex items-center justify-center rounded-lg border px-4 py-2 hover:bg-neutral-50 disabled:opacity-60"
                   disabled={!!topaz[it.id]?.taskId || upscale.isPending}
-                  title="Upscale 4K avec Topaz Labs"
-                >{topaz[it.id]?.taskId ? "4K en cours…" : "Upscale 4K (Topaz)"}</button>
+                  title="Upscale 4K"
+                >{topaz[it.id]?.taskId ? "4K en cours…" : "Upscale 4K"}</button>
                 <button
                   onClick={() => del.mutate(it.id)}
                   className="inline-flex items-center justify-center rounded-lg border px-4 py-2 hover:bg-neutral-50"
@@ -172,12 +163,7 @@ export default function LibraryGrid() {
                 >Supprimer</button>
               </div>
             </div>
-            {tpzDebug[it.id] && (
-              <div className="mt-2 rounded-lg bg-neutral-50 p-3 text-[11px] ring-1 ring-black/5 max-h-48 overflow-auto">
-                <div className="font-semibold mb-1">Topaz debug</div>
-                <pre className="whitespace-pre-wrap break-all">{JSON.stringify(tpzDebug[it.id], null, 2)}</pre>
-              </div>
-            )}
+            {/* Debug Topaz panel removed */}
             {!!topaz[it.id]?.status && (
               <div className="mt-2 text-xs text-neutral-600">{`Topaz 4K: ${topaz[it.id]?.status}`}{topaz[it.id]?.message ? ` — ${topaz[it.id]?.message}` : ''}</div>
             )}
