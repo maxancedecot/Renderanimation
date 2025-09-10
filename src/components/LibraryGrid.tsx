@@ -236,8 +236,7 @@ export default function LibraryGrid() {
                 <div className="flex flex-col gap-2">
                   <div className="flex items-center gap-2">
                     <a
-                      href={it.videoUrl}
-                      download
+                      href={`/api/download?url=${encodeURIComponent(it.videoUrl)}`}
                       className="inline-flex items-center justify-center rounded-lg bg-black px-4 py-2 text-white hover:bg-black/90 whitespace-nowrap"
                     >
                       Télécharger
