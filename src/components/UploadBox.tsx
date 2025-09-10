@@ -546,7 +546,8 @@ export default function UploadBox() {
               <video id="kling-video" src={finalVideoUrl} controls className="mt-4 w-full rounded-xl ring-1 ring-black/5" />
               <div className="mt-4 flex items-center gap-3">
                 <a
-                  href={`/api/download?url=${encodeURIComponent(finalVideoUrl)}`}
+                  href={finalVideoUrl}
+                  download
                   className="inline-flex items-center justify-center rounded-lg bg-black px-4 py-2 text-white hover:bg-black/90"
                 >Télécharger</a>
                 <a href="/library" className="text-sm rounded-md border px-3 py-2 hover:bg-neutral-50">Voir la bibliothèque</a>
@@ -584,7 +585,7 @@ export default function UploadBox() {
                   <h3 className="font-semibold">Version 4K</h3>
                   <video src={topaz4kUrl} controls className="mt-2 w-full rounded-xl ring-1 ring-black/5" />
                   <div className="mt-3 flex items-center gap-2">
-                    <a href={`/api/download?url=${encodeURIComponent(topaz4kUrl)}`} className="inline-flex items-center justify-center rounded-lg bg-black px-4 py-2 text-white hover:bg-black/90">Télécharger</a>
+                    <a href={topaz4kUrl} download className="inline-flex items-center justify-center rounded-lg bg-black px-4 py-2 text-white hover:bg-black/90">Télécharger</a>
                   </div>
                 </div>
               )}
