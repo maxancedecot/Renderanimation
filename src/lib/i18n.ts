@@ -30,7 +30,7 @@ const M: Record<Lang, Record<string, string>> = {
     stepsTitle3: 'Génération',
     stepsDesc3: 'Création automatique de la vidéo à partir du rendu.',
     reviewsTitle: 'Avis clients',
-    footer: 'Propulsé par Maxance Decot 🚀',
+    footer: 'Propulsé par RenderAnimation.app',
     // App/Upload
     uploadHeader: 'Uploader un rendu 3D',
     formatsHint: 'Formats JPG/PNG',
@@ -132,7 +132,7 @@ const M: Record<Lang, Record<string, string>> = {
     stepsTitle3: 'Generate',
     stepsDesc3: 'Automatically create the video from your still.',
     reviewsTitle: 'Customer reviews',
-    footer: 'Powered by Maxance Decot 🚀',
+    footer: 'Powered by RenderAnimation.app',
     // App/Upload
     uploadHeader: 'Upload a 3D render',
     formatsHint: 'JPG/PNG formats',
@@ -234,7 +234,7 @@ const M: Record<Lang, Record<string, string>> = {
     stepsTitle3: 'Genereren',
     stepsDesc3: 'Maak automatisch de video van je stilstaande beeld.',
     reviewsTitle: 'Klantreviews',
-    footer: 'Aangedreven door Maxance Decot 🚀',
+    footer: 'Aangedreven door RenderAnimation.app',
     // App/Upload
     uploadHeader: 'Een 3D-render uploaden',
     formatsHint: 'JPG/PNG-formaten',
