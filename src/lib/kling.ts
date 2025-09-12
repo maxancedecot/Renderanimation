@@ -86,7 +86,8 @@ export async function createImageToVideoTask(input: CreateTaskInput): Promise<Cr
     let msg = data?.message || `HTTP ${res.status} ${res.statusText}`;
     // Normalize specific known errors
     if (typeof msg === 'string' && /account balance not enough/i.test(msg)) {
-      msg = 'Error 0411';
+      // Return only the code, without any prefix
+      throw new Error('Error 0411');
     }
     throw new Error(`Kling create task error: ${msg}`);
   }

@@ -431,7 +431,7 @@ export default function UploadBox() {
             className={clsx(
               "mt-4 block rounded-xl border-2 border-dashed p-8 text-center transition cursor-pointer",
               "bg-neutral-50 hover:bg-neutral-100",
-              "border-neutral-300 dark:border-neutral-700",
+              "border-neutral-300",
               isDragging && "border-indigo-500 bg-indigo-50"
             )}
           >
@@ -443,7 +443,7 @@ export default function UploadBox() {
             />
             <div className="text-sm text-neutral-600">
               {file ? (
-                <span className="font-medium text-black dark:text-white">{file.name}</span>
+                <span className="font-medium text-black">{file.name}</span>
               ) : (
                 <>{t(lang, 'uploadDropHint')}</>
               )}

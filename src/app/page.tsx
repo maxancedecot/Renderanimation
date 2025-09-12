@@ -21,7 +21,7 @@ export default function Page() {
             <p className="text-neutral-600">{t(lang, 'heroSub')}</p>
             <div className="flex gap-3 pt-1">
               <a href="/signin" className="inline-flex items-center justify-center rounded-lg bg-black px-4 py-2 text-white hover:bg-black/90">{t(lang, 'ctaSignIn')}</a>
-              <a href="#pricing" className="inline-flex items-center justify-center rounded-lg border px-4 py-2 hover:bg-neutral-50 dark:hover:bg-neutral-800">{t(lang, 'ctaSeePricing')}</a>
+              <a href="#pricing" className="inline-flex items-center justify-center rounded-lg border px-4 py-2 hover:bg-neutral-50">{t(lang, 'ctaSeePricing')}</a>
             </div>
           </div>
           <div className="relative">
