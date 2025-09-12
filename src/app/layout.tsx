@@ -2,6 +2,9 @@
 import "./globals.css";
 import Providers from "@/components/Providers";
 import ThemeToggle from "@/components/ThemeToggle";
+import LanguageSwitcher from "@/components/LanguageSwitcher";
+import { getRequestLang } from "@/lib/i18n-server";
+import { t } from "@/lib/i18n";
 import { auth } from "@/src/lib/auth";
 
 export const metadata = {
@@ -11,8 +14,9 @@ export const metadata = {
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
+  const lang = getRequestLang();
   return (
-    <html lang="fr" className="h-full">
+    <html lang={lang} className="h-full">
       <head>
         {/* ✅ Fallback Tailwind via CDN : les styles s’appliquent immédiatement */}
         <script src="https://cdn.tailwindcss.com"></script>
@@ -45,17 +49,18 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                 />
               </a>
               <nav className="flex items-center gap-4 text-sm text-neutral-600">
-                <a href="/#pricing" className="hover:text-black">Tarifs</a>
+                <a href="/#pricing" className="hover:text-black">{t(lang, 'navPricing')}</a>
                 {session?.user ? (
                   <>
-                    <a href="/app" className="hover:text-black">App</a>
-                    <a href="/library" className="hover:text-black">Bibliothèque</a>
-                    <a href="/account" className="hover:text-black">Espace</a>
+                    <a href="/app" className="hover:text-black">{t(lang, 'navApp')}</a>
+                    <a href="/library" className="hover:text-black">{t(lang, 'navLibrary')}</a>
+                    <a href="/account" className="hover:text-black">{t(lang, 'navAccount')}</a>
                   </>
                 ) : (
-                  <a href="/signin" className="hover:text-black">Connexion</a>
+                  <a href="/signin" className="hover:text-black">{t(lang, 'navSignin')}</a>
                 )}
                 <ThemeToggle />
+                <LanguageSwitcher initial={lang} />
               </nav>
             </div>
           </header>
@@ -67,7 +72,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
           {/* Footer */}
           <footer className="mt-16 border-t py-8 text-center text-sm text-neutral-500">
-            © {new Date().getFullYear()} RenderAnimation — Propulsé par Maxance Decot 🚀
+            © {new Date().getFullYear()} RenderAnimation — {t(lang, 'footer')}
           </footer>
         </Providers>
       </body>

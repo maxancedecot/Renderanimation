@@ -1,13 +1,14 @@
 // src/app/page.tsx — public landing page (concept + pricing)
-import { normalizeLang, t } from "@/lib/i18n";
+import { t } from "@/lib/i18n";
+import { getRequestLang } from "@/lib/i18n-server";
 
 export const metadata = {
   title: "RenderAnimation — Anime tes rendus 3D",
   description: "Landing page: concept, bénéfices et tarifs par vidéos/mois.",
 };
 
-export default function Page({ searchParams }: { searchParams?: { [key: string]: string | string[] | undefined } }) {
-  const lang = normalizeLang(Array.isArray(searchParams?.lang) ? searchParams?.lang[0] : searchParams?.lang);
+export default function Page() {
+  const lang = getRequestLang();
   return (
     <div className="space-y-12">
       {/* Hero */}
@@ -20,21 +21,11 @@ export default function Page({ searchParams }: { searchParams?: { [key: string]:
               alt="RenderAnimation"
               className="h-8 w-auto mb-2 invert-dark"
             />
-            <h1 className="text-3xl md:text-4xl font-semibold leading-tight">
-              Anime tes <span className="underline decoration-black/30">rendus 3D</span> en 3 clics
-            </h1>
-            <p className="text-neutral-600">
-              Upload → Analyse de l’image → Génération de vidéo.
-              Parfait pour les promoteurs immobiliers et studios d’archi qui veulent
-              animer des rendus statiques sans budget vidéo exorbitant.
-            </p>
+            <h1 className="text-3xl md:text-4xl font-semibold leading-tight">{t(lang, 'heroTitle')}</h1>
+            <p className="text-neutral-600">{t(lang, 'heroSub')}</p>
             <div className="flex gap-3 pt-1">
-              <a href="/signin" className="inline-flex items-center justify-center rounded-lg bg-black px-4 py-2 text-white hover:bg-black/90">
-                Se connecter
-              </a>
-              <a href="#pricing" className="inline-flex items-center justify-center rounded-lg border px-4 py-2 hover:bg-neutral-50 dark:hover:bg-neutral-800">
-                Voir les tarifs
-              </a>
+              <a href="/signin" className="inline-flex items-center justify-center rounded-lg bg-black px-4 py-2 text-white hover:bg-black/90">{t(lang, 'ctaSignIn')}</a>
+              <a href="#pricing" className="inline-flex items-center justify-center rounded-lg border px-4 py-2 hover:bg-neutral-50 dark:hover:bg-neutral-800">{t(lang, 'ctaSeePricing')}</a>
             </div>
           </div>
           <div className="relative">
@@ -117,12 +108,12 @@ export default function Page({ searchParams }: { searchParams?: { [key: string]:
 
       {/* Comment ça marche */}
       <section className="rounded-2xl border bg-white p-6 shadow-sm">
-        <h2 className="text-lg font-semibold">Comment ça marche</h2>
+        <h2 className="text-lg font-semibold">{t(lang, 'howItWorks')}</h2>
         <div className="grid md:grid-cols-3 gap-4 text-center mt-4">
           {[
-            { n: 1, t: "Upload", d: "Importez votre rendu (JPG/PNG)." },
-            { n: 2, t: "Analyse", d: "L’image est analysée pour en extraire un prompt adapté." },
-            { n: 3, t: "Génération", d: "Création automatique de la vidéo à partir du rendu." },
+            { n: 1, t: t(lang, 'stepsTitle1'), d: t(lang, 'stepsDesc1') },
+            { n: 2, t: t(lang, 'stepsTitle2'), d: t(lang, 'stepsDesc2') },
+            { n: 3, t: t(lang, 'stepsTitle3'), d: t(lang, 'stepsDesc3') },
           ].map((s) => (
             <div key={s.n} className="rounded-xl bg-white p-5 ring-1 ring-black/5">
               <div className="text-2xl font-semibold step-number">{s.n}</div>
@@ -135,15 +126,7 @@ export default function Page({ searchParams }: { searchParams?: { [key: string]:
 
       {/* Tarifs */}
       <section id="pricing" className="space-y-4">
-        <div className="flex items-center justify-between gap-3">
-          <h2 className="text-lg font-semibold">{t(lang, 'pricingTitle')}</h2>
-          <div className="text-xs text-neutral-600 space-x-2">
-            <span>{t(lang, 'language')}:</span>
-            <a href="/?lang=fr#pricing" className="underline">FR</a>
-            <a href="/?lang=en#pricing" className="underline">EN</a>
-            <a href="/?lang=nl#pricing" className="underline">NL</a>
-          </div>
-        </div>
+        <h2 className="text-lg font-semibold">{t(lang, 'pricingTitle')}</h2>
         <p className="text-sm text-neutral-600">{t(lang, 'pricingSubtitle')}</p>
         <div className="grid md:grid-cols-3 gap-6">
           {[
@@ -172,7 +155,7 @@ export default function Page({ searchParams }: { searchParams?: { [key: string]:
 
       {/* Avis clients */}
       <section className="rounded-2xl border bg-white p-6 shadow-sm">
-        <h2 className="text-lg font-semibold">Avis clients</h2>
+        <h2 className="text-lg font-semibold">{t(lang, 'reviewsTitle')}</h2>
         <div className="grid md:grid-cols-3 gap-6 mt-4">
           {[
             {

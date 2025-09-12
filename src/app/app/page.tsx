@@ -1,5 +1,7 @@
 // src/app/app/page.tsx
 import UploadBox from "@/components/UploadBox";
+import { getRequestLang } from "@/lib/i18n-server";
+import { t } from "@/lib/i18n";
 import { auth } from "@/src/lib/auth";
 import { redirect } from "next/navigation";
 
@@ -8,6 +10,7 @@ export default async function AppPage() {
   if (!session?.user) {
     redirect("/signin");
   }
+  const lang = getRequestLang();
   return (
     <div className="space-y-10">
       <section className="rounded-3xl bg-white shadow-sm ring-1 ring-black/5 p-8 md:p-10">
@@ -20,13 +23,8 @@ export default async function AppPage() {
               alt="RenderAnimation"
               className="h-8 w-auto mb-2 invert-dark"
             />
-            <h1 className="text-3xl md:text-4xl font-semibold leading-tight">
-              Anime tes <span className="underline decoration-black/30">rendus 3D</span> en 3 clics
-            </h1>
-            <p className="text-neutral-600">
-              Upload → Analyse de l’image → Génération de vidéo.
-              Parfait pour les promoteurs immobiliers qui souhaitent animer des rendus 3D statiques sans payer un prix exorbitant.
-            </p>
+            <h1 className="text-3xl md:text-4xl font-semibold leading-tight">{t(lang, 'heroTitle')}</h1>
+            <p className="text-neutral-600">{t(lang, 'heroSub')}</p>
           </div>
           {/* Vidéo d'exemple à droite (sans fond, légère ombre) */}
           <div className="relative">
