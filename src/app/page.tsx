@@ -1,11 +1,13 @@
 // src/app/page.tsx — public landing page (concept + pricing)
+import { normalizeLang, t } from "@/lib/i18n";
 
 export const metadata = {
   title: "RenderAnimation — Anime tes rendus 3D",
   description: "Landing page: concept, bénéfices et tarifs par vidéos/mois.",
 };
 
-export default function Page() {
+export default function Page({ searchParams }: { searchParams?: { [key: string]: string | string[] | undefined } }) {
+  const lang = normalizeLang(Array.isArray(searchParams?.lang) ? searchParams?.lang[0] : searchParams?.lang);
   return (
     <div className="space-y-12">
       {/* Hero */}
@@ -133,20 +135,33 @@ export default function Page() {
 
       {/* Tarifs */}
       <section id="pricing" className="space-y-4">
-        <h2 className="text-lg font-semibold">Tarifs (abonnement)</h2>
-        <p className="text-sm text-neutral-600">Nombre de vidéos incluses par mois.</p>
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="text-lg font-semibold">{t(lang, 'pricingTitle')}</h2>
+          <div className="text-xs text-neutral-600 space-x-2">
+            <span>{t(lang, 'language')}:</span>
+            <a href="/?lang=fr#pricing" className="underline">FR</a>
+            <a href="/?lang=en#pricing" className="underline">EN</a>
+            <a href="/?lang=nl#pricing" className="underline">NL</a>
+          </div>
+        </div>
+        <p className="text-sm text-neutral-600">{t(lang, 'pricingSubtitle')}</p>
         <div className="grid md:grid-cols-3 gap-6">
           {[
-            { price: "25€", credits: "5 vidéos / mois", cta: "S’abonner" },
-            { price: "45€", credits: "10 vidéos / mois", cta: "S’abonner", highlight: true },
-            { price: "80€", credits: "20 vidéos / mois", cta: "S’abonner" },
+            { price: "25€", count: 5 },
+            { price: "45€", count: 10, discountKey: 'discount10', highlight: true },
+            { price: "80€", count: 20, discountKey: 'discount20' },
           ].map((p) => (
             <div key={p.price} className={`rounded-2xl border bg-white p-6 shadow-sm ${p.highlight ? "ring-2 ring-indigo-500" : ""}`}>
-              <div className="text-3xl font-semibold">{p.price}</div>
-              <div className="mt-1 text-sm text-neutral-600">{p.credits}</div>
+              <div className="text-3xl font-semibold flex items-baseline gap-3">
+                <span>{p.price}</span>
+                {p.discountKey ? (
+                  <span className="text-xs font-medium text-green-700 bg-green-100 rounded px-2 py-0.5 ring-1 ring-green-300">{t(lang, p.discountKey)}</span>
+                ) : null}
+              </div>
+              <div className="mt-1 text-sm text-neutral-600">{t(lang, 'videosPerMonth', { count: p.count })}</div>
               <div className="mt-4">
                 <a href="/signin" className="inline-flex items-center justify-center rounded-lg bg-black px-4 py-2 text-white hover:bg-black/90 w-full">
-                  {p.cta}
+                  {t(lang, 'subscribe')}
                 </a>
               </div>
             </div>
