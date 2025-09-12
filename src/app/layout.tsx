@@ -1,7 +1,7 @@
 // src/app/layout.tsx
 import "./globals.css";
 import Providers from "@/components/Providers";
-import LanguageSwitcher from "@/components/LanguageSwitcher";
+import HeaderNav from "@/components/HeaderNav";
 import { getRequestLang } from "@/lib/i18n-server";
 import { t } from "@/lib/i18n";
 import { auth } from "@/src/lib/auth";
@@ -39,19 +39,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                   className="h-8 w-auto"
                 />
               </a>
-              <nav className="flex items-center gap-4 text-sm text-neutral-600">
-                <a href="/#pricing" className="hover:text-black">{t(lang, 'navPricing')}</a>
-                {session?.user ? (
-                  <>
-                    <a href="/app" className="hover:text-black">{t(lang, 'navApp')}</a>
-                    <a href="/library" className="hover:text-black">{t(lang, 'navLibrary')}</a>
-                    <a href="/account" className="hover:text-black">{t(lang, 'navAccount')}</a>
-                  </>
-                ) : (
-                  <a href="/signin" className="hover:text-black">{t(lang, 'navSignin')}</a>
-                )}
-                <LanguageSwitcher initial={lang} />
-              </nav>
+              <HeaderNav lang={lang} isAuthed={!!session?.user} />
             </div>
           </header>
 
