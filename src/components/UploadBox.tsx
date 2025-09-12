@@ -452,7 +452,7 @@ export default function UploadBox() {
 
           <div className="mt-4 flex gap-3">
             <button
-              className="inline-flex items-center justify-center rounded-lg bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-600/90 disabled:opacity-60"
+              className="inline-flex items-center justify-center rounded-lg bg-[#F9D83C] px-4 py-2 text-black hover:bg-[#F9D83C]/90 disabled:opacity-60"
               onClick={() => file && uploadAndAnalyze.mutate(file)}
               disabled={!file || uploadAndAnalyze.isPending}
             >

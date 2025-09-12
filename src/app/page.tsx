@@ -134,7 +134,7 @@ export default function Page() {
             { price: "45€", count: 10, discountKey: 'discount10', highlight: true },
             { price: "80€", count: 20, discountKey: 'discount20' },
           ].map((p) => (
-            <div key={p.price} className={`rounded-2xl border bg-white p-6 shadow-sm ${p.highlight ? "ring-2 ring-indigo-500" : ""}`}>
+            <div key={p.price} className={`rounded-2xl border bg-white p-6 shadow-sm ${p.highlight ? "ring-2 ring-[#F9D83C] border-[#F9D83C]" : ""}`}>
               <div className="text-3xl font-semibold flex items-baseline gap-3">
                 <span>{p.price}</span>
                 {p.discountKey ? (
