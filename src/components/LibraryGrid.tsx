@@ -2,6 +2,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
+import { getClientLang, t } from "@/lib/i18n";
 
 type Item = {
   id: string;
@@ -15,6 +16,7 @@ type Item = {
 
 export default function LibraryGrid() {
   const qc = useQueryClient();
+  const lang = getClientLang();
   const [topaz, setTopaz] = useState<Record<string, { taskId?: string; status?: string; url?: string | null; message?: string | null; saved?: boolean }>>({});
   // Debug Topaz removed
   const [is4k, setIs4k] = useState<Record<string, boolean>>({});
@@ -77,12 +79,12 @@ export default function LibraryGrid() {
     },
     onMutate: ({ itemId }) => {
       setTopaz((m) => ({ ...m, [itemId]: { status: "queued", url: null, message: null } }));
-      toast.loading("Upscale RA 4K lancé…", { id: `tpz-${itemId}` });
+      toast.loading(t(lang, 'toast4kStart'), { id: `tpz-${itemId}` });
       setTopazStart((s) => ({ ...s, [itemId]: Date.now() }));
     },
     onSuccess: ({ taskId, itemId }) => {
       setTopaz((m) => ({ ...m, [itemId]: { ...m[itemId], taskId, status: "queued" } }));
-      toast.success("RA 4K: tâche envoyée", { id: `tpz-${itemId}` });
+      toast.success(t(lang, 'toast4kReceived'), { id: `tpz-${itemId}` });
       // start polling
       const poll = async () => {
         try {
@@ -93,7 +95,7 @@ export default function LibraryGrid() {
           const message = r.message || null;
           setTopaz((m) => ({ ...m, [itemId]: { ...m[itemId], status, url, message } }));
           if (status === "failed") {
-            toast.error(message || "Upscale 4K échoué", { id: `tpz-${itemId}` });
+            toast.error(message || t(lang, 'toast4kFailed'), { id: `tpz-${itemId}` });
             return; // stop
           }
           if ((status === "succeeded" || status === "success") && url) {
@@ -115,13 +117,13 @@ export default function LibraryGrid() {
           }
           setTimeout(poll, 5000);
         } catch (e: any) {
-          toast.error(e?.message || "Erreur statut RA 4K", { id: `tpz-${itemId}` });
+          toast.error(e?.message || t(lang, 'toast4kError'), { id: `tpz-${itemId}` });
         }
       };
       poll();
     },
     onError: (e: any, vars) => {
-      if (vars?.itemId) toast.error(e?.message || "Erreur RA 4K", { id: `tpz-${vars.itemId}` });
+      if (vars?.itemId) toast.error(e?.message || t(lang, 'toast4kError'), { id: `tpz-${vars.itemId}` });
     },
   });
 
@@ -152,37 +154,37 @@ export default function LibraryGrid() {
     );
   }
 
-  if (isLoading) return <p>Chargement…</p>;
-  if (error) return <p className="text-red-600">Erreur: {(error as any)?.message}</p>;
+  if (isLoading) return <p>{t(lang, 'loading')}</p>;
+  if (error) return <p className="text-red-600">{t(lang, 'errorPrefix')} {(error as any)?.message}</p>;
   const items = data || [];
   const folders = folderData || [];
   const filtered = selectedFolder === 'all' ? items : items.filter(it => it.folderId === selectedFolder);
-  if (items.length === 0) return <p>Aucune vidéo enregistrée pour le moment.</p>;
+  if (items.length === 0) return <p>{t(lang, 'emptyLibrary')}</p>;
 
   return (
     <div>
     <div className="mb-4 flex items-center justify-between gap-3">
       <div className="flex items-center gap-2">
-        <label className="text-sm text-neutral-600">Dossier:</label>
+        <label className="text-sm text-neutral-600">{t(lang, 'folderLabel')}</label>
         <select
           className="rounded-md border px-2 py-1 text-sm"
           value={selectedFolder}
           onChange={(e) => setSelectedFolder(e.target.value as any)}
         >
-          <option value="all">Tous</option>
+          <option value="all">{t(lang, 'all')}</option>
           {folders.map(f => (<option key={f.id} value={f.id}>{f.name}</option>))}
         </select>
         <button
           className="inline-flex items-center justify-center rounded-lg border px-3 py-1.5 text-sm hover:bg-neutral-50 disabled:opacity-50"
           disabled={selectedFolder === 'all'}
           onClick={() => { if (selectedFolder !== 'all') setConfirmDeleteFolder(selectedFolder); }}
-        >Supprimer le dossier</button>
+        >{t(lang, 'deleteFolder')}</button>
       </div>
       <div className="flex items-center gap-2">
         <input
           value={newFolderName}
           onChange={(e) => setNewFolderName(e.target.value)}
-          placeholder="Nouveau dossier"
+          placeholder={t(lang, 'newFolderPlaceholder')}
           className="rounded-md border px-2 py-1 text-sm"
         />
         <button
@@ -200,7 +202,7 @@ export default function LibraryGrid() {
             setNewFolderName('');
             qc.invalidateQueries({ queryKey: ['libraryFolders'] });
           }}
-        >Créer</button>
+        >{t(lang, 'create')}</button>
       </div>
     </div>
     <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -224,10 +226,10 @@ export default function LibraryGrid() {
                   <span className="absolute top-2 left-2 rounded-md bg-green-100 px-2 py-1 text-[11px] font-semibold text-green-800 ring-1 ring-green-300 shadow-sm">4K</span>
                 ) : null}
                 <button
-                  aria-label="Supprimer"
+                  aria-label={t(lang, 'deleteTooltip')}
                   className="absolute top-2 right-2 inline-flex h-6 w-6 items-center justify-center rounded-full bg-rose-100/70 text-white hover:bg-rose-200/80 ring-1 ring-rose-300 shadow-sm text-xs"
                   onClick={() => setConfirmDelete({ id: it.id })}
-                  title="Supprimer"
+                  title={t(lang, 'deleteTooltip')}
                 >
                   ×
                 </button>
@@ -240,16 +242,16 @@ export default function LibraryGrid() {
                       download
                       className="inline-flex items-center justify-center rounded-lg bg-black px-4 py-2 text-white hover:bg-black/90 whitespace-nowrap"
                     >
-                      Télécharger
+                      {t(lang, 'download')}
                     </a>
                     {!show4k ? (
                       <button
                         onClick={() => upscale.mutate({ itemId: it.id, url: it.videoUrl })}
                         className="inline-flex items-center justify-center rounded-lg bg-green-100 px-4 py-2 text-green-800 ring-1 ring-green-300 hover:bg-green-100/80 disabled:opacity-60 whitespace-nowrap"
                         disabled={!!topaz[it.id]?.taskId || upscale.isPending}
-                        title="Upscale 4K"
+                        title={t(lang, 'upscale4k')}
                       >
-                        {topaz[it.id]?.taskId ? '4K en cours…' : 'Upscale 4K'}
+                        {topaz[it.id]?.taskId ? t(lang, 'fourkPending') : t(lang, 'upscale4k')}
                       </button>
                     ) : null}
                   </div>
@@ -264,7 +266,7 @@ export default function LibraryGrid() {
                         qc.invalidateQueries({ queryKey: ['library'] });
                       }}
                     >
-                      <option value=''>Sans dossier</option>
+                      <option value=''>{t(lang, 'noFolder')}</option>
                       {folders.map(f => (<option key={f.id} value={f.id}>{f.name}</option>))}
                     </select>
                   </div>
@@ -280,7 +282,7 @@ export default function LibraryGrid() {
                           const s = topaz[it.id]?.status;
                           const m = topaz[it.id]?.message;
                           if (s === 'processing' || s === 'queued') {
-                            return 'RA 4K: en cours — Cela peut prendre jusqu’à 5 minutes.';
+                            return t(lang, 'ra4kInProgress');
                           }
                           return `RA 4K: ${s}${m ? ` — ${m}` : ''}`;
                         })()}
@@ -292,7 +294,7 @@ export default function LibraryGrid() {
                         const s = topaz[it.id]?.status;
                         const m = topaz[it.id]?.message;
                         if (s === 'processing' || s === 'queued') {
-                          return 'RA 4K: en cours — Cela peut prendre jusqu’à 5 minutes.';
+                          return t(lang, 'ra4kInProgress');
                         }
                         return `RA 4K: ${s}${m ? ` — ${m}` : ''}`;
                       })()}
@@ -301,7 +303,7 @@ export default function LibraryGrid() {
                 </div>
               ) : null}
               {/* Removed extra 4K download link under buttons */}
-              {it.project ? (<div className="mt-1 text-xs text-neutral-600">Projet: {it.project}</div>) : null}
+              {it.project ? (<div className="mt-1 text-xs text-neutral-600">{t(lang, 'projectLabel')} {it.project}</div>) : null}
               {!!it.tags?.length ? (
                 <div className="mt-2 flex gap-1 flex-wrap">
                   {it.tags.map((t) => (
@@ -316,22 +318,22 @@ export default function LibraryGrid() {
       {confirmDelete ? (
         <div className="fixed inset-0 z-50 grid place-items-center bg-black/30 p-4" role="dialog" aria-modal="true">
           <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl ring-1 ring-black/5">
-            <h3 className="text-lg font-semibold">Confirmer la suppression</h3>
-            <p className="mt-2 text-sm text-neutral-600">Êtes-vous sûr de vouloir supprimer la vidéo ? Cette action est irréversible.</p>
+            <h3 className="text-lg font-semibold">{t(lang, 'confirmDeleteTitle')}</h3>
+            <p className="mt-2 text-sm text-neutral-600">{t(lang, 'confirmDeleteBody')}</p>
             <div className="mt-4 flex justify-end gap-3">
               <button
                 className="inline-flex items-center justify-center rounded-lg border px-4 py-2 hover:bg-neutral-50"
                 onClick={() => setConfirmDelete(null)}
                 disabled={del.isPending}
               >
-                Non
+                {t(lang, 'no')}
               </button>
               <button
                 className="inline-flex items-center justify-center rounded-lg bg-rose-600 px-4 py-2 text-white hover:bg-rose-600/90 disabled:opacity-60"
                 onClick={() => { if (confirmDelete) { del.mutate(confirmDelete.id); setConfirmDelete(null); } }}
                 disabled={del.isPending}
               >
-                Oui
+                {t(lang, 'yes')}
               </button>
             </div>
           </div>
@@ -340,8 +342,8 @@ export default function LibraryGrid() {
       {confirmDeleteFolder ? (
         <div className="fixed inset-0 z-50 grid place-items-center bg-black/30 p-4" role="dialog" aria-modal="true">
           <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl ring-1 ring-black/5">
-            <h3 className="text-lg font-semibold">Supprimer ce dossier ?</h3>
-            <p className="mt-2 text-sm text-neutral-600">Les vidéos du dossier ne seront pas supprimées et resteront sans dossier.</p>
+            <h3 className="text-lg font-semibold">{t(lang, 'deleteFolderTitle')}</h3>
+            <p className="mt-2 text-sm text-neutral-600">{t(lang, 'deleteFolderBody')}</p>
             <div className="mt-4 flex justify-end gap-3">
               <button
                 className="inline-flex items-center justify-center rounded-lg border px-4 py-2 hover:bg-neutral-50"

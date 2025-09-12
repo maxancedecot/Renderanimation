@@ -2,6 +2,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
+import { getClientLang, t } from "@/lib/i18n";
 
 /* Helpers */
 function fileToBase64(file: File): Promise<string> {
@@ -31,6 +32,7 @@ function ProgressBar({ percent }: { percent: number }) {
 
 export default function UploadBox() {
   const qc = useQueryClient();
+  const lang = getClientLang();
 
   const [file, setFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -107,14 +109,14 @@ export default function UploadBox() {
       setFinalVideoUrl(null);
       setKlingTaskId(null);
       setProgress(0);
-      toast.loading("Upload en cours…", { id: "ua" });
+      toast.loading(t(lang, 'toastUploading'), { id: "ua" });
     },
     onSuccess: (data) => {
       setImageUrl(data.imagePublicUrl);
-      toast.success("Image uploadée ✅", { id: "ua" });
+      toast.success(t(lang, 'toastUploaded'), { id: "ua" });
     },
     onError: (e: any) => {
-      toast.error(e?.message || "Erreur d’upload", { id: "ua" });
+      toast.error(e?.message || t(lang, 'toastUploadError'), { id: "ua" });
     }
   });
 
@@ -139,16 +141,16 @@ export default function UploadBox() {
       return r.cleanedUrl as string;
     },
     onMutate: () => {
-      toast.loading("Suppression des personnes…", { id: "rp" });
+      toast.loading(t(lang, 'toastRemoving'), { id: "rp" });
       setCleanedUrl(null);
       setResult(null);
     },
     onSuccess: (url) => {
       setCleanedUrl(url);
       setImageUrl(url); // on bascule sur l’image nettoyée
-      toast.success("Personnes retirées ✅", { id: "rp" });
+      toast.success(t(lang, 'toastRemoved'), { id: "rp" });
     },
-    onError: (e: any) => toast.error(e?.message || "Erreur suppression", { id: "rp" })
+    onError: (e: any) => toast.error(e?.message || t(lang, 'toastRemoveError'), { id: "rp" })
   });
 
   /* 2) Analyse + prompt (sur l’image actuelle : nettoyée si dispo) */
@@ -164,14 +166,14 @@ export default function UploadBox() {
       return res;
     },
     onMutate: () => {
-      toast.loading("Analyse en cours…", { id: "an" });
+      toast.loading(t(lang, 'toastAnalyzing'), { id: "an" });
       setResult(null);
     },
     onSuccess: (data) => {
       setResult(data);
-      toast.success("Analyse OK ✅", { id: "an" });
+      toast.success(t(lang, 'toastAnalyzed'), { id: "an" });
     },
-    onError: (e: any) => toast.error(e?.message || "Erreur analyse", { id: "an" })
+    onError: (e: any) => toast.error(e?.message || t(lang, 'toastAnalyzeError'), { id: "an" })
   });
 
   /* 3) Soumettre (Kling) */
@@ -193,16 +195,16 @@ export default function UploadBox() {
       return { taskId: r.taskId as string };
     },
     onMutate: () => {
-      toast.loading("Tâche soumise…", { id: "kg" });
+      toast.loading(t(lang, 'toastTaskSubmitted'), { id: "kg" });
       setKlingTaskId(null);
       setFinalVideoUrl(null);
       setProgress(0);
     },
     onSuccess: (res) => {
       setKlingTaskId(res.taskId);
-      toast.success("Tâche reçue", { id: "kg" });
+      toast.success(t(lang, 'toastTaskReceived'), { id: "kg" });
     },
-    onError: (e: any) => toast.error(e?.message || "Erreur génération", { id: "kg" })
+    onError: (e: any) => toast.error(e?.message || t(lang, 'toastError'), { id: "kg" })
   });
 
   /* 4) Poll Kling */
@@ -222,12 +224,12 @@ export default function UploadBox() {
   useEffect(() => {
     if (!statusData) return;
     if (statusData.status === "failed") {
-      toast.error(statusData.message || "La génération a échoué", { id: "ks" });
+      toast.error(statusData.message || t(lang, 'toastGenFailed'), { id: "ks" });
       setKlingTaskId(null);
       setProgress(0);
       qc.removeQueries({ queryKey: statusQueryKey });
     } else if (statusData.status === "succeed" && statusData.videoUrl) {
-      toast.success("Vidéo prête ✨", { id: "ks" });
+      toast.success(t(lang, 'toastVideoReady'), { id: "ks" });
       setFinalVideoUrl(statusData.videoUrl);
       setKlingTaskId(null);
       setProgress(100);
@@ -250,8 +252,8 @@ export default function UploadBox() {
       return r.item;
     },
     onMutate: () => toast.loading("Enregistrement dans la bibliothèque…", { id: "lib" }),
-    onSuccess: () => toast.success("Enregistré ✅", { id: "lib" }),
-    onError: (e: any) => toast.error(e?.message || "Erreur", { id: "lib" }),
+    onSuccess: () => toast.success(t(lang, 'toastSaved'), { id: "lib" }),
+    onError: (e: any) => toast.error(e?.message || t(lang, 'toastError'), { id: "lib" }),
   });
   const save4kToLibrary = useMutation({
     mutationFn: async (url: string) => {
@@ -305,16 +307,16 @@ export default function UploadBox() {
       return r.taskId as string;
     },
     onMutate: () => {
-      toast.loading("Upscale RA 4K lancé…", { id: "tpz" });
+      toast.loading(t(lang, 'toast4kStart'), { id: "tpz" });
       setTopazTaskId(null);
       setTopaz4kUrl(null);
       setTopazProgress(0);
     },
     onSuccess: (taskId) => {
       setTopazTaskId(taskId);
-      toast.success("RA 4K: tâche reçue", { id: "tpz" });
+      toast.success(t(lang, 'toast4kReceived'), { id: "tpz" });
     },
-    onError: (e: any) => toast.error(e?.message || "Erreur RA 4K", { id: "tpz" })
+    onError: (e: any) => toast.error(e?.message || t(lang, 'toast4kError'), { id: "tpz" })
   });
 
   // Debug Topaz removed
@@ -335,11 +337,11 @@ export default function UploadBox() {
   useEffect(() => {
     if (!topazStatus) return;
     if (topazStatus.status === "failed") {
-      toast.error(topazStatus.message || "Upscale RA 4K échoué", { id: "tpzs" });
+      toast.error(topazStatus.message || t(lang, 'toast4kFailed'), { id: "tpzs" });
       setTopazTaskId(null);
       qc.removeQueries({ queryKey: topazKey });
     } else if ((topazStatus.status === "succeeded" || topazStatus.status === "success") && topazStatus.videoUrl) {
-      toast.success("Version 4K prête ✨", { id: "tpzs" });
+      toast.success(t(lang, 'toast4kReady'), { id: "tpzs" });
       setTopaz4kUrl(topazStatus.videoUrl);
       setTopazTaskId(null);
       setTopazProgress(100);
@@ -401,15 +403,15 @@ export default function UploadBox() {
             <div className="grid grid-cols-3 gap-3">
               <div className={boxClass(step1Done, step1Active)}>
                 <div className={numClass(step1Done, step1Active) + " step-number"}>1</div>
-                <div className="text-xs mt-1">Upload</div>
+                <div className="text-xs mt-1">{t(lang, 'stepsTitle1')}</div>
               </div>
               <div className={boxClass(step2Done, step2Active)}>
                 <div className={numClass(step2Done, step2Active) + " step-number"}>2</div>
-                <div className="text-xs mt-1">Analyse</div>
+                <div className="text-xs mt-1">{t(lang, 'stepsTitle2')}</div>
               </div>
               <div className={boxClass(step3Done, step3Active)}>
                 <div className={numClass(step3Done, step3Active) + " step-number"}>3</div>
-                <div className="text-xs mt-1">Génération de vidéo</div>
+                <div className="text-xs mt-1">{t(lang, 'stepsTitle3')}</div>
               </div>
             </div>
           );
@@ -419,8 +421,8 @@ export default function UploadBox() {
       <div className="space-y-6">
         {/* Upload */}
         <div className="rounded-2xl border bg-white p-6 shadow-sm">
-          <h2 className="text-lg font-semibold">Uploader un rendu 3D</h2>
-          <p className="text-sm text-neutral-600 mt-1">Formats JPG/PNG</p>
+          <h2 className="text-lg font-semibold">{t(lang, 'uploadHeader')}</h2>
+          <p className="text-sm text-neutral-600 mt-1">{t(lang, 'formatsHint')}</p>
 
           <label
             onDrop={onDrop}
@@ -443,7 +445,7 @@ export default function UploadBox() {
               {file ? (
                 <span className="font-medium text-black dark:text-white">{file.name}</span>
               ) : (
-                <>Glisse ton image ou <span className="underline">clique pour parcourir</span></>
+                <>{t(lang, 'uploadDropHint')}</>
               )}
             </div>
           </label>
@@ -454,14 +456,14 @@ export default function UploadBox() {
               onClick={() => file && uploadAndAnalyze.mutate(file)}
               disabled={!file || uploadAndAnalyze.isPending}
             >
-              {uploadAndAnalyze.isPending ? "Upload…" : "Uploader"}
+              {uploadAndAnalyze.isPending ? t(lang, 'uploading') : t(lang, 'uploadButton')}
             </button>
             <button
               className="inline-flex items-center justify-center rounded-lg border px-4 py-2 hover:bg-neutral-50 disabled:opacity-50"
               onClick={() => { setFile(null); setImageUrl(null); setCleanedUrl(null); setResult(null); setFinalVideoUrl(null); }}
               disabled={uploadAndAnalyze.isPending}
             >
-              Réinitialiser
+              {t(lang, 'reset')}
             </button>
           </div>
         </div>
@@ -469,7 +471,7 @@ export default function UploadBox() {
         {/* Nettoyage personnes + Analyse + Génération */}
         {imageUrl && (
           <div className="rounded-2xl border bg-white p-6 shadow-sm space-y-4">
-            <h2 className="text-lg font-semibold">Préparation</h2>
+            <h2 className="text-lg font-semibold">{t(lang, 'preparation')}</h2>
 
             {!result && (
               <div className="flex flex-wrap gap-3">
@@ -478,7 +480,7 @@ export default function UploadBox() {
                   onClick={() => setShowRemoveConfirm(true)}
                   disabled={removePeople.isPending}
                 >
-                  {removePeople.isPending ? "Retrait des personnes…" : "Retirer les personnes"}
+                  {removePeople.isPending ? t(lang, 'removingPeople') : t(lang, 'removePeople')}
                 </button>
 
                 <button
@@ -486,7 +488,7 @@ export default function UploadBox() {
                   onClick={() => runAnalyze.mutate()}
                   disabled={runAnalyze.isPending}
                 >
-                  {runAnalyze.isPending ? "Analyse…" : "Analyser l’image"}
+                  {runAnalyze.isPending ? t(lang, 'analyzing') : t(lang, 'analyzeImage')}
                 </button>
               </div>
             )}
@@ -494,14 +496,14 @@ export default function UploadBox() {
             {result && (
               <>
                 <h3 className="font-semibold">Image analysée — prête à être animée</h3>
-                <p className="text-sm text-neutral-600">Clique sur Générer la vidéo pour lancer l’animation.</p>
+                <p className="text-sm text-neutral-600">{t(lang, 'generateHint')}</p>
                 <div className="flex gap-2 flex-wrap">
                   <button
                     className="inline-flex items-center justify-center rounded-lg bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-600/90 disabled:opacity-60"
                     onClick={() => createKling.mutate({ prompt: result.prompt })}
                     disabled={createKling.isPending || !!klingTaskId}
                   >
-                    {createKling.isPending ? "Démarrage…" : (!!klingTaskId ? "En cours…" : "Générer la vidéo")}
+                    {createKling.isPending ? t(lang, 'generateStarting') : (!!klingTaskId ? t(lang, 'generateInProgress') : t(lang, 'generateAction'))}
                   </button>
                 </div>
               </>
@@ -510,7 +512,7 @@ export default function UploadBox() {
             {!!klingTaskId && (
               <div className="space-y-2 pt-2">
                 <ProgressBar percent={progress} />
-                <p className="text-sm text-neutral-600">{`Tâche: ${statusData?.status || "envoi…"}`}</p>
+                <p className="text-sm text-neutral-600">{`Tâche: ${statusData?.status || t(lang, 'ra4kSending')}`}</p>
                 {statusData?.message && <p className="text-xs text-neutral-500">{statusData.message}</p>}
               </div>
             )}
@@ -522,9 +524,9 @@ export default function UploadBox() {
       {/* Colonne droite : aperçu + vidéo */}
       <div className="space-y-6">
         <div className="rounded-2xl border bg-white p-6 shadow-sm">
-          <h2 className="text-lg font-semibold">Aperçu</h2>
+          <h2 className="text-lg font-semibold">{t(lang, 'preview')}</h2>
           {!imageUrl ? (
-            <p className="text-sm text-neutral-600 mt-2">Aucune image pour le moment.</p>
+            <p className="text-sm text-neutral-600 mt-2">{t(lang, 'noImageYet')}</p>
           ) : (
             <>
               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -538,9 +540,9 @@ export default function UploadBox() {
         </div>
 
         <div className="rounded-2xl border bg-white p-6 shadow-sm">
-          <h2 className="text-lg font-semibold">Vidéo générée</h2>
+          <h2 className="text-lg font-semibold">{t(lang, 'videoGenerated')}</h2>
           {!finalVideoUrl ? (
-            <p className="text-sm text-neutral-600 mt-2">La vidéo apparaîtra ici une fois prête.</p>
+            <p className="text-sm text-neutral-600 mt-2">{t(lang, 'videoPending')}</p>
           ) : (
             <>
               <video id="kling-video" src={finalVideoUrl} controls className="mt-4 w-full rounded-xl ring-1 ring-black/5" />
@@ -549,14 +551,14 @@ export default function UploadBox() {
                   href={finalVideoUrl}
                   download
                   className="inline-flex items-center justify-center rounded-lg bg-black px-4 py-2 text-white hover:bg-black/90"
-                >Télécharger</a>
-                <a href="/library" className="text-sm rounded-md border px-3 py-2 hover:bg-neutral-50">Voir la bibliothèque</a>
+                >{t(lang, 'download')}</a>
+                <a href="/library" className="text-sm rounded-md border px-3 py-2 hover:bg-neutral-50">{t(lang, 'viewLibrary')}</a>
                 <button
                   className="inline-flex items-center justify-center rounded-lg bg-green-100 px-4 py-2 text-green-800 ring-1 ring-green-300 hover:bg-green-100/80 disabled:opacity-60 whitespace-nowrap"
                   onClick={() => createTopazUpscale.mutate()}
                   disabled={createTopazUpscale.isPending || !!topazTaskId}
                   title="Upscale 4K"
-                >{createTopazUpscale.isPending ? 'Upscale 4K…' : (!!topazTaskId ? '4K en cours…' : 'Upscale 4K')}</button>
+                >{createTopazUpscale.isPending ? t(lang, 'upscale4k') + '…' : (!!topazTaskId ? t(lang, 'fourkPending') : t(lang, 'upscale4k'))}</button>
               </div>
               {/* Capture metadata once */}
               {finalVideoUrl && (
@@ -569,12 +571,12 @@ export default function UploadBox() {
                     {(() => {
                       const s = topazStatus?.status;
                       if (s === 'processing' || s === 'queued') {
-                        return 'RA 4K: en cours — Cela peut prendre jusqu’à 5 minutes.';
+                        return t(lang, 'ra4kInProgress');
                       }
                       if (s) {
                         return `RA 4K: ${s}${topazStatus?.message ? ` — ${topazStatus.message}` : ''}`;
                       }
-                      return 'RA 4K: envoi…';
+                      return t(lang, 'ra4kSending');
                     })()}
                   </div>
                 </div>
@@ -582,10 +584,10 @@ export default function UploadBox() {
               {/* Debug Topaz section removed */}
               {topaz4kUrl && (
                 <div className="mt-6">
-                  <h3 className="font-semibold">Version 4K</h3>
+                  <h3 className="font-semibold">{t(lang, 'version4k')}</h3>
                   <video src={topaz4kUrl} controls className="mt-2 w-full rounded-xl ring-1 ring-black/5" />
                   <div className="mt-3 flex items-center gap-2">
-                    <a href={topaz4kUrl} download className="inline-flex items-center justify-center rounded-lg bg-black px-4 py-2 text-white hover:bg-black/90">Télécharger</a>
+                    <a href={topaz4kUrl} download className="inline-flex items-center justify-center rounded-lg bg-black px-4 py-2 text-white hover:bg-black/90">{t(lang, 'download')}</a>
                   </div>
                 </div>
               )}
@@ -598,9 +600,9 @@ export default function UploadBox() {
       {showRemoveConfirm && (
         <div className="fixed inset-0 z-50 grid place-items-center bg-black/30 p-4" role="dialog" aria-modal="true">
           <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl ring-1 ring-black/5">
-            <h3 className="text-lg font-semibold">Retirer les personnes ?</h3>
+            <h3 className="text-lg font-semibold">{t(lang, 'confirmRemoveTitle')}</h3>
             <p className="mt-2 text-sm text-neutral-600">
-              Cette opération peut modifier le ratio de l’image nettoyée. Veux-tu continuer ?
+              {t(lang, 'confirmRemoveBody')}
             </p>
             <div className="mt-4 flex justify-end gap-3">
               <button
@@ -608,14 +610,14 @@ export default function UploadBox() {
                 onClick={() => setShowRemoveConfirm(false)}
                 disabled={removePeople.isPending}
               >
-                Annuler
+                {t(lang, 'cancel')}
               </button>
               <button
                 className="inline-flex items-center justify-center rounded-lg bg-rose-600 px-4 py-2 text-white hover:bg-rose-600/90 disabled:opacity-60"
                 onClick={() => { setShowRemoveConfirm(false); removePeople.mutate(); }}
                 disabled={removePeople.isPending}
               >
-                Continuer
+                {t(lang, 'continue')}
               </button>
             </div>
           </div>
