@@ -4,6 +4,9 @@ const M: Record<Lang, Record<string, string>> = {
   fr: {
     pricingTitle: 'Tarifs (abonnement)',
     pricingSubtitle: 'Nombre de vidéos incluses par mois.',
+    pricingMonthly: 'Mensuel',
+    pricingYearly: 'Annuel',
+    billedYearly: 'Facturé annuellement',
     subscribe: "S’abonner",
     videosPerMonth: '{count} vidéos / mois',
     discount10: '10% moins cher',
@@ -102,6 +105,9 @@ const M: Record<Lang, Record<string, string>> = {
   en: {
     pricingTitle: 'Pricing (subscription)',
     pricingSubtitle: 'Number of videos included per month.',
+    pricingMonthly: 'Monthly',
+    pricingYearly: 'Yearly',
+    billedYearly: 'Billed yearly',
     subscribe: 'Subscribe',
     videosPerMonth: '{count} videos / month',
     discount10: '10% cheaper',
@@ -200,6 +206,9 @@ const M: Record<Lang, Record<string, string>> = {
   nl: {
     pricingTitle: 'Prijzen (abonnement)',
     pricingSubtitle: 'Aantal video’s per maand inbegrepen.',
+    pricingMonthly: 'Maandelijks',
+    pricingYearly: 'Jaarlijks',
+    billedYearly: 'Jaarlijks gefactureerd',
     subscribe: 'Abonneren',
     videosPerMonth: "{count} video's / maand",
     discount10: '10% goedkoper',

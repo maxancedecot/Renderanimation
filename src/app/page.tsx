@@ -1,6 +1,7 @@
 // src/app/page.tsx — public landing page (concept + pricing)
 import { t } from "@/lib/i18n";
 import { getRequestLang } from "@/lib/i18n-server";
+import Pricing from "@/components/Pricing";
 
 export const metadata = {
   title: "RenderAnimation — Anime tes rendus 3D",
@@ -125,33 +126,7 @@ export default function Page() {
       </section>
 
       {/* Tarifs */}
-      <section id="pricing" className="space-y-4">
-        <h2 className="text-lg font-semibold">{t(lang, 'pricingTitle')}</h2>
-        <p className="text-sm text-neutral-600">{t(lang, 'pricingSubtitle')}</p>
-        <div className="grid md:grid-cols-3 gap-6">
-          {[
-            { price: "25€", count: 5 },
-            { price: "45€", count: 10, discountKey: 'discount10', highlight: true },
-            { price: "80€", count: 20, discountKey: 'discount20' },
-          ].map((p) => (
-            <div key={p.price} className={`rounded-2xl border bg-white p-6 shadow-sm ${p.highlight ? "ring-2 ring-[#F9D83C] border-[#F9D83C]" : ""}`}>
-              <div className="text-3xl font-semibold flex items-baseline gap-3">
-                <span>{p.price}</span>
-                {p.discountKey ? (
-                  <span className="text-xs font-medium text-green-700 bg-green-100 rounded px-2 py-0.5 ring-1 ring-green-300">{t(lang, p.discountKey)}</span>
-                ) : null}
-              </div>
-              <div className="mt-1 text-sm text-neutral-600">{t(lang, 'videosPerMonth', { count: p.count })}</div>
-              <div className="mt-4">
-                <a href="/signin" className="inline-flex items-center justify-center rounded-lg bg-black px-4 py-2 text-white hover:bg-black/90 w-full">
-                  {t(lang, 'subscribe')}
-                </a>
-              </div>
-            </div>
-          ))}
-        </div>
-        <p className="text-xs text-neutral-500">Prix HT indicatifs. Annulation à tout moment.</p>
-      </section>
+      <Pricing lang={lang} />
 
       {/* Avis clients */}
       <section className="rounded-2xl border bg-white p-6 shadow-sm">
