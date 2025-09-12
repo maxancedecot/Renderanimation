@@ -2,7 +2,7 @@
 
 export const metadata = {
   title: "RenderAnimation — Anime tes rendus 3D",
-  description: "Landing page: concept, bénéfices et tarifs par crédits.",
+  description: "Landing page: concept, bénéfices et tarifs par vidéos/mois.",
 };
 
 export default function Page() {
@@ -134,12 +134,12 @@ export default function Page() {
       {/* Tarifs */}
       <section id="pricing" className="space-y-4">
         <h2 className="text-lg font-semibold">Tarifs (abonnement)</h2>
-        <p className="text-sm text-neutral-600">Crédits consommés par génération. Les crédits se renouvellent chaque mois.</p>
+        <p className="text-sm text-neutral-600">Nombre de vidéos incluses par mois.</p>
         <div className="grid md:grid-cols-3 gap-6">
           {[
-            { price: "25€", credits: "400 crédits / mois", cta: "S’abonner" },
-            { price: "45€", credits: "800 crédits / mois", cta: "S’abonner", highlight: true },
-            { price: "80€", credits: "1600 crédits / mois", cta: "S’abonner" },
+            { price: "25€", credits: "5 vidéos / mois", cta: "S’abonner" },
+            { price: "45€", credits: "10 vidéos / mois", cta: "S’abonner", highlight: true },
+            { price: "80€", credits: "20 vidéos / mois", cta: "S’abonner" },
           ].map((p) => (
             <div key={p.price} className={`rounded-2xl border bg-white p-6 shadow-sm ${p.highlight ? "ring-2 ring-indigo-500" : ""}`}>
               <div className="text-3xl font-semibold">{p.price}</div>
