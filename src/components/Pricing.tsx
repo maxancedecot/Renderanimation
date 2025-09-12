@@ -7,17 +7,18 @@ type Plan = {
   count: number;
   highlight?: boolean;
   discountKey?: string;
+  supports4k?: boolean;
 };
 
 export default function Pricing({ lang }: { lang: Lang }) {
   const [cycle, setCycle] = useState<'monthly' | 'yearly'>('monthly');
   const plans: Plan[] = [
     { priceMonthly: 25, count: 5 },
-    { priceMonthly: 45, count: 10, discountKey: 'discount10', highlight: true },
-    { priceMonthly: 80, count: 20, discountKey: 'discount20' },
+    { priceMonthly: 45, count: 10, discountKey: 'discount10', highlight: true, supports4k: true },
+    { priceMonthly: 80, count: 20, discountKey: 'discount20', supports4k: true },
   ];
   const formatPrice = (n: number) => `${n}€`;
-  const compute = (p: Plan) => cycle === 'monthly' ? p.priceMonthly : p.priceMonthly * 12;
+  const compute = (p: Plan) => cycle === 'monthly' ? p.priceMonthly : p.priceMonthly * 10;
 
   return (
     <section id="pricing" className="space-y-4">
@@ -49,6 +50,9 @@ export default function Pricing({ lang }: { lang: Lang }) {
               ) : null}
             </div>
             <div className="mt-1 text-sm text-neutral-600">{t(lang, 'videosPerMonth', { count: p.count })}</div>
+            {p.supports4k ? (
+              <div className="mt-1 text-xs text-neutral-700">{t(lang, 'includes4k')}</div>
+            ) : null}
             {cycle === 'yearly' ? (
               <div className="mt-1 text-xs text-neutral-500">{t(lang, 'billedYearly')}</div>
             ) : null}
@@ -64,4 +68,3 @@ export default function Pricing({ lang }: { lang: Lang }) {
     </section>
   );
 }
-
