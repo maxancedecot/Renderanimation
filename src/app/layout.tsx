@@ -62,7 +62,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
           {/* Footer */}
           <footer className="mt-16 border-t py-8 text-center text-sm text-neutral-500">
-            © {new Date().getFullYear()} RenderAnimation — {t(lang, 'footer')}
+            {t(lang, 'footer')}
           </footer>
         </Providers>
       </body>

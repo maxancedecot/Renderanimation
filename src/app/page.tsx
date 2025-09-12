@@ -16,12 +16,7 @@ export default function Page() {
       <section className="rounded-3xl bg-white shadow-sm ring-1 ring-black/5 p-8 md:p-12">
         <div className="grid md:grid-cols-2 gap-10 items-center">
           <div className="space-y-4">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="https://pub-60f579eb256a4570ad9e0494f23007ac.r2.dev/0be6fd1e-8741-4a4a-ab61-6e6accc5edc8.png"
-              alt="RenderAnimation"
-              className="h-8 w-auto mb-2"
-            />
+            {/* Logo au-dessus du titre retiré */}
             <h1 className="text-3xl md:text-4xl font-semibold leading-tight">{t(lang, 'heroTitle')}</h1>
             <p className="text-neutral-600">{t(lang, 'heroSub')}</p>
             <div className="flex gap-3 pt-1">
