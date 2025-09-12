@@ -83,7 +83,11 @@ export async function createImageToVideoTask(input: CreateTaskInput): Promise<Cr
 
   const data = await res.json().catch(() => ({} as any));
   if (!res.ok || data?.code !== 0) {
-    const msg = data?.message || `HTTP ${res.status} ${res.statusText}`;
+    let msg = data?.message || `HTTP ${res.status} ${res.statusText}`;
+    // Normalize specific known errors
+    if (typeof msg === 'string' && /account balance not enough/i.test(msg)) {
+      msg = 'Error 0411';
+    }
     throw new Error(`Kling create task error: ${msg}`);
   }
 

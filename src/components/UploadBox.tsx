@@ -499,7 +499,7 @@ export default function UploadBox() {
                 <p className="text-sm text-neutral-600">{t(lang, 'generateHint')}</p>
                 <div className="flex gap-2 flex-wrap">
                   <button
-                    className="inline-flex items-center justify-center rounded-lg bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-600/90 disabled:opacity-60"
+                    className="inline-flex items-center justify-center rounded-lg bg-[#F9D83C] px-4 py-2 text-black hover:bg-[#F9D83C]/90 disabled:opacity-60"
                     onClick={() => createKling.mutate({ prompt: result.prompt })}
                     disabled={createKling.isPending || !!klingTaskId}
                   >
@@ -554,10 +554,10 @@ export default function UploadBox() {
                 >{t(lang, 'download')}</a>
                 <a href="/library" className="text-sm rounded-md border px-3 py-2 hover:bg-neutral-50">{t(lang, 'viewLibrary')}</a>
                 <button
-                  className="inline-flex items-center justify-center rounded-lg bg-green-100 px-4 py-2 text-green-800 ring-1 ring-green-300 hover:bg-green-100/80 disabled:opacity-60 whitespace-nowrap"
+                  className="inline-flex items-center justify-center rounded-lg bg-[#F9D83C] px-4 py-2 text-black hover:bg-[#F9D83C]/90 disabled:opacity-60 whitespace-nowrap"
                   onClick={() => createTopazUpscale.mutate()}
                   disabled={createTopazUpscale.isPending || !!topazTaskId}
-                  title="Upscale 4K"
+                  title={t(lang, 'upscale4k')}
                 >{createTopazUpscale.isPending ? t(lang, 'upscale4k') + '…' : (!!topazTaskId ? t(lang, 'fourkPending') : t(lang, 'upscale4k'))}</button>
               </div>
               {/* Capture metadata once */}
