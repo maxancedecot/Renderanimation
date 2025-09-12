@@ -17,12 +17,12 @@ export default function LanguageSwitcher({ initial }: Props) {
     window.location.reload();
   };
   return (
-    <div className="flex items-center gap-1 rounded-full bg-black/5 px-1 py-1 text-xs text-neutral-700 dark:bg-white/10">
+    <div className="flex items-center gap-1 rounded-full bg-neutral-100 px-1 py-1 text-xs text-neutral-700 dark:bg-white/10">
       {(['fr','en','nl'] as const).map((v) => (
         <button
           key={v}
           onClick={() => set(v)}
-          className={`${lang === v ? 'bg-black text-white dark:bg-white dark:text-black' : 'text-neutral-700/80 hover:text-black dark:text-white/80 dark:hover:text-white'} px-2 py-0.5 rounded-full transition`}
+          className={`${lang === v ? 'bg-[#F9D83C] text-black shadow-sm' : 'text-neutral-400 hover:text-neutral-700 dark:text-white/60 dark:hover:text-white'} px-2.5 py-1 rounded-full transition`}
           aria-pressed={lang === v}
         >
           {v.toUpperCase()}
