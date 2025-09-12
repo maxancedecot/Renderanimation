@@ -22,7 +22,7 @@ export default function LanguageSwitcher({ initial }: Props) {
         <button
           key={v}
           onClick={() => set(v)}
-          className={`${lang === v ? 'bg-[#F9D83C] text-black shadow-sm' : 'text-neutral-400 hover:text-neutral-700 dark:text-white/60 dark:hover:text-white'} px-2.5 py-1 rounded-full transition`}
+          className={`${lang === v ? 'bg-[#F9D83C] text-black shadow-sm' : 'text-neutral-400'} px-2.5 py-1 rounded-full transition`}
           aria-pressed={lang === v}
         >
           {v.toUpperCase()}
