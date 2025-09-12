@@ -19,9 +19,9 @@ export default async function AppPage() {
             {/* Logo au-dessus du titre */}
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src="https://pub-60f579eb256a4570ad9e0494f23007ac.r2.dev/logo%20ra.png"
+              src="https://pub-60f579eb256a4570ad9e0494f23007ac.r2.dev/0be6fd1e-8741-4a4a-ab61-6e6accc5edc8.png"
               alt="RenderAnimation"
-              className="h-8 w-auto mb-2 invert-dark"
+              className="h-8 w-auto mb-2"
             />
             <h1 className="text-3xl md:text-4xl font-semibold leading-tight">{t(lang, 'heroTitle')}</h1>
             <p className="text-neutral-600">{t(lang, 'heroSub')}</p>
@@ -39,9 +39,9 @@ export default async function AppPage() {
             {/* Favicon en bas à gauche de la vidéo */}
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src="https://pub-60f579eb256a4570ad9e0494f23007ac.r2.dev/Favicon.png"
+              src="https://pub-60f579eb256a4570ad9e0494f23007ac.r2.dev/ledoux-embleem.png"
               alt="RenderAnimation"
-              className="absolute bottom-3 left-3 h-8 w-8 rounded-md shadow-md invert-dark"
+              className="absolute bottom-3 left-3 h-8 w-8 rounded-md shadow-md"
             />
           </div>
         </div>

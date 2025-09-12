@@ -1,7 +1,6 @@
 // src/app/layout.tsx
 import "./globals.css";
 import Providers from "@/components/Providers";
-import ThemeToggle from "@/components/ThemeToggle";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import { getRequestLang } from "@/lib/i18n-server";
 import { t } from "@/lib/i18n";
@@ -20,17 +19,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <head>
         {/* ✅ Fallback Tailwind via CDN : les styles s’appliquent immédiatement */}
         <script src="https://cdn.tailwindcss.com"></script>
-        {/* Set initial theme before paint */}
-        <script dangerouslySetInnerHTML={{ __html: `
-          try {
-            const t = localStorage.getItem('theme');
-            const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-            if (t === 'dark' || (!t && prefersDark)) document.documentElement.classList.add('dark');
-          } catch {}
-        ` }} />
         <link
           rel="icon"
-          href="https://pub-60f579eb256a4570ad9e0494f23007ac.r2.dev/Favicon.png"
+          href="https://pub-60f579eb256a4570ad9e0494f23007ac.r2.dev/ledoux-embleem.png"
           type="image/png"
         />
       </head>
@@ -43,9 +34,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                 {/* Replace text logo with image logo */}
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                  src="https://pub-60f579eb256a4570ad9e0494f23007ac.r2.dev/Favicon.png"
+                  src="https://pub-60f579eb256a4570ad9e0494f23007ac.r2.dev/0be6fd1e-8741-4a4a-ab61-6e6accc5edc8.png"
                   alt="RenderAnimation"
-                  className="h-8 w-auto invert-dark"
+                  className="h-8 w-auto"
                 />
               </a>
               <nav className="flex items-center gap-4 text-sm text-neutral-600">
@@ -59,7 +50,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                 ) : (
                   <a href="/signin" className="hover:text-black">{t(lang, 'navSignin')}</a>
                 )}
-                <ThemeToggle />
                 <LanguageSwitcher initial={lang} />
               </nav>
             </div>
