@@ -1,7 +1,7 @@
 // src/app/page.tsx — public landing page (concept + pricing)
 import { t } from "@/lib/i18n";
 import { getRequestLang } from "@/lib/i18n-server";
-import Pricing from "@/components/Pricing";
+import Script from "next/script";
 
 export const metadata = {
   title: "RenderAnimation — Anime tes rendus 3D",
@@ -120,8 +120,15 @@ export default function Page() {
         </div>
       </section>
 
-      {/* Tarifs */}
-      <Pricing lang={lang} />
+      {/* Tarifs — Stripe Pricing Table */}
+      <section id="pricing" className="space-y-4">
+        <Script async src="https://js.stripe.com/v3/pricing-table.js" />
+        <stripe-pricing-table
+          pricing-table-id="prctbl_1S6g94KGUOwmR3N2nzXOF3Ti"
+          publishable-key="pk_test_51S5a1eKGUOwmR3N2eyoF6oXiHGPNxPN1Ag4aTZLCwYc4KmZYxRqThb6566sT5CL46moYeisRBnvePkZ6QMsZsXGi00SOmVNsgz"
+        >
+        </stripe-pricing-table>
+      </section>
 
       {/* Avis clients */}
       <section className="rounded-2xl border bg-white p-6 shadow-sm">
