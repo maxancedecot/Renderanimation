@@ -120,14 +120,26 @@ export default function Page() {
         </div>
       </section>
 
-      {/* Tarifs — Stripe Pricing Table */}
+      {/* Tarifs — Stripe Pricing Table (localized) */}
       <section id="pricing" className="space-y-4">
         <Script async src="https://js.stripe.com/v3/pricing-table.js" />
-        <stripe-pricing-table
-          pricing-table-id="prctbl_1S6g94KGUOwmR3N2nzXOF3Ti"
-          publishable-key="pk_test_51S5a1eKGUOwmR3N2eyoF6oXiHGPNxPN1Ag4aTZLCwYc4KmZYxRqThb6566sT5CL46moYeisRBnvePkZ6QMsZsXGi00SOmVNsgz"
-        >
-        </stripe-pricing-table>
+        {(() => {
+          const key = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || "pk_test_51S5a1eKGUOwmR3N2eyoF6oXiHGPNxPN1Ag4aTZLCwYc4KmZYxRqThb6566sT5CL46moYeisRBnvePkZ6QMsZsXGi00SOmVNsgz";
+          const map: Record<string, string | undefined> = {
+            fr: process.env.NEXT_PUBLIC_STRIPE_PRICING_TABLE_ID_FR,
+            en: process.env.NEXT_PUBLIC_STRIPE_PRICING_TABLE_ID_EN,
+            nl: process.env.NEXT_PUBLIC_STRIPE_PRICING_TABLE_ID_NL,
+          };
+          const fallback = process.env.NEXT_PUBLIC_STRIPE_PRICING_TABLE_ID || "prctbl_1S6g94KGUOwmR3N2nzXOF3Ti";
+          const pricingId = map[lang] || fallback;
+          return (
+            <stripe-pricing-table
+              pricing-table-id={pricingId}
+              publishable-key={key}
+            >
+            </stripe-pricing-table>
+          );
+        })()}
       </section>
 
       {/* Avis clients */}
