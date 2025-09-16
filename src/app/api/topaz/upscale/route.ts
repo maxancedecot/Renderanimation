@@ -3,6 +3,7 @@ export const runtime = "nodejs";
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/src/lib/auth";
 import { topazCreateUpscale, buildTopazCreateBody } from "@/lib/topaz";
+import { getBilling, ensurePeriod } from "@/lib/billing";
 
 export async function POST(req: NextRequest) {
   // Tiny temporary env check: return basic config if ?debug=1
@@ -22,6 +23,16 @@ export async function POST(req: NextRequest) {
   const session = await auth();
   if (!session?.user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   try {
+    // Gate 4K to eligible subscriptions
+    const uid = String(session.user.id);
+    const rec = await getBilling(uid);
+    if (!rec || !rec.subscriptionStatus || !['trialing','active','past_due'].includes(rec.subscriptionStatus)) {
+      return NextResponse.json({ error: 'subscription_required' }, { status: 402 });
+    }
+    await ensurePeriod(uid, rec);
+    if (!rec.includes4k) {
+      return NextResponse.json({ error: 'fourk_not_included' }, { status: 402 });
+    }
     const urlObj = new URL(req.url);
     const debugFlag = urlObj.searchParams.get("debug") === "1";
     const { inputUrl, debug, meta } = await req.json();

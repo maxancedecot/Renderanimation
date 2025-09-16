@@ -5,6 +5,8 @@ import { NextResponse } from "next/server";
 import { createImageToVideoTask } from "@/lib/kling";
 import fs from "node:fs";
 import path from "node:path";
+import { auth } from "@/src/lib/auth";
+import { decrementVideoCredit } from "@/lib/billing";
 
 function guessMimeFromExt(p: string) {
   const ext = p.split(".").pop()?.toLowerCase();
@@ -17,6 +19,11 @@ function guessMimeFromExt(p: string) {
 
 export async function POST(req: Request) {
   try {
+    // Enforce subscription credits per user
+    const session = await auth();
+    const uid = session?.user?.id as string | undefined;
+    if (!uid) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+
     const { prompt, imageUrl, imageDataUrl, durationSec } = await req.json();
 
     if (!prompt || typeof prompt !== "string") {
@@ -39,6 +46,13 @@ export async function POST(req: Request) {
       const b64 = buf.toString("base64");
       const mime = guessMimeFromExt(filePath);
       finalImageDataUrl = `data:${mime};base64,${b64}`;
+    }
+
+    // Decrement 1 credit before sending the job
+    const dec = await decrementVideoCredit(uid);
+    if (!dec.ok) {
+      const msg = dec.reason === 'no_active_subscription' ? 'subscription_required' : 'quota_exceeded';
+      return NextResponse.json({ error: msg }, { status: 402 });
     }
 
     const { taskId } = await createImageToVideoTask({

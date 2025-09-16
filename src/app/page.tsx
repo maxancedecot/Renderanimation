@@ -2,14 +2,17 @@
 import { t } from "@/lib/i18n";
 import { getRequestLang } from "@/lib/i18n-server";
 import Script from "next/script";
+import { auth } from "@/src/lib/auth";
 
 export const metadata = {
   title: "RenderAnimation — Anime tes rendus 3D",
   description: "Landing page: concept, bénéfices et tarifs par vidéos/mois.",
 };
 
-export default function Page() {
+export default async function Page() {
   const lang = getRequestLang();
+  const session = await auth();
+  const uid = session?.user?.id ? String(session.user.id) : undefined;
   return (
     <div className="space-y-12">
       {/* Hero */}
@@ -136,6 +139,7 @@ export default function Page() {
             <stripe-pricing-table
               pricing-table-id={pricingId}
               publishable-key={key}
+              client-reference-id={uid as any}
             >
             </stripe-pricing-table>
           );
