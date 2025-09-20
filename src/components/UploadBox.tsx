@@ -34,6 +34,26 @@ export default function UploadBox() {
   const qc = useQueryClient();
   const lang = getClientLang();
 
+  // Billing credits for badge near Generate
+  const { data: billingData } = useQuery({
+    queryKey: ['billingMe'],
+    queryFn: async () => {
+      const r = await fetch('/api/billing/me');
+      if (!r.ok) return null;
+      return r.json();
+    },
+    staleTime: 10000,
+  });
+  const creditsBadge = (() => {
+    const b = (billingData as any)?.billing;
+    if (!b || typeof b.videosRemaining !== 'number' || typeof b.videosTotal !== 'number') return null;
+    return (
+      <span className="ml-2 inline-flex items-center rounded-full bg-neutral-100 px-2 py-0.5 text-xs text-neutral-700" title={t(lang,'credits')}>
+        {t(lang,'credits')}: {b.videosRemaining}/{b.videosTotal}
+      </span>
+    );
+  })();
+
   const [file, setFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
 
@@ -664,23 +684,4 @@ function MetadataCapture({ videoId, onMeta }: { videoId: string; onMeta: (m: { r
     return () => v.removeEventListener('loadedmetadata', handler);
   }, [videoId, onMeta]);
   return null;
-  // Billing credits
-  const { data: billingData } = useQuery({
-    queryKey: ['billingMe'],
-    queryFn: async () => {
-      const r = await fetch('/api/billing/me');
-      if (!r.ok) return null;
-      return r.json();
-    },
-    staleTime: 10000,
-  });
-  const creditsBadge = (() => {
-    const b = (billingData as any)?.billing;
-    if (!b || typeof b.videosRemaining !== 'number' || typeof b.videosTotal !== 'number') return null;
-    return (
-      <span className="ml-2 inline-flex items-center rounded-full bg-neutral-100 px-2 py-0.5 text-xs text-neutral-700" title={t(lang,'credits')}>
-        {t(lang,'credits')}: {b.videosRemaining}/{b.videosTotal}
-      </span>
-    );
-  })();
 }
