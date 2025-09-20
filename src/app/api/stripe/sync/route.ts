@@ -44,6 +44,7 @@ export async function GET(req: Request) {
     subscriptionStatus: status || 'active',
     priceId,
     productId,
+    subscriptionId: (subscription?.id as string | undefined),
     videosTotal: quotas?.videosTotal ?? 0,
     videosRemaining: quotas?.videosTotal ?? 0,
     includes4k: quotas?.includes4k ?? false,
@@ -69,4 +70,3 @@ export async function GET(req: Request) {
   }
   return NextResponse.json({ ok: false, error: 'user_not_mapped' }, { status: 404 });
 }
-

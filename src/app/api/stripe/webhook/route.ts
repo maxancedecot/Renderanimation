@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { findUserByEmail } from '@/lib/users';
-import { getBilling, planForPrice, setBilling, type BillingRecord } from '@/lib/billing';
+import { getBilling, planForPrice, setBilling, type BillingRecord, setCustomerIndex, setSubscriptionIndex, getUserIdBySubscription, getUserIdByCustomer } from '@/lib/billing';
 
 export const runtime = 'nodejs';
 
@@ -35,12 +35,14 @@ export async function POST(req: Request) {
         const productId: string | undefined = sub?.items?.data?.[0]?.price?.product;
         const status: BillingRecord['subscriptionStatus'] | undefined = sub?.status as any;
         const currentPeriodEnd: number | undefined = sub?.current_period_end as number | undefined;
+        const subscriptionId: string | undefined = (sub?.id as string | undefined) || subId;
         const quotas = priceId ? planForPrice(priceId) : null;
         const rec: BillingRecord = {
           stripeCustomerId: customerId,
           subscriptionStatus: status || 'active',
           priceId,
           productId,
+          subscriptionId,
           videosTotal: quotas?.videosTotal ?? 0,
           videosRemaining: quotas?.videosTotal ?? 0,
           includes4k: quotas?.includes4k ?? false,
@@ -52,6 +54,8 @@ export async function POST(req: Request) {
         if (refUserId) {
           const existing = (await getBilling(refUserId)) || {} as BillingRecord;
           await setBilling(refUserId, { ...existing, ...rec });
+          if (customerId) await setCustomerIndex(customerId, refUserId);
+          if (subscriptionId) await setSubscriptionIndex(subscriptionId, refUserId);
           break;
         }
         // Fallback: map by email
@@ -60,8 +64,44 @@ export async function POST(req: Request) {
           if (u) {
             const existing = (await getBilling(u.id)) || {} as BillingRecord;
             await setBilling(u.id, { ...existing, ...rec });
+            if (customerId) await setCustomerIndex(customerId, u.id);
+            if (subscriptionId) await setSubscriptionIndex(subscriptionId, u.id);
           }
         }
+        break;
+      }
+      case 'customer.subscription.updated': {
+        const sub = event.data.object as any;
+        const subId: string = sub.id;
+        const customerId: string = sub.customer;
+        // Resolve user id
+        let userId = await getUserIdBySubscription(subId);
+        if (!userId && customerId) userId = await getUserIdByCustomer(customerId);
+        if (!userId) break; // not mapped yet
+        const priceId: string | undefined = sub?.items?.data?.[0]?.price?.id;
+        const quotas = priceId ? planForPrice(priceId) : null;
+        const newEnd: number = sub.current_period_end;
+        const status: BillingRecord['subscriptionStatus'] = sub.status;
+        const existing = (await getBilling(userId)) || {} as BillingRecord;
+        const prevEnd = existing.currentPeriodEnd || 0;
+        // If moved to a new period or plan changed, reset credits
+        const videosTotal = quotas?.videosTotal ?? existing.videosTotal ?? 0;
+        const includes4k = quotas?.includes4k ?? existing.includes4k ?? false;
+        const shouldReset = newEnd > prevEnd;
+        const updated: BillingRecord = {
+          ...existing,
+          stripeCustomerId: customerId || existing.stripeCustomerId,
+          subscriptionId: subId,
+          priceId: priceId || existing.priceId,
+          productId: (sub?.items?.data?.[0]?.price?.product as string | undefined) || existing.productId,
+          subscriptionStatus: status,
+          videosTotal,
+          includes4k,
+          currentPeriodEnd: newEnd,
+          videosRemaining: shouldReset ? videosTotal : (existing.videosRemaining ?? videosTotal),
+          lastUpdatedAt: new Date().toISOString(),
+        };
+        await setBilling(userId, updated);
         break;
       }
       case 'customer.subscription.created':
