@@ -19,7 +19,8 @@ export async function GET(req: Request) {
   if (!sessResp.ok) return NextResponse.json({ error: session?.error?.message || 'fetch_session_failed' }, { status: 400 });
 
   const refUserId: string | undefined = session?.client_reference_id || undefined;
-  const customerId: string | undefined = session?.customer || session?.customer?.id || undefined;
+  const custAny: any = session?.customer;
+  const customerId: string | undefined = typeof custAny === 'string' ? custAny : custAny?.id || undefined;
   const email: string | undefined = session?.customer_details?.email || session?.customer?.email || undefined;
   let subscription: any = session?.subscription;
 

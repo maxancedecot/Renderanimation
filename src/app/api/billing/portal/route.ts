@@ -11,13 +11,16 @@ export async function GET(req: Request) {
   const uid = String((session.user as any).id || '');
   const rec = await getBilling(uid);
   if (!rec?.stripeCustomerId) return NextResponse.json({ error: 'no_customer' }, { status: 400 });
+  const custAny: any = rec.stripeCustomerId as any;
+  const customerId: string | undefined = typeof custAny === 'string' ? custAny : custAny?.id;
+  if (!customerId) return NextResponse.json({ error: 'invalid_customer' }, { status: 400 });
 
   const url = new URL(req.url);
   const origin = `${url.protocol}//${url.host}`;
   const returnUrl = process.env.BILLING_PORTAL_RETURN_URL || `${origin}/account`;
   const sk = process.env.STRIPE_SECRET_KEY;
   if (!sk) return NextResponse.json({ error: 'missing_stripe_key' }, { status: 500 });
-  const body = new URLSearchParams({ customer: rec.stripeCustomerId, return_url: returnUrl });
+  const body = new URLSearchParams({ customer: customerId, return_url: returnUrl });
   const resp = await fetch('https://api.stripe.com/v1/billing_portal/sessions', {
     method: 'POST',
     headers: { 'Authorization': `Bearer ${sk}`, 'Content-Type': 'application/x-www-form-urlencoded' },

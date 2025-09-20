@@ -39,7 +39,8 @@ export async function POST(req: Request) {
       case 'checkout.session.completed': {
         const session = event.data.object as any;
         const email: string | undefined = session?.customer_details?.email || session?.customer_email || undefined;
-        const customerId: string | undefined = session?.customer || undefined;
+        const custAny: any = session?.customer;
+        const customerId: string | undefined = typeof custAny === 'string' ? custAny : custAny?.id || undefined;
         const subId: string | undefined = session?.subscription || undefined;
         const refUserId: string | undefined = session?.client_reference_id || undefined;
 
