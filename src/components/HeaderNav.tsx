@@ -1,10 +1,31 @@
 "use client";
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { t, type Lang } from "@/lib/i18n";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 
 export default function HeaderNav({ lang, isAuthed }: { lang: Lang; isAuthed: boolean }) {
   const [open, setOpen] = useState(false);
+  const { data: billingData } = useQuery({
+    queryKey: ['billingMe'],
+    queryFn: async () => {
+      if (!isAuthed) return null;
+      const r = await fetch('/api/billing/me');
+      if (!r.ok) return null;
+      return r.json();
+    },
+    enabled: isAuthed,
+    staleTime: 10000,
+  });
+  const credits = (() => {
+    const b = (billingData as any)?.billing;
+    if (!isAuthed || !b || typeof b.videosRemaining !== 'number' || typeof b.videosTotal !== 'number') return null;
+    return (
+      <a href="/api/billing/portal" title={t(lang,'manageSubscription')} className="inline-flex items-center rounded-full bg-[#F9D83C] px-2 py-0.5 text-xs text-black hover:bg-[#F9D83C]/90">
+        {t(lang,'credits')}: {b.videosRemaining}/{b.videosTotal}
+      </a>
+    );
+  })();
 
   return (
     <div className="flex items-center gap-2">
@@ -21,6 +42,7 @@ export default function HeaderNav({ lang, isAuthed }: { lang: Lang; isAuthed: bo
           <a href="/signin" className="hover:text-black">{t(lang, 'navSignin')}</a>
         )}
         <LanguageSwitcher initial={lang} />
+        {credits}
       </nav>
 
       {/* Mobile hamburger */}
@@ -53,6 +75,12 @@ export default function HeaderNav({ lang, isAuthed }: { lang: Lang; isAuthed: bo
               <a href="/signin" onClick={() => setOpen(false)} className="rounded-md px-3 py-2 hover:bg-neutral-50">{t(lang, 'navSignin')}</a>
             )}
             <div className="border-t my-1"></div>
+            {credits ? (
+              <div className="px-3 py-1 flex items-center justify-between gap-2">
+                <span className="text-xs text-neutral-500">{t(lang,'credits')}</span>
+                {credits}
+              </div>
+            ) : null}
             <div className="px-3 py-1">
               <LanguageSwitcher initial={lang} />
             </div>
@@ -62,4 +90,3 @@ export default function HeaderNav({ lang, isAuthed }: { lang: Lang; isAuthed: bo
     </div>
   );
 }
-
