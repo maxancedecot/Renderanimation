@@ -1,13 +1,36 @@
 import { NextResponse } from 'next/server';
+import { createHmac, timingSafeEqual } from 'node:crypto';
 import { findUserByEmail } from '@/lib/users';
 import { getBilling, planForPrice, setBilling, type BillingRecord, setCustomerIndex, setSubscriptionIndex, getUserIdBySubscription, getUserIdByCustomer } from '@/lib/billing';
 
 export const runtime = 'nodejs';
 
 export async function POST(req: Request) {
-  // NOTE: For simplicity we parse the event without signature verification here.
-  // In production, verify using STRIPE_WEBHOOK_SECRET (HMAC) or the Stripe SDK.
+  // Read raw body for signature verification
   const text = await req.text();
+  const sig = req.headers.get('stripe-signature') || '';
+  const secret = process.env.STRIPE_WEBHOOK_SECRET || '';
+  if (!secret) return NextResponse.json({ error: 'missing_webhook_secret' }, { status: 500 });
+
+  // Verify Stripe signature (t=timestamp, v1=HMAC-SHA256 of `${t}.${payload}`)
+  function verifyStripeSignature(payload: string, header: string, secret: string): boolean {
+    try {
+      const parts = Object.fromEntries(header.split(',').map(kv => kv.split('=')) as any);
+      const t = parts['t'];
+      const v1 = parts['v1'];
+      if (!t || !v1) return false;
+      const data = `${t}.${payload}`;
+      const mac = createHmac('sha256', secret).update(data, 'utf8').digest('hex');
+      const a = Buffer.from(mac, 'utf8');
+      const b = Buffer.from(String(v1), 'utf8');
+      return a.length === b.length && timingSafeEqual(a, b);
+    } catch { return false; }
+  }
+
+  if (!verifyStripeSignature(text, sig, secret)) {
+    return NextResponse.json({ error: 'invalid_signature' }, { status: 400 });
+  }
+
   let event: any;
   try { event = JSON.parse(text); } catch { return NextResponse.json({ error: 'invalid_json' }, { status: 400 }); }
 

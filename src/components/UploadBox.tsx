@@ -203,6 +203,8 @@ export default function UploadBox() {
     onSuccess: (res) => {
       setKlingTaskId(res.taskId);
       toast.success(t(lang, 'toastTaskReceived'), { id: "kg" });
+      // Refresh credits after starting a generation
+      qc.invalidateQueries({ queryKey: ['billingMe'] });
     },
     onError: (e: any) => {
       const msg = String(e?.message || '');
@@ -515,7 +517,7 @@ export default function UploadBox() {
               <>
                 <h3 className="font-semibold">Image analysée — prête à être animée</h3>
                 <p className="text-sm text-neutral-600">{t(lang, 'generateHint')}</p>
-                <div className="flex gap-2 flex-wrap">
+                <div className="flex gap-2 flex-wrap items-center">
                   <button
                     className="inline-flex items-center justify-center rounded-lg bg-[#F9D83C] px-4 py-2 text-black hover:bg-[#F9D83C]/90 disabled:opacity-60"
                     onClick={() => createKling.mutate({ prompt: result.prompt })}
@@ -523,6 +525,7 @@ export default function UploadBox() {
                   >
                     {createKling.isPending ? t(lang, 'generateStarting') : (!!klingTaskId ? t(lang, 'generateInProgress') : t(lang, 'generateAction'))}
                   </button>
+                  {creditsBadge}
                 </div>
               </>
             )}
@@ -661,4 +664,23 @@ function MetadataCapture({ videoId, onMeta }: { videoId: string; onMeta: (m: { r
     return () => v.removeEventListener('loadedmetadata', handler);
   }, [videoId, onMeta]);
   return null;
+  // Billing credits
+  const { data: billingData } = useQuery({
+    queryKey: ['billingMe'],
+    queryFn: async () => {
+      const r = await fetch('/api/billing/me');
+      if (!r.ok) return null;
+      return r.json();
+    },
+    staleTime: 10000,
+  });
+  const creditsBadge = (() => {
+    const b = (billingData as any)?.billing;
+    if (!b || typeof b.videosRemaining !== 'number' || typeof b.videosTotal !== 'number') return null;
+    return (
+      <span className="ml-2 inline-flex items-center rounded-full bg-neutral-100 px-2 py-0.5 text-xs text-neutral-700" title={t(lang,'credits')}>
+        {t(lang,'credits')}: {b.videosRemaining}/{b.videosTotal}
+      </span>
+    );
+  })();
 }
