@@ -15,9 +15,10 @@ export default function StripeSync() {
         await fetch(`/api/stripe/sync?session_id=${encodeURIComponent(sid)}`).then(() => {});
       } catch {}
       setDone(true);
+      // Refresh server data so Account re-renders with updated billing
       router.replace('/account');
+      router.refresh();
     })();
   }, [sid, done, router]);
   return null;
 }
-
