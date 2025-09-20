@@ -8,7 +8,7 @@ export const runtime = 'nodejs';
 export async function GET(req: Request) {
   const session = await auth();
   if (!session?.user) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
-  const uid = String(session.user.id);
+  const uid = String((session.user as any).id || '');
   const rec = await getBilling(uid);
   if (!rec?.stripeCustomerId) return NextResponse.json({ error: 'no_customer' }, { status: 400 });
 

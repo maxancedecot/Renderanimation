@@ -12,7 +12,7 @@ export const metadata = {
 export default async function Page() {
   const lang = getRequestLang();
   const session = await auth();
-  const uid = session?.user?.id ? String(session.user.id) : undefined;
+  const uid = session?.user ? (String((session.user as any).id || '')) : undefined;
   return (
     <div className="space-y-12">
       {/* Hero */}

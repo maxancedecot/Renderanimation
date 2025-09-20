@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
   if (!session?.user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   try {
     // Gate 4K to eligible subscriptions
-    const uid = String(session.user.id);
+    const uid = String((session.user as any).id || '');
     const rec = await getBilling(uid);
     if (!rec || !rec.subscriptionStatus || !['trialing','active','past_due'].includes(rec.subscriptionStatus)) {
       return NextResponse.json({ error: 'subscription_required' }, { status: 402 });

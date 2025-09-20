@@ -6,7 +6,7 @@ import { getBilling } from "@/lib/billing";
 export default async function AccountPage() {
   const session = await auth();
   if (!session?.user) redirect("/signin");
-  const billing = await getBilling(String(session.user.id));
+  const billing = await getBilling(String((session.user as any).id || ''));
   const email = (session.user.email || "").toLowerCase();
   const admins = (process.env.ADMIN_EMAILS || "").split(",").map(s=>s.trim().toLowerCase()).filter(Boolean);
   const isAdmin = admins.length === 0 ? true : admins.includes(email);
