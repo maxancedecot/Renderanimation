@@ -100,13 +100,17 @@ export async function ensurePeriod(userId: string, rec: BillingRecord): Promise<
   const quotas = priceId ? planForPrice(priceId) : null;
   const videosTotal = quotas?.videosTotal ?? rec.videosTotal ?? 0;
   const includes4k = quotas?.includes4k ?? rec.includes4k ?? false;
+  const mult = Number(process.env.BILLING_ROLLOVER_CAP_MULTIPLIER || '1');
+  const cap = Math.max(videosTotal, Math.floor(videosTotal * mult));
+  const accumulated = (rec.videosRemaining ?? videosTotal) + videosTotal;
+  const rolled = Math.min(accumulated, cap);
   const updated: BillingRecord = {
     ...rec,
     subscriptionStatus: status,
     priceId,
     videosTotal,
     includes4k,
-    videosRemaining: videosTotal,
+    videosRemaining: rolled,
     currentPeriodEnd: newEnd,
     lastUpdatedAt: new Date().toISOString()
   };

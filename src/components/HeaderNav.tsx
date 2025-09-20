@@ -19,10 +19,10 @@ export default function HeaderNav({ lang, isAuthed }: { lang: Lang; isAuthed: bo
   });
   const credits = (() => {
     const b = (billingData as any)?.billing;
-    if (!isAuthed || !b || typeof b.videosRemaining !== 'number' || typeof b.videosTotal !== 'number') return null;
+    if (!isAuthed || !b || typeof b.videosRemaining !== 'number') return null;
     return (
       <a href="/api/billing/portal" title={t(lang,'manageSubscription')} className="inline-flex items-center rounded-full bg-[#F9D83C] px-2 py-0.5 text-xs text-black hover:bg-[#F9D83C]/90">
-        {t(lang,'credits')}: {b.videosRemaining}/{b.videosTotal}
+        {t(lang,'credits')}: {b.videosRemaining}
       </a>
     );
   })();

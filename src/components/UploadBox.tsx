@@ -46,10 +46,10 @@ export default function UploadBox() {
   });
   const creditsBadge = (() => {
     const b = (billingData as any)?.billing;
-    if (!b || typeof b.videosRemaining !== 'number' || typeof b.videosTotal !== 'number') return null;
+    if (!b || typeof b.videosRemaining !== 'number') return null;
     return (
       <span className="ml-2 inline-flex items-center rounded-full bg-neutral-100 px-2 py-0.5 text-xs text-neutral-700" title={t(lang,'credits')}>
-        {t(lang,'credits')}: {b.videosRemaining}/{b.videosTotal}
+        {t(lang,'credits')}: {b.videosRemaining}
       </span>
     );
   })();

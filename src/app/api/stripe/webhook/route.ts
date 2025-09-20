@@ -111,6 +111,10 @@ export async function POST(req: Request) {
         const videosTotal = quotas?.videosTotal ?? existing.videosTotal ?? 0;
         const includes4k = quotas?.includes4k ?? existing.includes4k ?? false;
         const shouldReset = newEnd > prevEnd;
+        const mult = Number(process.env.BILLING_ROLLOVER_CAP_MULTIPLIER || '1');
+        const cap = Math.max(videosTotal, Math.floor(videosTotal * mult));
+        const accumulated = (existing.videosRemaining ?? videosTotal) + videosTotal;
+        const rolled = Math.min(accumulated, cap);
         const updated: BillingRecord = {
           ...existing,
           stripeCustomerId: customerId || existing.stripeCustomerId,
@@ -121,7 +125,7 @@ export async function POST(req: Request) {
           videosTotal,
           includes4k,
           currentPeriodEnd: newEnd,
-          videosRemaining: shouldReset ? videosTotal : (existing.videosRemaining ?? videosTotal),
+          videosRemaining: shouldReset ? rolled : (existing.videosRemaining ?? videosTotal),
           lastUpdatedAt: new Date().toISOString(),
         };
         await setBilling(userId, updated);
