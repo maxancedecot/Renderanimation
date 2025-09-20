@@ -30,7 +30,7 @@ export default async function AccountPage() {
         {billing ? (
           <div className="text-sm text-neutral-700 space-y-1 mt-2">
             <div>{t(lang, 'subscriptionStatus')}: <span className="font-medium">{billing.subscriptionStatus || '—'}</span></div>
-            <div>{t(lang, 'credits')}: <span className="font-medium">{billing.videosRemaining ?? 0}</span> / {billing.videosTotal ?? 0}</div>
+            <div><span className="font-medium">{t(lang, 'videosLeft', { count: billing.videosRemaining ?? 0 })}</span></div>
             <div>{t(lang, 'fourKShort')}: <span className="font-medium">{billing.includes4k ? t(lang, 'yes') : t(lang, 'no')}</span></div>
             {billing.currentPeriodEnd ? (
               <div>{t(lang, 'renewal')}: {new Date((billing.currentPeriodEnd as number) * 1000).toLocaleDateString()}</div>

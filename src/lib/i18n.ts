@@ -129,6 +129,7 @@ const M: Record<Lang, Record<string, string>> = {
     manageSubscription: 'Gérer l’abonnement',
     noActiveSub: 'Aucun abonnement actif.',
     seeOffers: 'Voir les offres',
+    videosLeft: '{count} vidéos restantes',
   },
   en: {
     pricingTitle: 'Pricing (subscription)',
@@ -258,6 +259,7 @@ const M: Record<Lang, Record<string, string>> = {
     manageSubscription: 'Manage subscription',
     noActiveSub: 'No active subscription.',
     seeOffers: 'See plans',
+    videosLeft: '{count} videos left',
   },
   nl: {
     pricingTitle: 'Prijzen (abonnement)',
@@ -387,6 +389,7 @@ const M: Record<Lang, Record<string, string>> = {
     manageSubscription: 'Abonnement beheren',
     noActiveSub: 'Geen actief abonnement.',
     seeOffers: 'Pakketten bekijken',
+    videosLeft: 'Nog {count} video’s',
   },
 };
 
