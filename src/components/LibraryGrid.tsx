@@ -123,7 +123,16 @@ export default function LibraryGrid() {
       poll();
     },
     onError: (e: any, vars) => {
-      if (vars?.itemId) toast.error(e?.message || t(lang, 'toast4kError'), { id: `tpz-${vars.itemId}` });
+      const id = vars?.itemId;
+      const msg = String(e?.message || '');
+      if (!id) return;
+      if (msg === 'subscription_required') {
+        toast.error(`${t(lang,'errSubRequired')} — ${t(lang,'hintSeePlans')}`, { id: `tpz-${id}` });
+      } else if (msg === 'fourk_not_included') {
+        toast.error(`${t(lang,'err4kNotIncluded')} — ${t(lang,'hintManageSubscription')}`, { id: `tpz-${id}` });
+      } else {
+        toast.error(msg || t(lang, 'toast4kError'), { id: `tpz-${id}` });
+      }
     },
   });
 

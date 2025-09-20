@@ -204,7 +204,16 @@ export default function UploadBox() {
       setKlingTaskId(res.taskId);
       toast.success(t(lang, 'toastTaskReceived'), { id: "kg" });
     },
-    onError: (e: any) => toast.error(e?.message || t(lang, 'toastError'), { id: "kg" })
+    onError: (e: any) => {
+      const msg = String(e?.message || '');
+      if (msg === 'subscription_required') {
+        toast.error(`${t(lang,'errSubRequired')} — ${t(lang,'hintSeePlans')}` , { id: 'kg' });
+      } else if (msg === 'quota_exceeded') {
+        toast.error(`${t(lang,'errQuotaExceeded')} — ${t(lang,'hintManageSubscription')}`, { id: 'kg' });
+      } else {
+        toast.error(msg || t(lang, 'toastError'), { id: 'kg' });
+      }
+    }
   });
 
   /* 4) Poll Kling */
@@ -316,7 +325,16 @@ export default function UploadBox() {
       setTopazTaskId(taskId);
       toast.success(t(lang, 'toast4kReceived'), { id: "tpz" });
     },
-    onError: (e: any) => toast.error(e?.message || t(lang, 'toast4kError'), { id: "tpz" })
+    onError: (e: any) => {
+      const msg = String(e?.message || '');
+      if (msg === 'subscription_required') {
+        toast.error(`${t(lang,'errSubRequired')} — ${t(lang,'hintSeePlans')}`, { id: 'tpz' });
+      } else if (msg === 'fourk_not_included') {
+        toast.error(`${t(lang,'err4kNotIncluded')} — ${t(lang,'hintManageSubscription')}`, { id: 'tpz' });
+      } else {
+        toast.error(msg || t(lang, 'toast4kError'), { id: 'tpz' });
+      }
+    }
   });
 
   // Debug Topaz removed

@@ -109,6 +109,12 @@ const M: Record<Lang, Record<string, string>> = {
     deleteFolderBody: 'Les vidéos du dossier ne seront pas supprimées et resteront sans dossier.',
     deleteTooltip: 'Supprimer',
     duplicateFolderName: 'Un dossier avec ce nom existe déjà',
+    // Billing/errors
+    errSubRequired: 'Abonnement requis pour générer des vidéos.',
+    errQuotaExceeded: 'Crédits épuisés pour ce mois.',
+    err4kNotIncluded: '4K non inclus dans votre offre.',
+    hintSeePlans: 'Voir les offres',
+    hintManageSubscription: 'Gérer l’abonnement',
     // Account
     accountTitle: 'Espace utilisateur',
     signedInAs: 'Connecté en tant que',
@@ -232,6 +238,12 @@ const M: Record<Lang, Record<string, string>> = {
     deleteFolderBody: 'Videos in the folder will not be deleted and will remain without a folder.',
     deleteTooltip: 'Delete',
     duplicateFolderName: 'A folder with this name already exists',
+    // Billing/errors
+    errSubRequired: 'Subscription required to generate videos.',
+    errQuotaExceeded: 'Credits exhausted for this month.',
+    err4kNotIncluded: '4K not included in your plan.',
+    hintSeePlans: 'See plans',
+    hintManageSubscription: 'Manage subscription',
     // Account
     accountTitle: 'Account',
     signedInAs: 'Signed in as',
@@ -355,6 +367,12 @@ const M: Record<Lang, Record<string, string>> = {
     deleteFolderBody: 'Video’s worden niet verwijderd en blijven zonder map.',
     deleteTooltip: 'Verwijderen',
     duplicateFolderName: 'Er bestaat al een map met deze naam',
+    // Billing/errors
+    errSubRequired: "Abonnement vereist om video's te genereren.",
+    errQuotaExceeded: 'Credits voor deze maand opgebruikt.',
+    err4kNotIncluded: '4K zit niet in je pakket.',
+    hintSeePlans: 'Pakketten bekijken',
+    hintManageSubscription: 'Abonnement beheren',
     // Account
     accountTitle: 'Account',
     signedInAs: 'Ingelogd als',
