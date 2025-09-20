@@ -18,36 +18,46 @@ export async function POST(req: Request) {
         const email: string | undefined = session?.customer_details?.email || session?.customer_email || undefined;
         const customerId: string | undefined = session?.customer || undefined;
         const subId: string | undefined = session?.subscription || undefined;
+        const refUserId: string | undefined = session?.client_reference_id || undefined;
+
+        // Helper to fetch subscription details
+        async function fetchSub(subId?: string) {
+          if (!subId) return {} as any;
+          const sk = process.env.STRIPE_SECRET_KEY || '';
+          const resp = await fetch(`https://api.stripe.com/v1/subscriptions/${encodeURIComponent(subId)}`, {
+            headers: { 'Authorization': `Bearer ${sk}` },
+          });
+          return await resp.json().catch(() => ({}));
+        }
+
+        const sub: any = await fetchSub(subId);
+        const priceId: string | undefined = sub?.items?.data?.[0]?.price?.id;
+        const productId: string | undefined = sub?.items?.data?.[0]?.price?.product;
+        const status: BillingRecord['subscriptionStatus'] | undefined = sub?.status as any;
+        const currentPeriodEnd: number | undefined = sub?.current_period_end as number | undefined;
+        const quotas = priceId ? planForPrice(priceId) : null;
+        const rec: BillingRecord = {
+          stripeCustomerId: customerId,
+          subscriptionStatus: status || 'active',
+          priceId,
+          productId,
+          videosTotal: quotas?.videosTotal ?? 0,
+          videosRemaining: quotas?.videosTotal ?? 0,
+          includes4k: quotas?.includes4k ?? false,
+          currentPeriodEnd,
+          lastUpdatedAt: new Date().toISOString(),
+        };
+
+        // Prefer client_reference_id mapping
+        if (refUserId) {
+          const existing = (await getBilling(refUserId)) || {} as BillingRecord;
+          await setBilling(refUserId, { ...existing, ...rec });
+          break;
+        }
+        // Fallback: map by email
         if (email && customerId) {
           const u = await findUserByEmail(email);
           if (u) {
-            let priceId: string | undefined;
-            let productId: string | undefined;
-            let status: BillingRecord['subscriptionStatus'] | undefined;
-            let currentPeriodEnd: number | undefined;
-            if (subId) {
-              const sk = process.env.STRIPE_SECRET_KEY || '';
-              const resp = await fetch(`https://api.stripe.com/v1/subscriptions/${encodeURIComponent(subId)}`, {
-                headers: { 'Authorization': `Bearer ${sk}` },
-              });
-              const sub: any = await resp.json().catch(() => ({}));
-              priceId = sub?.items?.data?.[0]?.price?.id as string | undefined;
-              productId = sub?.items?.data?.[0]?.price?.product as string | undefined;
-              status = sub?.status as any;
-              currentPeriodEnd = sub?.current_period_end as number | undefined;
-            }
-            const quotas = priceId ? planForPrice(priceId) : null;
-            const rec: BillingRecord = {
-              stripeCustomerId: customerId,
-              subscriptionStatus: status || 'active',
-              priceId,
-              productId,
-              videosTotal: quotas?.videosTotal ?? 0,
-              videosRemaining: quotas?.videosTotal ?? 0,
-              includes4k: quotas?.includes4k ?? false,
-              currentPeriodEnd,
-              lastUpdatedAt: new Date().toISOString(),
-            };
             const existing = (await getBilling(u.id)) || {} as BillingRecord;
             await setBilling(u.id, { ...existing, ...rec });
           }

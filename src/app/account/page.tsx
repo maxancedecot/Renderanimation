@@ -2,6 +2,7 @@ import { auth } from "@/src/lib/auth";
 import { redirect } from "next/navigation";
 import SignOutButton from "@/components/SignOutButton";
 import { getBilling } from "@/lib/billing";
+import StripeSync from "@/components/StripeSync";
 import { getRequestLang } from "@/lib/i18n-server";
 import { t } from "@/lib/i18n";
 
@@ -15,6 +16,7 @@ export default async function AccountPage() {
   const isAdmin = admins.length === 0 ? true : admins.includes(email);
   return (
     <div className="max-w-3xl mx-auto space-y-6">
+      <StripeSync />
       <h1 className="text-2xl font-semibold">{t(lang, 'accountTitle')}</h1>
       <div className="rounded-2xl border bg-white p-6 shadow-sm">
         <div className="text-sm text-neutral-600">{t(lang, 'signedInAs')}</div>
