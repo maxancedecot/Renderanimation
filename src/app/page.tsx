@@ -13,6 +13,7 @@ export default async function Page() {
   const lang = getRequestLang();
   const session = await auth();
   const uid = session?.user ? (String((session.user as any).id || '')) : undefined;
+  const email = session?.user?.email || undefined;
   return (
     <div className="space-y-12">
       {/* Hero */}
@@ -140,6 +141,7 @@ export default async function Page() {
               pricing-table-id={pricingId}
               publishable-key={key}
               client-reference-id={uid as any}
+              customer-email={email as any}
             >
             </stripe-pricing-table>
           );

@@ -41,6 +41,22 @@ export const authOptions: NextAuthOptions = {
   session: { strategy: "jwt" },
   secret: process.env.NEXTAUTH_SECRET,
   pages: { signIn: "/signin" },
+  callbacks: {
+    async jwt({ token, user }) {
+      if (user) {
+        // Persist the user id on the token
+        (token as any).uid = (user as any).id || (token as any).uid || token.sub;
+      }
+      return token;
+    },
+    async session({ session, token }) {
+      // Expose id on session.user for server/client usage
+      if (session.user) {
+        (session.user as any).id = (token as any).uid || token.sub || '';
+      }
+      return session;
+    }
+  }
 };
 
 export function auth() {
