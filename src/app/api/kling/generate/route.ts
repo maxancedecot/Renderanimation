@@ -21,7 +21,7 @@ export async function POST(req: Request) {
   try {
     // Enforce subscription credits per user
     const session = await auth();
-    const uid = session?.user?.id as string | undefined;
+    const uid = session?.user ? (String((session.user as any).id || '')) : undefined;
     if (!uid) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
 
     const { prompt, imageUrl, imageDataUrl, durationSec } = await req.json();
