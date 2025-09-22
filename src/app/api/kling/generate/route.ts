@@ -6,7 +6,7 @@ import { createImageToVideoTask } from "@/lib/kling";
 import fs from "node:fs";
 import path from "node:path";
 import { auth } from "@/src/lib/auth";
-import { decrementVideoCredit } from "@/lib/billing";
+import { canConsumeVideo } from "@/lib/billing";
 
 function guessMimeFromExt(p: string) {
   const ext = p.split(".").pop()?.toLowerCase();
@@ -48,10 +48,10 @@ export async function POST(req: Request) {
       finalImageDataUrl = `data:${mime};base64,${b64}`;
     }
 
-    // Decrement 1 credit before sending the job
-    const dec = await decrementVideoCredit(uid);
-    if (!dec.ok) {
-      const msg = dec.reason === 'no_active_subscription' ? 'subscription_required' : 'quota_exceeded';
+    // Check quota before sending the job; decrement will happen on successful save
+    const chk = await canConsumeVideo(uid);
+    if (!chk.ok) {
+      const msg = chk.reason === 'no_active_subscription' ? 'subscription_required' : 'quota_exceeded';
       return NextResponse.json({ error: msg }, { status: 402 });
     }
 

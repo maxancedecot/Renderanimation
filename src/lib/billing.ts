@@ -130,3 +130,14 @@ export async function decrementVideoCredit(userId: string): Promise<{ ok: true }
   await setBilling(userId, updated);
   return { ok: true };
 }
+
+export async function canConsumeVideo(userId: string): Promise<{ ok: true } | { ok: false; reason: string }> {
+  const rec = await getBilling(userId);
+  if (!rec || !rec.subscriptionStatus || !['trialing', 'active', 'past_due'].includes(rec.subscriptionStatus)) {
+    return { ok: false, reason: 'no_active_subscription' };
+  }
+  const state = await ensurePeriod(userId, rec);
+  const remaining = state.videosRemaining ?? 0;
+  if (remaining <= 0) return { ok: false, reason: 'quota_exceeded' };
+  return { ok: true };
+}
