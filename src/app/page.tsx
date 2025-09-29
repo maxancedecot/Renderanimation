@@ -50,18 +50,9 @@ export default async function Page() {
       {/* Pour qui */}
       <section className="grid md:grid-cols-3 gap-6">
         {[
-          {
-            title: "Promoteurs immobiliers",
-            desc: "Créez rapidement des vidéos fluides pour valoriser vos lots sur les réseaux et sites de vente.",
-          },
-          {
-            title: "Architectes & studios",
-            desc: "Animez vos rendus sans pipeline vidéo complexe. Gardez la cohérence des matériaux et lumières.",
-          },
-          {
-            title: "Marketing & agences",
-            desc: "Produisez plus de contenus 3D à coût maîtrisé. Idéal pour A/B tests et social ads.",
-          },
+          { title: t(lang, 'audience1Title'), desc: t(lang, 'audience1Desc') },
+          { title: t(lang, 'audience2Title'), desc: t(lang, 'audience2Desc') },
+          { title: t(lang, 'audience3Title'), desc: t(lang, 'audience3Desc') },
         ].map((c) => (
           <div key={c.title} className="rounded-2xl border bg-white p-6 shadow-sm">
             <h3 className="font-semibold">{c.title}</h3>
