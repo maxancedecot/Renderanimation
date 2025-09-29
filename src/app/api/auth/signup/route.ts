@@ -3,7 +3,6 @@ export const runtime = "nodejs";
 import { NextRequest, NextResponse } from "next/server";
 import { addUser, createEmailVerificationToken } from "@/lib/users";
 import { sendEmail } from "@/lib/mail";
-import { NextRequest } from "next/server";
 
 function isEmail(s: string): boolean {
   return /.+@.+\..+/.test(s);
