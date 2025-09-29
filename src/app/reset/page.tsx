@@ -25,7 +25,7 @@ export default function ResetPage() {
       const j = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error(j?.error || "reset failed");
       toast.success("Mot de passe mis à jour", { id: p });
-      router.push("/signin");
+      router.push("/login");
     } catch (e: any) {
       toast.error(e?.message || "Erreur de réinitialisation", { id: p });
     } finally {
@@ -43,4 +43,3 @@ export default function ResetPage() {
     </div>
   );
 }
-

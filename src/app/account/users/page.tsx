@@ -4,7 +4,7 @@ import UsersAdmin from "@/components/UsersAdmin";
 
 export default async function UsersAdminPage() {
   const session = await auth();
-  if (!session?.user) redirect("/signin");
+  if (!session?.user) redirect("/login");
   const email = (session.user.email || "").toLowerCase();
   const admins = (process.env.ADMIN_EMAILS || "").split(",").map(s=>s.trim().toLowerCase()).filter(Boolean);
   const isAdmin = admins.length === 0 ? true : admins.includes(email);

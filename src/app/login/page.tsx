@@ -4,7 +4,7 @@ import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { getClientLang, t } from "@/lib/i18n";
 
-export default function SignInPage() {
+export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -62,3 +62,4 @@ export default function SignInPage() {
     </div>
   );
 }
+

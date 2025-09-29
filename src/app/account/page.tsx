@@ -8,7 +8,7 @@ import { t } from "@/lib/i18n";
 
 export default async function AccountPage() {
   const session = await auth();
-  if (!session?.user) redirect("/signin");
+  if (!session?.user) redirect("/login");
   const billing = await getBilling(String((session.user as any).id || ''));
   const lang = getRequestLang();
   const email = (session.user.email || "").toLowerCase();

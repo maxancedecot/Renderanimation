@@ -6,7 +6,7 @@ import LibraryGrid from "@/components/LibraryGrid";
 
 export default async function LibraryPage() {
   const session = await auth();
-  if (!session?.user) redirect("/signin");
+  if (!session?.user) redirect("/login");
   const lang = getRequestLang();
   return (
     <div className="space-y-6">

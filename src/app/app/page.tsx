@@ -8,7 +8,7 @@ import { redirect } from "next/navigation";
 export default async function AppPage() {
   const session = await auth();
   if (!session?.user) {
-    redirect("/signin");
+    redirect("/login");
   }
   const lang = getRequestLang();
   return (

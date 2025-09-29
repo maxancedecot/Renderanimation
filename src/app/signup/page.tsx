@@ -77,10 +77,9 @@ export default function SignUpPage() {
           {loading ? t(lang, 'signupSubmitting') : t(lang, 'signupSubmit')}
         </button>
         <div className="flex items-center justify-between text-xs mt-2">
-          <a href="/signin" className="underline text-neutral-600 hover:text-neutral-800">{t(lang, 'haveAccount')}</a>
+          <a href="/login" className="underline text-neutral-600 hover:text-neutral-800">{t(lang, 'haveAccount')}</a>
         </div>
       </form>
     </div>
   );
 }
-
