@@ -35,15 +35,20 @@ export async function sendEmail(input: SendEmailInput): Promise<{ ok: boolean; i
   if (process.env.SMTP_HOST) {
     try {
       const nodemailer = await import("nodemailer");
+      const secure = (() => {
+        const v = String(process.env.SMTP_SECURE || '').toLowerCase();
+        return v === '1' || v === 'true' || v === 'yes';
+      })();
       const transport = nodemailer.createTransport({
         host: process.env.SMTP_HOST,
         port: Number(process.env.SMTP_PORT || 587),
-        secure: Boolean(process.env.SMTP_SECURE || false),
+        secure,
         auth: process.env.SMTP_USER ? { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS } : undefined,
       });
       const info = await transport.sendMail({ from, to: input.to, subject: input.subject, html: input.html, text: input.text });
       return { ok: true, id: info.messageId };
     } catch (e: any) {
+      console.error("SMTP send failed:", e);
       return { ok: false, error: e?.message || "smtp failed" };
     }
   }
@@ -52,4 +57,3 @@ export async function sendEmail(input: SendEmailInput): Promise<{ ok: boolean; i
   console.warn("sendEmail fallback: no provider configured. Intended to:", input);
   return { ok: true, id: "dev-fallback" };
 }
-
