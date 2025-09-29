@@ -1,7 +1,7 @@
 export const runtime = "nodejs";
 
 import { NextRequest, NextResponse } from "next/server";
-import { addUser, createEmailVerificationToken } from "@/lib/users";
+import { addUser, createEmailVerificationToken, findUserByEmail } from "@/lib/users";
 import { sendEmail } from "@/lib/mail";
 
 function isEmail(s: string): boolean {
@@ -25,6 +25,25 @@ export async function POST(req: NextRequest) {
     if (!em || !pw) return NextResponse.json({ error: 'missing_email_or_password' }, { status: 400 });
     if (!isEmail(em)) return NextResponse.json({ error: 'invalid_email' }, { status: 400 });
     if (pw.length < 6) return NextResponse.json({ error: 'password_too_short' }, { status: 400 });
+    // If user already exists, handle accordingly
+    const existing = await findUserByEmail(em);
+    if (existing) {
+      if ((existing as any).verified === false) {
+        // Resend verification email
+        const token = await createEmailVerificationToken(existing.id, existing.email, 7 * 24 * 3600);
+        const base = originFromReq(req);
+        const link = `${base}/verify?token=${encodeURIComponent(token)}`;
+        await sendEmail({
+          to: existing.email,
+          subject: 'Verify your email',
+          html: `<p>Welcome back!</p><p>Confirm your email by clicking the link below:</p><p><a href="${link}">${link}</a></p>`,
+          text: `Verify your email: ${link}`,
+        });
+        return NextResponse.json({ resent: true }, { status: 200 });
+      }
+      return NextResponse.json({ error: 'user_exists' }, { status: 409 });
+    }
+
     const user = await addUser({ email: em, password: pw, name: nm });
     // Send verification email
     const token = await createEmailVerificationToken(user.id, user.email, 7 * 24 * 3600);

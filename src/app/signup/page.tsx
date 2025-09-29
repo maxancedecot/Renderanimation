@@ -22,10 +22,16 @@ export default function SignUpPage() {
         body: JSON.stringify({ email, password, name: name || undefined }),
       });
       const j = await r.json().catch(() => ({}));
-      if (!r.ok) throw new Error(j?.error || 'signup_failed');
-      toast.success(t(lang, 'signupEmailSent'), { id: p });
-      // Redirect to verify instructions page
-      window.location.href = '/login';
+      if (r.ok) {
+        toast.success(t(lang, 'signupEmailSent'), { id: p });
+        window.location.href = '/login';
+        return;
+      }
+      if (r.status === 409) {
+        toast.error(t(lang, 'emailAlreadyRegistered'), { id: p });
+        return;
+      }
+      throw new Error(j?.error || 'signup_failed');
     } catch (e: any) {
       toast.error(e?.message || t(lang, 'signupFailed'), { id: p });
     } finally {
