@@ -144,25 +144,13 @@ export default async function Page() {
         <h2 className="text-lg font-semibold">{t(lang, 'reviewsTitle')}</h2>
         <div className="grid md:grid-cols-3 gap-6 mt-4">
           {[
-            {
-              q: "En 10 minutes j’ai des vidéos propres pour nos lots – gain de temps énorme.",
-              a: "Nicolas R.",
-              r: "Directeur marketing, promoteur",
-            },
-            {
-              q: "Le rendu final respecte bien matériaux et éclairage, parfait pour nos présentations.",
-              a: "Sarah B.",
-              r: "Architecte associée",
-            },
-            {
-              q: "Idéal pour produire des assets 3D pour nos campagnes social à coût maîtrisé.",
-              a: "Mehdi K.",
-              r: "Head of Growth, agence",
-            },
-          ].map((t, i) => (
+            { q: t(lang, 'reviews1Quote'), a: t(lang, 'reviews1Author'), r: t(lang, 'reviews1Role') },
+            { q: t(lang, 'reviews2Quote'), a: t(lang, 'reviews2Author'), r: t(lang, 'reviews2Role') },
+            { q: t(lang, 'reviews3Quote'), a: t(lang, 'reviews3Author'), r: t(lang, 'reviews3Role') },
+          ].map((rv, i) => (
             <figure key={i} className="rounded-xl bg-white p-5 ring-1 ring-black/5">
-              <blockquote className="text-sm text-neutral-700">“{t.q}”</blockquote>
-              <figcaption className="mt-3 text-xs text-neutral-500">{t.a} · {t.r}</figcaption>
+              <blockquote className="text-sm text-neutral-700">“{rv.q}”</blockquote>
+              <figcaption className="mt-3 text-xs text-neutral-500">{rv.a} · {rv.r}</figcaption>
             </figure>
           ))}
         </div>
