@@ -4,6 +4,7 @@ import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { getClientLang, t } from "@/lib/i18n";
 import { useSearchParams } from "next/navigation";
+import { useState as useReactState } from "react";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -12,6 +13,32 @@ export default function LoginPage() {
   const lang = getClientLang();
   const sp = useSearchParams();
   const hasError = Boolean(sp.get('error'));
+  const [resendMsg, setResendMsg] = useReactState<string | null>(null);
+
+  async function resendVerification() {
+    setResendMsg(null);
+    if (!email) { setResendMsg(t(lang, 'signinEmail')); return; }
+    try {
+      const r = await fetch('/api/auth/verify/resend', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+      const j = await r.json().catch(() => ({}));
+      if (r.ok && j?.status === 'resent') {
+        setResendMsg(t(lang, 'signupEmailSent'));
+      } else if (r.ok && j?.status === 'already_verified') {
+        setResendMsg(t(lang, 'alreadyVerified'));
+      } else {
+        setResendMsg(t(lang, 'resendGeneric'));
+      }
+      if (j?.devLink) {
+        console.warn('Verification link (dev):', j.devLink);
+      }
+    } catch {
+      setResendMsg(t(lang, 'resendGeneric'));
+    }
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -64,6 +91,10 @@ export default function LoginPage() {
           <a href="/forgot" className="underline text-neutral-600 hover:text-neutral-800">{t(lang, 'signinForgot')}</a>
           <a href="/signup" className="underline text-neutral-600 hover:text-neutral-800">{t(lang, 'createAccount')}</a>
         </div>
+        <button type="button" onClick={resendVerification} className="w-full text-xs underline text-neutral-600 hover:text-neutral-800 mt-2">
+          {t(lang, 'resendVerification')}
+        </button>
+        {resendMsg && <div className="text-xs text-neutral-700 mt-1">{resendMsg}</div>}
       </form>
     </div>
   );

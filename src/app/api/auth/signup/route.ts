@@ -39,7 +39,9 @@ export async function POST(req: NextRequest) {
           html: `<p>Welcome back!</p><p>Confirm your email by clicking the link below:</p><p><a href="${link}">${link}</a></p>`,
           text: `Verify your email: ${link}`,
         });
-        return NextResponse.json({ resent: true }, { status: 200 });
+        const devEcho = (process.env.MAIL_DEV_ECHO || '').toLowerCase();
+        const shouldEcho = devEcho === '1' || devEcho === 'true' || devEcho === 'yes';
+        return NextResponse.json({ resent: true, devLink: shouldEcho ? link : undefined }, { status: 200 });
       }
       return NextResponse.json({ error: 'user_exists' }, { status: 409 });
     }
@@ -55,7 +57,9 @@ export async function POST(req: NextRequest) {
       html: `<p>Welcome!</p><p>Confirm your email by clicking the link below:</p><p><a href="${link}">${link}</a></p>`,
       text: `Verify your email: ${link}`,
     });
-    return NextResponse.json({ user, sent: true }, { status: 201 });
+    const devEcho = (process.env.MAIL_DEV_ECHO || '').toLowerCase();
+    const shouldEcho = devEcho === '1' || devEcho === 'true' || devEcho === 'yes';
+    return NextResponse.json({ user, sent: true, devLink: shouldEcho ? link : undefined }, { status: 201 });
   } catch (e: any) {
     const msg = String(e?.message || '')
     const status = /existant|exist/i.test(msg) ? 409 : 400;
