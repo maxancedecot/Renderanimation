@@ -39,7 +39,10 @@ export default function HeaderNav({ lang, isAuthed }: { lang: Lang; isAuthed: bo
             <a href="/account" className="hover:text-black">{t(lang, 'navAccount')}</a>
           </>
         ) : (
-          <a href="/signin" className="hover:text-black">{t(lang, 'navSignin')}</a>
+          <>
+            <a href="/signin" className="hover:text-black">{t(lang, 'navSignin')}</a>
+            <a href="/signup" className="hover:text-black">{t(lang, 'navSignup')}</a>
+          </>
         )}
         <LanguageSwitcher initial={lang} />
         {credits}
@@ -72,7 +75,10 @@ export default function HeaderNav({ lang, isAuthed }: { lang: Lang; isAuthed: bo
                 <a href="/account" onClick={() => setOpen(false)} className="rounded-md px-3 py-2 hover:bg-neutral-50">{t(lang, 'navAccount')}</a>
               </>
             ) : (
-              <a href="/signin" onClick={() => setOpen(false)} className="rounded-md px-3 py-2 hover:bg-neutral-50">{t(lang, 'navSignin')}</a>
+              <>
+                <a href="/signin" onClick={() => setOpen(false)} className="rounded-md px-3 py-2 hover:bg-neutral-50">{t(lang, 'navSignin')}</a>
+                <a href="/signup" onClick={() => setOpen(false)} className="rounded-md px-3 py-2 hover:bg-neutral-50">{t(lang, 'navSignup')}</a>
+              </>
             )}
             <div className="border-t my-1"></div>
             {credits ? (
