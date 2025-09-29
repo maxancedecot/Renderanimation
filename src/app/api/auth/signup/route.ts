@@ -1,10 +1,16 @@
 export const runtime = "nodejs";
 
 import { NextRequest, NextResponse } from "next/server";
-import { addUser } from "@/lib/users";
+import { addUser, createEmailVerificationToken } from "@/lib/users";
+import { sendEmail } from "@/lib/mail";
+import { NextRequest } from "next/server";
 
 function isEmail(s: string): boolean {
   return /.+@.+\..+/.test(s);
+}
+
+function originFromReq(req: NextRequest): string {
+  try { return new URL(req.url).origin; } catch { return process.env.APP_BASE_URL || "http://localhost:3000"; }
 }
 
 export async function POST(req: NextRequest) {
@@ -21,11 +27,20 @@ export async function POST(req: NextRequest) {
     if (!isEmail(em)) return NextResponse.json({ error: 'invalid_email' }, { status: 400 });
     if (pw.length < 6) return NextResponse.json({ error: 'password_too_short' }, { status: 400 });
     const user = await addUser({ email: em, password: pw, name: nm });
-    return NextResponse.json({ user }, { status: 201 });
+    // Send verification email
+    const token = await createEmailVerificationToken(user.id, user.email, 7 * 24 * 3600);
+    const base = originFromReq(req);
+    const link = `${base}/verify?token=${encodeURIComponent(token)}`;
+    await sendEmail({
+      to: user.email,
+      subject: 'Verify your email',
+      html: `<p>Welcome!</p><p>Confirm your email by clicking the link below:</p><p><a href="${link}">${link}</a></p>`,
+      text: `Verify your email: ${link}`,
+    });
+    return NextResponse.json({ user, sent: true }, { status: 201 });
   } catch (e: any) {
     const msg = String(e?.message || '')
     const status = /existant|exist/i.test(msg) ? 409 : 400;
     return NextResponse.json({ error: msg || 'signup_failed' }, { status });
   }
 }
-

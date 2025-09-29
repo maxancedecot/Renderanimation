@@ -12,10 +12,12 @@ export type UserRecord = {
   name?: string;
   passwordHash: string; // format: scrypt:<saltHex>:<keyHex>
   createdAt: string; // ISO
+  verified?: boolean; // email verified flag
 };
 
 const USERS_KEY = "users/users.json";
 const RESET_PREFIX = "users/reset/"; // tokens stored as users/reset/<token>.json
+const VERIFY_PREFIX = "users/verify/"; // tokens stored as users/verify/<token>.json
 
 async function readAll(): Promise<UserRecord[]> {
   try {
@@ -85,6 +87,7 @@ export async function addUser(params: { email: string; password: string; name?: 
     name,
     passwordHash: hashPassword(params.password),
     createdAt: new Date().toISOString(),
+    verified: false,
   };
   users.push(user);
   await writeAll(users);
@@ -114,6 +117,7 @@ export async function ensureDefaultAdmin(): Promise<void> {
     name: "Admin",
     passwordHash: hashPassword(password),
     createdAt: new Date().toISOString(),
+    verified: true,
   };
   users.push(user);
   await writeAll(users);
@@ -161,4 +165,45 @@ export async function consumePasswordResetToken(token: string): Promise<void> {
   } catch {
     // ignore
   }
+}
+
+// Email verification tokens
+export async function createEmailVerificationToken(userId: string, email: string, ttlSeconds = 7 * 24 * 3600): Promise<string> {
+  const token = randomBytes(24).toString("hex");
+  const rec: ResetRecord = { userId, email, exp: Math.floor(Date.now() / 1000) + ttlSeconds };
+  await r2.send(new PutObjectCommand({
+    Bucket: R2_BUCKET,
+    Key: `${VERIFY_PREFIX}${token}.json`,
+    Body: JSON.stringify(rec),
+    ContentType: "application/json",
+    CacheControl: "no-cache",
+  }));
+  return token;
+}
+
+export async function getEmailVerificationRecord(token: string): Promise<ResetRecord | null> {
+  try {
+    const obj = await r2.send(new GetObjectCommand({ Bucket: R2_BUCKET, Key: `${VERIFY_PREFIX}${token}.json` }));
+    const body = await obj.Body?.transformToString();
+    if (!body) return null;
+    const rec = JSON.parse(body) as ResetRecord;
+    return rec || null;
+  } catch {
+    return null;
+  }
+}
+
+export async function consumeEmailVerificationToken(token: string): Promise<void> {
+  try {
+    await r2.send(new DeleteObjectCommand({ Bucket: R2_BUCKET, Key: `${VERIFY_PREFIX}${token}.json` }));
+  } catch {}
+}
+
+export async function markUserVerified(id: string): Promise<boolean> {
+  const users = await readAll();
+  const idx = users.findIndex(u => u.id === id);
+  if (idx === -1) return false;
+  users[idx].verified = true;
+  await writeAll(users);
+  return true;
 }

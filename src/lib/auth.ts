@@ -22,7 +22,12 @@ export const authOptions: NextAuthOptions = {
           const u = await findUserByEmail(credEmail);
           if (u) {
             const ok = verifyPassword(credPass, u.passwordHash);
-            if (ok) return { id: u.id, name: u.name || u.email, email: u.email } as any;
+            // Allow if password ok and either verified or missing flag (legacy users)
+            const verified = (u as any).verified;
+            if (ok && (verified === true || typeof verified === 'undefined')) {
+              return { id: u.id, name: u.name || u.email, email: u.email } as any;
+            }
+            // If not verified, reject
           }
         } catch {
           // ignore and fall back to demo account

@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { signIn } from "next-auth/react";
 import { getClientLang, t } from "@/lib/i18n";
 import toast from "react-hot-toast";
 
@@ -24,9 +23,9 @@ export default function SignUpPage() {
       });
       const j = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error(j?.error || 'signup_failed');
-      toast.success(t(lang, 'signupSuccess'), { id: p });
-      // Auto sign-in after signup
-      await signIn('credentials', { redirect: true, callbackUrl: '/', email, password });
+      toast.success(t(lang, 'signupEmailSent'), { id: p });
+      // Redirect to verify instructions page
+      window.location.href = '/login';
     } catch (e: any) {
       toast.error(e?.message || t(lang, 'signupFailed'), { id: p });
     } finally {

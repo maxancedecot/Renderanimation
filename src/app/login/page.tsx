@@ -3,12 +3,15 @@
 import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { getClientLang, t } from "@/lib/i18n";
+import { useSearchParams } from "next/navigation";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const lang = getClientLang();
+  const sp = useSearchParams();
+  const hasError = Boolean(sp.get('error'));
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -26,6 +29,9 @@ export default function LoginPage() {
     <div className="grid min-h-[70vh] place-items-center bg-neutral-50 p-6">
       <form onSubmit={handleSubmit} className="w-full max-w-sm space-y-4 p-6 rounded-xl bg-white shadow">
         <h1 className="text-xl font-semibold">{t(lang, 'signinTitle')}</h1>
+        {hasError && (
+          <div className="text-xs text-red-700">{t(lang, 'loginError')}</div>
+        )}
         <label className="block text-sm">
           {t(lang, 'signinEmail')}
           <input
@@ -62,4 +68,3 @@ export default function LoginPage() {
     </div>
   );
 }
-
