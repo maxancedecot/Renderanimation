@@ -14,6 +14,16 @@ export default async function Page() {
   const session = await auth();
   const uid = session?.user ? (String((session.user as any).id || '')) : undefined;
   const email = session?.user?.email || undefined;
+  const clientLogos = [
+    { src: "https://pub-60f579eb256a4570ad9e0494f23007ac.r2.dev/Logo's/Logo%20Everest.png", alt: "Everest" },
+    { src: "https://pub-60f579eb256a4570ad9e0494f23007ac.r2.dev/Logo's/Logo%20Imroder.png", alt: "Imroder" },
+    { src: "https://pub-60f579eb256a4570ad9e0494f23007ac.r2.dev/Logo's/Logo%20Lintoo.png", alt: "Lintoo" },
+    { src: "https://pub-60f579eb256a4570ad9e0494f23007ac.r2.dev/Logo's/Logo%20Loyd.png", alt: "Loyd" },
+    { src: "https://pub-60f579eb256a4570ad9e0494f23007ac.r2.dev/Logo's/Logo%20Mevaco.png", alt: "Mevaco" },
+    { src: "https://pub-60f579eb256a4570ad9e0494f23007ac.r2.dev/Logo's/Logo%20Thuz.png", alt: "Thuz" },
+    { src: "https://pub-60f579eb256a4570ad9e0494f23007ac.r2.dev/Logo's/Logo%20Unidevelop.png", alt: "Unidevelop" },
+    { src: "https://pub-60f579eb256a4570ad9e0494f23007ac.r2.dev/Logo's/Logo%20Wannes%20real%20estate.png", alt: "Wannes Real Estate" },
+  ];
   return (
     <div className="space-y-12">
       {/* Hero */}
@@ -65,32 +75,16 @@ export default async function Page() {
       <section className="rounded-2xl border bg-white p-4 shadow-sm overflow-hidden">
         <div className="relative w-full">
           <div className="flex items-center gap-12 whitespace-nowrap animate-scroll-x will-change-transform">
-            {[
-              "Archimax",
-              "NeoBuild",
-              "Urbania",
-              "ProImmo",
-              "RenderLab",
-              "Habitat+",
-              "Vision3D",
-              "Skylines",
-            ].map((name, idx) => (
-              <div key={`logo1-${idx}`} className="shrink-0 h-10 px-5 grid place-items-center rounded-lg ring-1 ring-black/5 bg-white text-neutral-700 font-medium">
-                {name}
+            {clientLogos.map((logo, idx) => (
+              <div key={`logo1-${idx}`} className="shrink-0 h-14 px-5 grid place-items-center rounded-lg ring-1 ring-black/5 bg-white">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={logo.src} alt={logo.alt} className="h-10 w-auto object-contain" />
               </div>
             ))}
-            {[
-              "Archimax",
-              "NeoBuild",
-              "Urbania",
-              "ProImmo",
-              "RenderLab",
-              "Habitat+",
-              "Vision3D",
-              "Skylines",
-            ].map((name, idx) => (
-              <div key={`logo2-${idx}`} className="shrink-0 h-10 px-5 grid place-items-center rounded-lg ring-1 ring-black/5 bg-white text-neutral-700 font-medium">
-                {name}
+            {clientLogos.map((logo, idx) => (
+              <div key={`logo2-${idx}`} className="shrink-0 h-14 px-5 grid place-items-center rounded-lg ring-1 ring-black/5 bg-white">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={logo.src} alt={logo.alt} className="h-10 w-auto object-contain" />
               </div>
             ))}
           </div>
