@@ -10,9 +10,14 @@ type User = {
   createdAt: string;
   videosRemaining?: number;
   subscriptionStatus?: string | null;
+  admin?: boolean;
 };
 
-export default function UsersAdmin() {
+type Props = {
+  currentUserId: string;
+};
+
+export default function UsersAdmin({ currentUserId }: Props) {
   const [users, setUsers] = useState<User[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -22,6 +27,7 @@ export default function UsersAdmin() {
   const [name, setName] = useState("");
   const [grantInputs, setGrantInputs] = useState<Record<string, string>>({});
   const [granting, setGranting] = useState<Record<string, boolean>>({});
+  const [adminSaving, setAdminSaving] = useState<Record<string, boolean>>({});
 
   async function load() {
     setLoading(true);
@@ -37,6 +43,7 @@ export default function UsersAdmin() {
       setUsers(json.users || []);
       setGrantInputs({});
       setGranting({});
+      setAdminSaving({});
     } catch (e: any) {
       setError(e?.message || "Erreur de chargement");
     } finally {
@@ -114,6 +121,26 @@ export default function UsersAdmin() {
     }
   }
 
+  async function toggleAdmin(userId: string, makeAdmin: boolean) {
+    setAdminSaving((prev) => ({ ...prev, [userId]: true }));
+    const toastId = toast.loading(makeAdmin ? "Attribution du rôle…" : "Retrait du rôle…");
+    try {
+      const r = await fetch(`/api/users/${userId}/admin`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ admin: makeAdmin }),
+      });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(j?.error || "admin_update_failed");
+      setUsers((prev) => (prev || []).map((u) => (u.id === userId ? { ...u, admin: makeAdmin } : u)));
+      toast.success(makeAdmin ? "Utilisateur promu admin" : "Rôle admin retiré", { id: toastId });
+    } catch (e: any) {
+      toast.error(e?.message || "Erreur lors de la mise à jour", { id: toastId });
+    } finally {
+      setAdminSaving((prev) => ({ ...prev, [userId]: false }));
+    }
+  }
+
   return (
     <div className="space-y-6">
       <div className="rounded-2xl border bg-white p-6 shadow-sm">
@@ -141,6 +168,7 @@ export default function UsersAdmin() {
             {(users || []).map((u) => {
               const credits = typeof u.videosRemaining === "number" ? u.videosRemaining : 0;
               const grantValue = grantInputs[u.id] ?? "";
+              const isAdmin = u.admin === true;
               return (
                 <li key={u.id} className="py-3">
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -151,6 +179,11 @@ export default function UsersAdmin() {
                         <span className="inline-flex items-center rounded-full bg-neutral-100 px-2 py-0.5 text-[11px] font-medium text-neutral-700">
                           Crédits: {credits}
                         </span>
+                        {isAdmin && (
+                          <span className="inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-medium text-amber-700">
+                            Admin
+                          </span>
+                        )}
                       </div>
                     </div>
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
@@ -178,6 +211,13 @@ export default function UsersAdmin() {
                         onClick={() => removeUser(u.id)}
                         className="text-sm rounded-lg border px-3 py-1.5 hover:bg-neutral-50"
                       >Supprimer</button>
+                      <button
+                        onClick={() => toggleAdmin(u.id, !isAdmin)}
+                        disabled={!!adminSaving[u.id] || (u.id === currentUserId && isAdmin)}
+                        className="text-sm rounded-lg border px-3 py-1.5 hover:bg-neutral-50 disabled:opacity-50"
+                      >
+                        {isAdmin ? "Retirer admin" : "Rendre admin"}
+                      </button>
                     </div>
                   </div>
                 </li>

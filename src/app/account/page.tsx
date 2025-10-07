@@ -12,8 +12,10 @@ export default async function AccountPage() {
   const billing = await getBilling(String((session.user as any).id || ''));
   const lang = getRequestLang();
   const email = (session.user.email || "").toLowerCase();
-  const admins = (process.env.ADMIN_EMAILS || "").split(",").map(s=>s.trim().toLowerCase()).filter(Boolean);
-  const isAdmin = admins.length === 0 ? true : admins.includes(email);
+  const envAdmins = (process.env.ADMIN_EMAILS || "").split(",").map(s=>s.trim().toLowerCase()).filter(Boolean);
+  const sessionAdmin = (session.user as any).isAdmin === true;
+  const fallbackAdmin = envAdmins.length > 0 && email ? envAdmins.includes(email) : false;
+  const isAdmin = envAdmins.length > 0 ? (sessionAdmin || fallbackAdmin) : sessionAdmin;
   return (
     <div className="max-w-3xl mx-auto space-y-6">
       <StripeSync />

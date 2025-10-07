@@ -4,15 +4,20 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/src/lib/auth";
 import { deleteUser } from "@/lib/users";
 
-function isAdmin(email?: string | null): boolean {
-  const allow = (process.env.ADMIN_EMAILS || "").split(",").map(s => s.trim().toLowerCase()).filter(Boolean);
-  if (allow.length === 0) return !!email; // any logged-in user if no list configured
-  return !!email && allow.includes(email.toLowerCase());
+function sessionIsAdmin(session: any): boolean {
+  if (!session?.user) return false;
+  const env = (process.env.ADMIN_EMAILS || "").split(",").map((s) => s.trim().toLowerCase()).filter(Boolean);
+  const email = (session.user.email || "").toLowerCase();
+  const flag = (session.user as any).isAdmin === true;
+  if (env.length > 0) {
+    return flag || (email ? env.includes(email) : false);
+  }
+  return flag;
 }
 
 export async function DELETE(_req: NextRequest, { params }: { params: { id: string } }) {
   const session = await auth();
-  if (!session?.user || !isAdmin(session.user.email)) {
+  if (!sessionIsAdmin(session)) {
     return NextResponse.json({ error: "forbidden" }, { status: 403 });
   }
   try {
@@ -23,4 +28,3 @@ export async function DELETE(_req: NextRequest, { params }: { params: { id: stri
     return NextResponse.json({ error: e?.message || "delete failed" }, { status: 400 });
   }
 }
-

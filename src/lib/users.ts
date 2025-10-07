@@ -13,6 +13,7 @@ export type UserRecord = {
   passwordHash: string; // format: scrypt:<saltHex>:<keyHex>
   createdAt: string; // ISO
   verified?: boolean; // email verified flag
+  admin?: boolean; // admin flag
 };
 
 const USERS_KEY = "users/users.json";
@@ -79,7 +80,7 @@ export async function findUserById(id: string): Promise<UserRecord | null> {
   return u || null;
 }
 
-export async function addUser(params: { email: string; password: string; name?: string }): Promise<Omit<UserRecord, "passwordHash">> {
+export async function addUser(params: { email: string; password: string; name?: string; admin?: boolean }): Promise<Omit<UserRecord, "passwordHash">> {
   const email = params.email.trim().toLowerCase();
   const name = params.name?.trim();
   if (!email || !params.password) throw new Error("email et password requis");
@@ -94,6 +95,7 @@ export async function addUser(params: { email: string; password: string; name?: 
     passwordHash: hashPassword(params.password),
     createdAt: new Date().toISOString(),
     verified: false,
+    admin: params.admin === true,
   };
   users.push(user);
   await writeAll(users);
@@ -124,6 +126,7 @@ export async function ensureDefaultAdmin(): Promise<void> {
     passwordHash: hashPassword(password),
     createdAt: new Date().toISOString(),
     verified: true,
+    admin: true,
   };
   users.push(user);
   await writeAll(users);
@@ -210,6 +213,15 @@ export async function markUserVerified(id: string): Promise<boolean> {
   const idx = users.findIndex(u => u.id === id);
   if (idx === -1) return false;
   users[idx].verified = true;
+  await writeAll(users);
+  return true;
+}
+
+export async function setUserAdmin(id: string, admin: boolean): Promise<boolean> {
+  const users = await readAll();
+  const idx = users.findIndex((u) => u.id === id);
+  if (idx === -1) return false;
+  users[idx].admin = admin;
   await writeAll(users);
   return true;
 }

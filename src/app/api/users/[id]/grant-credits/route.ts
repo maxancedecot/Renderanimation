@@ -5,15 +5,20 @@ import { auth } from "@/src/lib/auth";
 import { getBilling, setBilling, type BillingRecord } from "@/lib/billing";
 import { findUserById } from "@/lib/users";
 
-function isAdmin(email?: string | null): boolean {
-  const allow = (process.env.ADMIN_EMAILS || "").split(",").map((s) => s.trim().toLowerCase()).filter(Boolean);
-  if (allow.length === 0) return !!email;
-  return !!email && allow.includes(email.toLowerCase());
+function sessionIsAdmin(session: any): boolean {
+  if (!session?.user) return false;
+  const env = (process.env.ADMIN_EMAILS || "").split(",").map((s) => s.trim().toLowerCase()).filter(Boolean);
+  const email = (session.user.email || "").toLowerCase();
+  const flag = (session.user as any).isAdmin === true;
+  if (env.length > 0) {
+    return flag || (email ? env.includes(email) : false);
+  }
+  return flag;
 }
 
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
   const session = await auth();
-  if (!session?.user || !isAdmin(session.user.email)) {
+  if (!sessionIsAdmin(session)) {
     return NextResponse.json({ error: "forbidden" }, { status: 403 });
   }
 
@@ -60,4 +65,3 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
 
   return NextResponse.json({ ok: true, videosRemaining });
 }
-

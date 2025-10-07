@@ -24,8 +24,9 @@ export const authOptions: NextAuthOptions = {
             const ok = verifyPassword(credPass, u.passwordHash);
             // Allow if password ok and either verified or missing flag (legacy users)
             const verified = (u as any).verified;
+            const isAdmin = !!(u as any).admin;
             if (ok && (verified === true || typeof verified === 'undefined')) {
-              return { id: u.id, name: u.name || u.email, email: u.email } as any;
+              return { id: u.id, name: u.name || u.email, email: u.email, isAdmin } as any;
             }
             // If not verified, reject
           }
@@ -37,7 +38,7 @@ export const authOptions: NextAuthOptions = {
         const demoEmail = process.env.DEMO_LOGIN_EMAIL || "demo@client.test";
         const demoPass  = process.env.DEMO_LOGIN_PASSWORD || "demo1234";
         if (credEmail === demoEmail && credPass === demoPass) {
-          return { id: "demo", name: "Demo User", email: demoEmail } as any;
+          return { id: "demo", name: "Demo User", email: demoEmail, isAdmin: true } as any;
         }
         return null;
       }
@@ -51,6 +52,7 @@ export const authOptions: NextAuthOptions = {
       if (user) {
         // Persist the user id on the token
         (token as any).uid = (user as any).id || (token as any).uid || token.sub;
+        (token as any).isAdmin = (user as any).isAdmin === true;
       }
       return token;
     },
@@ -58,6 +60,7 @@ export const authOptions: NextAuthOptions = {
       // Expose id on session.user for server/client usage
       if (session.user) {
         (session.user as any).id = (token as any).uid || token.sub || '';
+        (session.user as any).isAdmin = (token as any).isAdmin === true;
       }
       return session;
     }
