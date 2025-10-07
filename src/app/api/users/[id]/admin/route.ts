@@ -21,6 +21,11 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     return NextResponse.json({ error: "forbidden" }, { status: 403 });
   }
 
+  const currentUser = session?.user;
+  if (!currentUser) {
+    return NextResponse.json({ error: "forbidden" }, { status: 403 });
+  }
+
   const targetId = params.id;
   if (!targetId) {
     return NextResponse.json({ error: "missing_user" }, { status: 400 });
@@ -43,7 +48,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     return NextResponse.json({ error: "user_not_found" }, { status: 404 });
   }
 
-  const currentId = (session.user as any).id || (session.user as any).uid || null;
+  const currentId = (currentUser as any).id || (currentUser as any).uid || null;
   if (currentId && currentId === targetId && desired === false) {
     return NextResponse.json({ error: "cannot_demote_self" }, { status: 400 });
   }
