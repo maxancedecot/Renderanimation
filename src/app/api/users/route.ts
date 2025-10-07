@@ -3,6 +3,7 @@ export const runtime = "nodejs";
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/src/lib/auth";
 import { listUsers, addUser, ensureDefaultAdmin } from "@/lib/users";
+import { getBilling } from "@/lib/billing";
 
 function isAdmin(email?: string | null): boolean {
   const allow = (process.env.ADMIN_EMAILS || "").split(",").map(s => s.trim().toLowerCase()).filter(Boolean);
@@ -17,7 +18,23 @@ export async function GET() {
     return NextResponse.json({ error: "forbidden" }, { status: 403 });
   }
   const users = await listUsers();
-  return NextResponse.json({ users });
+  const withBilling = await Promise.all(users.map(async (user) => {
+    try {
+      const billing = await getBilling(user.id);
+      return {
+        ...user,
+        videosRemaining: billing?.videosRemaining ?? 0,
+        subscriptionStatus: billing?.subscriptionStatus || null,
+      };
+    } catch {
+      return {
+        ...user,
+        videosRemaining: 0,
+        subscriptionStatus: null,
+      };
+    }
+  }));
+  return NextResponse.json({ users: withBilling });
 }
 
 export async function POST(req: NextRequest) {

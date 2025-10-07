@@ -73,6 +73,12 @@ export async function findUserByEmail(email: string): Promise<UserRecord | null>
   return u || null;
 }
 
+export async function findUserById(id: string): Promise<UserRecord | null> {
+  const users = await readAll();
+  const u = users.find((x) => x.id === id);
+  return u || null;
+}
+
 export async function addUser(params: { email: string; password: string; name?: string }): Promise<Omit<UserRecord, "passwordHash">> {
   const email = params.email.trim().toLowerCase();
   const name = params.name?.trim();

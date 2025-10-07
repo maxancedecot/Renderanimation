@@ -8,6 +8,8 @@ type User = {
   email: string;
   name?: string;
   createdAt: string;
+  videosRemaining?: number;
+  subscriptionStatus?: string | null;
 };
 
 export default function UsersAdmin() {
@@ -18,6 +20,8 @@ export default function UsersAdmin() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
+  const [grantInputs, setGrantInputs] = useState<Record<string, string>>({});
+  const [granting, setGranting] = useState<Record<string, boolean>>({});
 
   async function load() {
     setLoading(true);
@@ -31,6 +35,8 @@ export default function UsersAdmin() {
       }
       const json = await r.json();
       setUsers(json.users || []);
+      setGrantInputs({});
+      setGranting({});
     } catch (e: any) {
       setError(e?.message || "Erreur de chargement");
     } finally {
@@ -71,8 +77,40 @@ export default function UsersAdmin() {
       if (!r.ok) throw new Error(j?.error || "delete failed");
       toast.success("Utilisateur supprimé", { id: p });
       setUsers((prev) => (prev || []).filter((u) => u.id !== id));
+      setGrantInputs((prev) => {
+        const { [id]: _omit, ...rest } = prev;
+        return rest;
+      });
     } catch (e: any) {
       toast.error(e?.message || "Erreur suppression", { id: p });
+    }
+  }
+
+  async function grantCredits(userId: string) {
+    const raw = grantInputs[userId];
+    const value = Number.parseInt(raw || "", 10);
+    if (!Number.isInteger(value) || value <= 0) {
+      toast.error("Nombre de crédits invalide");
+      return;
+    }
+    setGranting((prev) => ({ ...prev, [userId]: true }));
+    const toastId = toast.loading("Ajout de crédits…");
+    try {
+      const r = await fetch(`/api/users/${userId}/grant-credits`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ amount: value }),
+      });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(j?.error || "grant failed");
+      const nextRemaining = typeof j?.videosRemaining === "number" ? j.videosRemaining : value;
+      setUsers((prev) => (prev || []).map((u) => (u.id === userId ? { ...u, videosRemaining: nextRemaining } : u)));
+      setGrantInputs((prev) => ({ ...prev, [userId]: "" }));
+      toast.success(`+${value} crédits octroyés`, { id: toastId });
+    } catch (e: any) {
+      toast.error(e?.message || "Erreur lors de l'ajout", { id: toastId });
+    } finally {
+      setGranting((prev) => ({ ...prev, [userId]: false }));
     }
   }
 
@@ -100,15 +138,51 @@ export default function UsersAdmin() {
         {error && <p className="text-sm text-rose-600 mt-3">{error}</p>}
         {!loading && !error && (
           <ul className="mt-3 divide-y">
-            {(users || []).map((u) => (
-              <li key={u.id} className="flex items-center justify-between py-3">
-                <div>
-                  <div className="font-medium">{u.email}</div>
-                  <div className="text-xs text-neutral-500">{u.name || "—"} · {new Date(u.createdAt).toLocaleString()}</div>
-                </div>
-                <button onClick={() => removeUser(u.id)} className="text-sm rounded-lg border px-3 py-1.5 hover:bg-neutral-50">Supprimer</button>
-              </li>
-            ))}
+            {(users || []).map((u) => {
+              const credits = typeof u.videosRemaining === "number" ? u.videosRemaining : 0;
+              const grantValue = grantInputs[u.id] ?? "";
+              return (
+                <li key={u.id} className="py-3">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <div className="font-medium break-all">{u.email}</div>
+                      <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-neutral-500">
+                        <span>{u.name || "—"} · {new Date(u.createdAt).toLocaleString()}</span>
+                        <span className="inline-flex items-center rounded-full bg-neutral-100 px-2 py-0.5 text-[11px] font-medium text-neutral-700">
+                          Crédits: {credits}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                      <form
+                        onSubmit={(e) => { e.preventDefault(); grantCredits(u.id); }}
+                        className="flex items-center gap-2"
+                      >
+                        <input
+                          type="number"
+                          min={1}
+                          value={grantValue}
+                          onChange={(e) => setGrantInputs((prev) => ({ ...prev, [u.id]: e.target.value }))}
+                          className="w-24 rounded-lg border px-2 py-1 text-sm"
+                          placeholder="+ crédits"
+                        />
+                        <button
+                          type="submit"
+                          disabled={!!granting[u.id]}
+                          className="inline-flex items-center justify-center rounded-lg border px-3 py-1.5 text-sm hover:bg-neutral-50 disabled:opacity-50"
+                        >
+                          {granting[u.id] ? "Ajout…" : "Octroyer"}
+                        </button>
+                      </form>
+                      <button
+                        onClick={() => removeUser(u.id)}
+                        className="text-sm rounded-lg border px-3 py-1.5 hover:bg-neutral-50"
+                      >Supprimer</button>
+                    </div>
+                  </div>
+                </li>
+              );
+            })}
             {(users && users.length === 0) && <li className="py-3 text-sm text-neutral-500">Aucun utilisateur</li>}
           </ul>
         )}
@@ -116,4 +190,3 @@ export default function UsersAdmin() {
     </div>
   );
 }
-
