@@ -19,17 +19,20 @@ export async function POST(req: NextRequest) {
     const token = await createEmailVerificationToken(u.id, u.email, 7 * 24 * 3600);
     const base = originFromReq(req);
     const link = `${base}/verify?token=${encodeURIComponent(token)}`;
-    await sendEmail({
+    const emailResult = await sendEmail({
       to: u.email,
       subject: 'Verify your email',
       html: `<p>Hello!</p><p>Confirm your email by clicking the link below:</p><p><a href="${link}">${link}</a></p>`,
       text: `Verify your email: ${link}`,
     });
+    if (!emailResult.ok) {
+      throw new Error(emailResult.error || 'email_send_failed');
+    }
     const devEcho = (process.env.MAIL_DEV_ECHO || '').toLowerCase();
     const shouldEcho = devEcho === '1' || devEcho === 'true' || devEcho === 'yes';
     return NextResponse.json({ ok: true, status: 'resent', devLink: shouldEcho ? link : undefined });
   } catch (e: any) {
+    console.error('verify resend error:', e);
     return NextResponse.json({ error: e?.message || 'resend_failed' }, { status: 500 });
   }
 }
-

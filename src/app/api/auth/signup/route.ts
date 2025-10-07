@@ -33,12 +33,15 @@ export async function POST(req: NextRequest) {
         const token = await createEmailVerificationToken(existing.id, existing.email, 7 * 24 * 3600);
         const base = originFromReq(req);
         const link = `${base}/verify?token=${encodeURIComponent(token)}`;
-        await sendEmail({
+        const emailResult = await sendEmail({
           to: existing.email,
           subject: 'Verify your email',
           html: `<p>Welcome back!</p><p>Confirm your email by clicking the link below:</p><p><a href="${link}">${link}</a></p>`,
           text: `Verify your email: ${link}`,
         });
+        if (!emailResult.ok) {
+          throw new Error(emailResult.error || 'email_send_failed');
+        }
         const devEcho = (process.env.MAIL_DEV_ECHO || '').toLowerCase();
         const shouldEcho = devEcho === '1' || devEcho === 'true' || devEcho === 'yes';
         return NextResponse.json({ resent: true, devLink: shouldEcho ? link : undefined }, { status: 200 });
@@ -51,18 +54,26 @@ export async function POST(req: NextRequest) {
     const token = await createEmailVerificationToken(user.id, user.email, 7 * 24 * 3600);
     const base = originFromReq(req);
     const link = `${base}/verify?token=${encodeURIComponent(token)}`;
-    await sendEmail({
+    const emailResult = await sendEmail({
       to: user.email,
       subject: 'Verify your email',
       html: `<p>Welcome!</p><p>Confirm your email by clicking the link below:</p><p><a href="${link}">${link}</a></p>`,
       text: `Verify your email: ${link}`,
     });
+    if (!emailResult.ok) {
+      throw new Error(emailResult.error || 'email_send_failed');
+    }
     const devEcho = (process.env.MAIL_DEV_ECHO || '').toLowerCase();
     const shouldEcho = devEcho === '1' || devEcho === 'true' || devEcho === 'yes';
     return NextResponse.json({ user, sent: true, devLink: shouldEcho ? link : undefined }, { status: 201 });
   } catch (e: any) {
-    const msg = String(e?.message || '')
-    const status = /existant|exist/i.test(msg) ? 409 : 400;
+    console.error('signup error:', e);
+    const msg = String(e?.message || '');
+    const status = /existant|exist/i.test(msg)
+      ? 409
+      : /email|smtp|resend|missing_from|provider/i.test(msg)
+        ? 500
+        : 400;
     return NextResponse.json({ error: msg || 'signup_failed' }, { status });
   }
 }

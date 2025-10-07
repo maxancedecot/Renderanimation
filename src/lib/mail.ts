@@ -10,7 +10,19 @@ export type SendEmailInput = {
 };
 
 export async function sendEmail(input: SendEmailInput): Promise<{ ok: boolean; id?: string; error?: string }> {
-  const from = input.from || process.env.MAIL_FROM || process.env.SMTP_FROM || "no-reply@example.com";
+  const from =
+    input.from ||
+    process.env.MAIL_FROM ||
+    process.env.RESEND_FROM ||
+    process.env.RESEND_FROM_EMAIL ||
+    process.env.SMTP_FROM ||
+    process.env.EMAIL_FROM ||
+    "";
+
+  if (!from) {
+    console.error("sendEmail: missing FROM address configuration");
+    return { ok: false, error: "missing_from_address" };
+  }
 
   // Prefer Resend if configured
   if (process.env.RESEND_API_KEY) {
@@ -55,5 +67,5 @@ export async function sendEmail(input: SendEmailInput): Promise<{ ok: boolean; i
 
   // Last resort: log the link
   console.warn("sendEmail fallback: no provider configured. Intended to:", input);
-  return { ok: true, id: "dev-fallback" };
+  return { ok: process.env.NODE_ENV !== "production", id: process.env.NODE_ENV !== "production" ? "dev-fallback" : undefined, error: process.env.NODE_ENV === "production" ? "no_provider_configured" : undefined };
 }
