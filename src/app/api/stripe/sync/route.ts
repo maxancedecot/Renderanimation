@@ -48,7 +48,7 @@ export async function GET(req: Request) {
     subscriptionId: (subscription?.id as string | undefined),
     videosTotal: quotas?.videosTotal ?? 0,
     videosRemaining: quotas?.videosTotal ?? 0,
-    includes4k: quotas?.includes4k ?? false,
+    includes4k: true,
     currentPeriodEnd,
     lastUpdatedAt: new Date().toISOString(),
   };

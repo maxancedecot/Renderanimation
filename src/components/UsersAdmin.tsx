@@ -11,6 +11,7 @@ type User = {
   videosRemaining?: number;
   subscriptionStatus?: string | null;
   admin?: boolean;
+  envAdmin?: boolean;
 };
 
 type Props = {
@@ -135,7 +136,11 @@ export default function UsersAdmin({ currentUserId }: Props) {
       setUsers((prev) => (prev || []).map((u) => (u.id === userId ? { ...u, admin: makeAdmin } : u)));
       toast.success(makeAdmin ? "Utilisateur promu admin" : "Rôle admin retiré", { id: toastId });
     } catch (e: any) {
-      toast.error(e?.message || "Erreur lors de la mise à jour", { id: toastId });
+      const raw = e?.message || "";
+      const message = raw === "env_admin_locked"
+        ? "Ce compte est administrateur via la configuration et ne peut pas être modifié ici."
+        : (raw || "Erreur lors de la mise à jour");
+      toast.error(message, { id: toastId });
     } finally {
       setAdminSaving((prev) => ({ ...prev, [userId]: false }));
     }
@@ -169,6 +174,7 @@ export default function UsersAdmin({ currentUserId }: Props) {
               const credits = typeof u.videosRemaining === "number" ? u.videosRemaining : 0;
               const grantValue = grantInputs[u.id] ?? "";
               const isAdmin = u.admin === true;
+              const envLocked = u.envAdmin === true;
               return (
                 <li key={u.id} className="py-3">
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -181,7 +187,7 @@ export default function UsersAdmin({ currentUserId }: Props) {
                         </span>
                         {isAdmin && (
                           <span className="inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-medium text-amber-700">
-                            Admin
+                            {envLocked ? "Admin (env)" : "Admin"}
                           </span>
                         )}
                       </div>
@@ -213,7 +219,7 @@ export default function UsersAdmin({ currentUserId }: Props) {
                       >Supprimer</button>
                       <button
                         onClick={() => toggleAdmin(u.id, !isAdmin)}
-                        disabled={!!adminSaving[u.id] || (u.id === currentUserId && isAdmin)}
+                        disabled={!!adminSaving[u.id] || (u.id === currentUserId && isAdmin) || envLocked}
                         className="text-sm rounded-lg border px-3 py-1.5 hover:bg-neutral-50 disabled:opacity-50"
                       >
                         {isAdmin ? "Retirer admin" : "Rendre admin"}

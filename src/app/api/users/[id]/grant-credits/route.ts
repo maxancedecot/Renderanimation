@@ -58,7 +58,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     updated.videosTotal = billing?.videosTotal ?? 0;
   }
   if (typeof updated.includes4k === "undefined") {
-    updated.includes4k = billing?.includes4k ?? false;
+    updated.includes4k = true;
   }
 
   await setBilling(userId, updated);

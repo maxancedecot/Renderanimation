@@ -2,7 +2,7 @@ export const runtime = "nodejs";
 
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/src/lib/auth";
-import { listUsers, addUser, ensureDefaultAdmin } from "@/lib/users";
+import { listUsers, addUser, ensureDefaultAdmin, getEnvAdminEmails } from "@/lib/users";
 import { getBilling } from "@/lib/billing";
 
 function sessionIsAdmin(session: any): boolean {
@@ -23,6 +23,7 @@ export async function GET() {
     return NextResponse.json({ error: "forbidden" }, { status: 403 });
   }
   const users = await listUsers();
+  const envSet = new Set(getEnvAdminEmails());
   const withBilling = await Promise.all(users.map(async (user) => {
     try {
       const billing = await getBilling(user.id);
@@ -30,12 +31,14 @@ export async function GET() {
         ...user,
         videosRemaining: billing?.videosRemaining ?? 0,
         subscriptionStatus: billing?.subscriptionStatus || null,
+        envAdmin: envSet.has(user.email.toLowerCase()),
       };
     } catch {
       return {
         ...user,
         videosRemaining: 0,
         subscriptionStatus: null,
+        envAdmin: envSet.has(user.email.toLowerCase()),
       };
     }
   }));

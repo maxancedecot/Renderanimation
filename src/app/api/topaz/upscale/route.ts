@@ -30,9 +30,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'subscription_required' }, { status: 402 });
     }
     await ensurePeriod(uid, rec);
-    if (!rec.includes4k) {
-      return NextResponse.json({ error: 'fourk_not_included' }, { status: 402 });
-    }
     const urlObj = new URL(req.url);
     const debugFlag = urlObj.searchParams.get("debug") === "1";
     const { inputUrl, debug, meta } = await req.json();

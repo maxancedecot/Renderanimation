@@ -53,7 +53,12 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     return NextResponse.json({ error: "cannot_demote_self" }, { status: 400 });
   }
 
-  await setUserAdmin(targetId, desired);
+  try {
+    await setUserAdmin(targetId, desired);
+  } catch (e: any) {
+    const message = e?.message || 'admin_update_failed';
+    return NextResponse.json({ error: message }, { status: 400 });
+  }
 
   return NextResponse.json({ ok: true, admin: desired });
 }

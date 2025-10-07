@@ -20,6 +20,32 @@ const USERS_KEY = "users/users.json";
 const RESET_PREFIX = "users/reset/"; // tokens stored as users/reset/<token>.json
 const VERIFY_PREFIX = "users/verify/"; // tokens stored as users/verify/<token>.json
 
+function getEnvAdminSet(): Set<string> {
+  return new Set(
+    (process.env.ADMIN_EMAILS || "")
+      .split(",")
+      .map((s) => s.trim().toLowerCase())
+      .filter(Boolean)
+  );
+}
+
+function normalizeEnvAdmins(users: UserRecord[]): { normalized: UserRecord[]; changed: boolean } {
+  const envAdmins = getEnvAdminSet();
+  if (envAdmins.size === 0) {
+    return { normalized: users, changed: false };
+  }
+  let changed = false;
+  const normalized = users.map((user) => {
+    const email = user.email?.toLowerCase?.() || "";
+    if (email && envAdmins.has(email) && user.admin !== true) {
+      changed = true;
+      return { ...user, admin: true };
+    }
+    return user;
+  });
+  return { normalized, changed };
+}
+
 async function readAll(): Promise<UserRecord[]> {
   try {
     // Check if exists first to avoid noisy errors
@@ -32,7 +58,13 @@ async function readAll(): Promise<UserRecord[]> {
   if (!body) return [];
   try {
     const parsed = JSON.parse(body);
-    return Array.isArray(parsed) ? (parsed as UserRecord[]) : [];
+    const users = Array.isArray(parsed) ? (parsed as UserRecord[]) : [];
+    const { normalized, changed } = normalizeEnvAdmins(users);
+    if (changed) {
+      await writeAll(normalized);
+      return normalized;
+    }
+    return normalized;
   } catch {
     return [];
   }
@@ -88,6 +120,7 @@ export async function addUser(params: { email: string; password: string; name?: 
   if (users.some((u) => u.email.toLowerCase() === email)) {
     throw new Error("Utilisateur déjà existant");
   }
+  const envAdmins = getEnvAdminSet();
   const user: UserRecord = {
     id: randomUUID(),
     email,
@@ -95,7 +128,7 @@ export async function addUser(params: { email: string; password: string; name?: 
     passwordHash: hashPassword(params.password),
     createdAt: new Date().toISOString(),
     verified: false,
-    admin: params.admin === true,
+    admin: envAdmins.has(email) ? true : params.admin === true,
   };
   users.push(user);
   await writeAll(users);
@@ -221,7 +254,16 @@ export async function setUserAdmin(id: string, admin: boolean): Promise<boolean>
   const users = await readAll();
   const idx = users.findIndex((u) => u.id === id);
   if (idx === -1) return false;
+  const envAdmins = getEnvAdminSet();
+  const email = users[idx].email?.toLowerCase() || "";
+  if (!admin && email && envAdmins.has(email)) {
+    throw new Error("env_admin_locked");
+  }
   users[idx].admin = admin;
   await writeAll(users);
   return true;
+}
+
+export function getEnvAdminEmails(): string[] {
+  return Array.from(getEnvAdminSet());
 }

@@ -23,7 +23,15 @@ export async function getBilling(userId: string): Promise<BillingRecord | null> 
   const obj = await r2.send(new GetObjectCommand({ Bucket: R2_BUCKET, Key: key(userId) }));
   const body = await obj.Body?.transformToString();
   if (!body) return null;
-  try { return JSON.parse(body) as BillingRecord; } catch { return null; }
+  try {
+    const parsed = JSON.parse(body) as BillingRecord;
+    if (parsed && parsed.includes4k !== true) {
+      const updated: BillingRecord = { ...parsed, includes4k: true };
+      await setBilling(userId, updated);
+      return updated;
+    }
+    return parsed;
+  } catch { return null; }
 }
 
 export async function setBilling(userId: string, rec: BillingRecord): Promise<void> {
@@ -65,20 +73,24 @@ export async function getUserIdBySubscription(subId: string): Promise<string | n
 
 export function planForPrice(priceId: string): { videosTotal: number; includes4k: boolean } | null {
   const map: Record<string, { videosTotal: number; includes4k: boolean }> = {};
-  const p = (id?: string | null, q = 0, k = false) => { if (id) map[id] = { videosTotal: q, includes4k: k }; };
+  const p = (id?: string | null, q = 0) => { if (id) map[id] = { videosTotal: q, includes4k: true }; };
   // support multiple env keys mapping to the same quotas
-  p(process.env.STRIPE_PRICE_BASIC_MONTHLY, 5, false);
-  p(process.env.STRIPE_PRICE_BASIC_YEARLY, 5, false);
-  p(process.env.STRIPE_PRICE_PRO_MONTHLY, 10, true);
-  p(process.env.STRIPE_PRICE_PRO_YEARLY, 10, true);
-  p(process.env.STRIPE_PRICE_BUSINESS_MONTHLY, 20, true);
-  p(process.env.STRIPE_PRICE_BUSINESS_YEARLY, 20, true);
+  p(process.env.STRIPE_PRICE_BASIC_MONTHLY, 5);
+  p(process.env.STRIPE_PRICE_BASIC_YEARLY, 5);
+  p(process.env.STRIPE_PRICE_PRO_MONTHLY, 10);
+  p(process.env.STRIPE_PRICE_PRO_YEARLY, 10);
+  p(process.env.STRIPE_PRICE_BUSINESS_MONTHLY, 20);
+  p(process.env.STRIPE_PRICE_BUSINESS_YEARLY, 20);
   return map[priceId] || null;
 }
 
 export async function ensurePeriod(userId: string, rec: BillingRecord): Promise<BillingRecord> {
+  let current = rec.includes4k === true ? rec : { ...rec, includes4k: true };
+  if (current !== rec) {
+    await setBilling(userId, current);
+  }
   const now = Math.floor(Date.now() / 1000);
-  if (!rec.currentPeriodEnd || now <= rec.currentPeriodEnd) return rec;
+  if (!current.currentPeriodEnd || now <= current.currentPeriodEnd) return current;
   // Try refreshing from Stripe subscription if we can
   let newEnd = rec.currentPeriodEnd;
   let priceId = rec.priceId;
@@ -98,18 +110,16 @@ export async function ensurePeriod(userId: string, rec: BillingRecord): Promise<
     } catch {}
   }
   const quotas = priceId ? planForPrice(priceId) : null;
-  const videosTotal = quotas?.videosTotal ?? rec.videosTotal ?? 0;
-  const includes4k = quotas?.includes4k ?? rec.includes4k ?? false;
+  const videosTotal = quotas?.videosTotal ?? current.videosTotal ?? 0;
   const mult = Number(process.env.BILLING_ROLLOVER_CAP_MULTIPLIER || '1');
   const cap = Math.max(videosTotal, Math.floor(videosTotal * mult));
-  const accumulated = (rec.videosRemaining ?? videosTotal) + videosTotal;
+  const accumulated = (current.videosRemaining ?? videosTotal) + videosTotal;
   const rolled = Math.min(accumulated, cap);
   const updated: BillingRecord = {
-    ...rec,
+    ...current,
     subscriptionStatus: status,
     priceId,
     videosTotal,
-    includes4k,
     videosRemaining: rolled,
     currentPeriodEnd: newEnd,
     lastUpdatedAt: new Date().toISOString()

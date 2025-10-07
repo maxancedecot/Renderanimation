@@ -69,7 +69,7 @@ export async function POST(req: Request) {
           subscriptionId,
           videosTotal: quotas?.videosTotal ?? 0,
           videosRemaining: quotas?.videosTotal ?? 0,
-          includes4k: quotas?.includes4k ?? false,
+          includes4k: true,
           currentPeriodEnd,
           lastUpdatedAt: new Date().toISOString(),
         };
@@ -110,7 +110,7 @@ export async function POST(req: Request) {
         const prevEnd = existing.currentPeriodEnd || 0;
         // If moved to a new period or plan changed, reset credits
         const videosTotal = quotas?.videosTotal ?? existing.videosTotal ?? 0;
-        const includes4k = quotas?.includes4k ?? existing.includes4k ?? false;
+        const includes4k = true;
         const shouldReset = newEnd > prevEnd;
         const mult = Number(process.env.BILLING_ROLLOVER_CAP_MULTIPLIER || '1');
         const cap = Math.max(videosTotal, Math.floor(videosTotal * mult));
