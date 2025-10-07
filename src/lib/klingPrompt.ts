@@ -1,6 +1,8 @@
 // src/lib/klingPrompt.ts
 
 // --- Types attendus par le générateur de prompt ---
+export type CameraMotion = 'forward_push' | 'orbit_left' | 'orbit_right';
+
 export type Analysis = {
   scene_summary?: string;
   property_type?: string;     // ex: apartment | house | villa | office | retail | exterior | other
@@ -40,13 +42,47 @@ function normalizeAnalysis(a: Analysis) {
  */
 export function createPromptFromAnalysis(
   ana: Analysis,
-  opts?: { durationSec?: number; fps?: number; aspect?: string }
+  opts?: { durationSec?: number; fps?: number; aspect?: string; cameraMotion?: CameraMotion }
 ) {
   const n = normalizeAnalysis(ana);
 
   const duration = opts?.durationSec ?? 7;
   const fps = opts?.fps ?? 24;
   const aspect = opts?.aspect ?? "16:9";
+  const cameraMotion: CameraMotion = opts?.cameraMotion ?? 'forward_push';
+
+  const motionPresets: Record<CameraMotion, { title: string; bullets: string[]; timing: string }> = {
+    forward_push: {
+      title: 'Forward push',
+      bullets: [
+        'Hold for ~0.5s, then glide forward very slowly along the existing viewing axis.',
+        'Maintain a subtle dolly-in with perfectly level framing—no tilt, roll, or lateral drift.',
+        'Keep the camera distance changes gentle; no sudden zooms or parallax exaggeration.',
+      ],
+      timing: 'constant forward glide',
+    },
+    orbit_left: {
+      title: 'Orbit left',
+      bullets: [
+        'Hold for ~0.5s, then orbit counter-clockwise (to the left) around the main subject at a slow, even speed.',
+        'Keep a constant radius and camera height; always face the focal point of the scene.',
+        'Avoid tilt or roll; keep verticals straight and the orbit extremely smooth.',
+      ],
+      timing: 'slow, even left orbit',
+    },
+    orbit_right: {
+      title: 'Orbit right',
+      bullets: [
+        'Hold for ~0.5s, then orbit clockwise (to the right) around the main subject at a slow, even speed.',
+        'Maintain a consistent distance and camera height while keeping focus on the center of the scene.',
+        'Keep the move perfectly level—no tilt, roll, or sudden accelerations.',
+      ],
+      timing: 'slow, even right orbit',
+    },
+  };
+
+  const motion = motionPresets[cameraMotion] ?? motionPresets.forward_push;
+  const motionLines = motion.bullets.map((line) => `- ${line}`).join('\n');
 
   const listToStr = (xs?: string[]) => (xs && xs.length ? xs.join(", ") : "—");
 
@@ -73,14 +109,12 @@ Style: ${listToStr(n.style_tags)}
 Materials/colors to respect: ${listToStr(n.materials)}; ${listToStr(n.color_palette)}
 Lighting: ${lightingLine}
 
-Camera & Motion (FIXED):
-- Perform a very slow, steady forward glide (subtle dolly-in) along the current viewing axis.
-- Keep verticals perfectly straight, no parallax exaggeration, no tilt, no roll.
-- No lateral pans, no orbits, no zoom jumps.
+Camera & Motion (${motion.title}):
+${motionLines}
 
 Timing:
 - Duration: ${duration}s
-- 0.5s hold → constant forward motion → 0.5s settle.
+- 0.5s hold → ${motion.timing} → 0.5s settle.
 
 Constraints:
 - Preserve architecture and materials exactly.

@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import { getClientLang, t } from "@/lib/i18n";
+import type { CameraMotion } from "@/lib/klingPrompt";
 
 /* Helpers */
 function fileToBase64(file: File): Promise<string> {
@@ -65,6 +66,7 @@ export default function UploadBox() {
   const [finalVideoUrl, setFinalVideoUrl] = useState<string | null>(null);
   const [progress, setProgress] = useState(0);
   const [showRemoveConfirm, setShowRemoveConfirm] = useState(false);
+  const [cameraMotion, setCameraMotion] = useState<CameraMotion>('forward_push');
   
 
   /* Drag & drop */
@@ -174,13 +176,33 @@ export default function UploadBox() {
   });
 
   /* 2) Analyse + prompt (sur l’image actuelle : nettoyée si dispo) */
-  const runAnalyze = useMutation({
-    mutationFn: async () => {
+  const cameraOptionLabels: Record<CameraMotion, string> = {
+    orbit_left: t(lang, 'cameraOptionOrbitLeftTitle'),
+    forward_push: t(lang, 'cameraOptionForwardPushTitle'),
+    orbit_right: t(lang, 'cameraOptionOrbitRightTitle'),
+  } as const;
+  const cameraOptionDescriptions: Record<CameraMotion, string> = {
+    orbit_left: t(lang, 'cameraOptionOrbitLeftDesc'),
+    forward_push: t(lang, 'cameraOptionForwardPushDesc'),
+    orbit_right: t(lang, 'cameraOptionOrbitRightDesc'),
+  } as const;
+  const cameraOptions: Array<{ value: CameraMotion; label: string; description: string }> = [
+    { value: 'orbit_left', label: cameraOptionLabels.orbit_left, description: cameraOptionDescriptions.orbit_left },
+    { value: 'forward_push', label: cameraOptionLabels.forward_push, description: cameraOptionDescriptions.forward_push },
+    { value: 'orbit_right', label: cameraOptionLabels.orbit_right, description: cameraOptionDescriptions.orbit_right },
+  ];
+
+  const runAnalyze = useMutation<
+    { analysis: any; prompt: string; cameraMotion?: CameraMotion },
+    any,
+    { cameraMotion: CameraMotion }
+  >({
+    mutationFn: async ({ cameraMotion }) => {
       if (!imageUrl) throw new Error("Pas d'image disponible");
       const res = await fetch("/api/analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ imageUrl })
+        body: JSON.stringify({ imageUrl, cameraMotion })
       }).then(r => r.json());
       if (res.error) throw new Error(res.error);
       return res;
@@ -189,8 +211,8 @@ export default function UploadBox() {
       toast.loading(t(lang, 'toastAnalyzing'), { id: "an" });
       setResult(null);
     },
-    onSuccess: (data) => {
-      setResult(data);
+    onSuccess: (data, variables) => {
+      setResult({ ...data, cameraMotion: variables.cameraMotion });
       toast.success(t(lang, 'toastAnalyzed'), { id: "an" });
     },
     onError: (e: any) => toast.error(e?.message || t(lang, 'toastAnalyzeError'), { id: "an" })
@@ -500,7 +522,7 @@ export default function UploadBox() {
             </button>
             <button
               className="inline-flex items-center justify-center rounded-lg border px-4 py-2 hover:bg-neutral-50 disabled:opacity-50"
-              onClick={() => { setFile(null); setImageUrl(null); setCleanedUrl(null); setResult(null); setFinalVideoUrl(null); }}
+              onClick={() => { setFile(null); setImageUrl(null); setCleanedUrl(null); setResult(null); setFinalVideoUrl(null); setCameraMotion('forward_push'); }}
               disabled={uploadAndAnalyze.isPending}
             >
               {t(lang, 'reset')}
@@ -514,22 +536,56 @@ export default function UploadBox() {
             <h2 className="text-lg font-semibold">{t(lang, 'preparation')}</h2>
 
             {!result && (
-              <div className="flex flex-wrap gap-3">
-                <button
-                  className="inline-flex items-center justify-center rounded-lg bg-rose-600 px-4 py-2 text-white hover:bg-rose-600/90 disabled:opacity-60"
-                  onClick={() => setShowRemoveConfirm(true)}
-                  disabled={removePeople.isPending}
-                >
-                  {removePeople.isPending ? t(lang, 'removingPeople') : t(lang, 'removePeople')}
-                </button>
+              <div className="space-y-4">
+                <div>
+                  <p className="text-sm font-medium text-neutral-800">{t(lang, 'cameraChoiceTitle')}</p>
+                  <p className="text-xs text-neutral-500 mt-1">{t(lang, 'cameraChoiceHint')}</p>
+                  <div className="mt-3 grid gap-2">
+                    {cameraOptions.map((option) => (
+                      <label
+                        key={option.value}
+                        className={clsx(
+                          'flex items-start gap-3 rounded-lg border px-3 py-2 transition',
+                          cameraMotion === option.value ? 'border-black bg-neutral-50 shadow-sm' : 'border-neutral-200 hover:border-neutral-400',
+                          !runAnalyze.isPending && 'cursor-pointer',
+                          runAnalyze.isPending && 'opacity-60 cursor-not-allowed'
+                        )}
+                      >
+                        <input
+                          type="radio"
+                          name="camera-motion"
+                          value={option.value}
+                          checked={cameraMotion === option.value}
+                          onChange={() => setCameraMotion(option.value)}
+                          disabled={runAnalyze.isPending}
+                          className="mt-1"
+                        />
+                        <div>
+                          <div className="text-sm font-medium text-neutral-900">{option.label}</div>
+                          <div className="text-xs text-neutral-500">{option.description}</div>
+                        </div>
+                      </label>
+                    ))}
+                  </div>
+                </div>
 
-                <button
-                  className="inline-flex items-center justify-center rounded-lg bg-black px-4 py-2 text-white hover:bg-black/90 disabled:opacity-60"
-                  onClick={() => runAnalyze.mutate()}
-                  disabled={runAnalyze.isPending}
-                >
-                  {runAnalyze.isPending ? t(lang, 'analyzing') : t(lang, 'analyzeImage')}
-                </button>
+                <div className="flex flex-wrap gap-3">
+                  <button
+                    className="inline-flex items-center justify-center rounded-lg bg-rose-600 px-4 py-2 text-white hover:bg-rose-600/90 disabled:opacity-60"
+                    onClick={() => setShowRemoveConfirm(true)}
+                    disabled={removePeople.isPending}
+                  >
+                    {removePeople.isPending ? t(lang, 'removingPeople') : t(lang, 'removePeople')}
+                  </button>
+
+                  <button
+                    className="inline-flex items-center justify-center rounded-lg bg-black px-4 py-2 text-white hover:bg-black/90 disabled:opacity-60"
+                    onClick={() => runAnalyze.mutate({ cameraMotion })}
+                    disabled={runAnalyze.isPending}
+                  >
+                    {runAnalyze.isPending ? t(lang, 'analyzing') : t(lang, 'analyzeImage')}
+                  </button>
+                </div>
               </div>
             )}
 
@@ -537,6 +593,15 @@ export default function UploadBox() {
               <>
                 <h3 className="font-semibold">Image analysée — prête à être animée</h3>
                 <p className="text-sm text-neutral-600">{t(lang, 'generateHint')}</p>
+                {(() => {
+                  const motionKey = ((result.cameraMotion as CameraMotion) || cameraMotion) as CameraMotion;
+                  const optionLabel = cameraOptionLabels[motionKey] ?? cameraOptionLabels.forward_push;
+                  return (
+                    <div className="inline-flex items-center rounded-full bg-neutral-100 px-3 py-1 text-xs text-neutral-700">
+                      {t(lang, 'cameraSelectionLabel', { option: optionLabel })}
+                    </div>
+                  );
+                })()}
                 <div className="flex gap-2 flex-wrap items-center">
                   <button
                     className="inline-flex items-center justify-center rounded-lg bg-[#F9D83C] px-4 py-2 text-black hover:bg-[#F9D83C]/90 disabled:opacity-60"

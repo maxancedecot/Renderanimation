@@ -2,7 +2,7 @@ export const runtime = "nodejs";
 
 import { NextRequest, NextResponse } from "next/server";
 import { analyzeImageFromUrl, analyzeImageFromBase64 } from "@/src/lib/openaiVision";
-import { createPromptFromAnalysis } from "@/src/lib/klingPrompt";
+import { createPromptFromAnalysis, type CameraMotion } from "@/src/lib/klingPrompt";
 import fs from "node:fs";
 import path from "node:path";
 
@@ -17,7 +17,13 @@ function guessMimeFromExt(p: string) {
 
 export async function POST(req: NextRequest) {
   try {
-    const { imageUrl } = await req.json();
+    const body = await req.json();
+    const imageUrl = body?.imageUrl as string | undefined;
+    const requestedMotion = typeof body?.cameraMotion === 'string' ? String(body.cameraMotion) : '';
+    const allowedMotions = new Set<CameraMotion>(['forward_push', 'orbit_left', 'orbit_right']);
+    const cameraMotion: CameraMotion = allowedMotions.has(requestedMotion as CameraMotion)
+      ? (requestedMotion as CameraMotion)
+      : 'forward_push';
     if (!imageUrl) return NextResponse.json({ error: "imageUrl requis" }, { status: 400 });
 
     let analysis;
@@ -37,8 +43,8 @@ export async function POST(req: NextRequest) {
       analysis = await analyzeImageFromUrl(imageUrl);
     }
 
-    const prompt = createPromptFromAnalysis(analysis, { durationSec: 7, fps: 24, aspect: "16:9" });
-    return NextResponse.json({ analysis, prompt });
+    const prompt = createPromptFromAnalysis(analysis, { durationSec: 7, fps: 24, aspect: "16:9", cameraMotion });
+    return NextResponse.json({ analysis, prompt, cameraMotion });
   } catch (e: any) {
     console.error(e);
     return NextResponse.json({ error: e.message || "analyse failed" }, { status: 500 });
