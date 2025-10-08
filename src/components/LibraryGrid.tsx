@@ -232,7 +232,7 @@ export default function LibraryGrid() {
                   }}
                 />
                 {show4k ? (
-                  <span className="absolute top-2 left-2 rounded-md bg-green-100 px-2 py-1 text-[11px] font-semibold text-green-800 ring-1 ring-green-300 shadow-sm">4K</span>
+                  <span className="absolute bottom-2 right-2 rounded-md bg-green-100 px-2 py-1 text-[11px] font-semibold text-green-800 ring-1 ring-green-300 shadow-sm">4K</span>
                 ) : null}
                 <button
                   aria-label={t(lang, 'deleteTooltip')}
