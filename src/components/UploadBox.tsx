@@ -570,7 +570,7 @@ export default function UploadBox() {
                 </div>
 
                 <div className="flex flex-wrap items-center gap-3">
-                  <div className="flex items-center gap-2">
+                  <div className="relative inline-flex">
                     <button
                       className="inline-flex items-center justify-center rounded-lg bg-rose-600 px-4 py-2 text-white hover:bg-rose-600/90 disabled:opacity-60"
                       onClick={() => setShowRemoveConfirm(true)}
@@ -578,7 +578,7 @@ export default function UploadBox() {
                     >
                       {removePeople.isPending ? t(lang, 'removingPeople') : t(lang, 'removePeople')}
                     </button>
-                    <span className="rounded-full bg-rose-100 px-2 py-0.5 text-[11px] font-semibold uppercase text-rose-700 ring-1 ring-rose-200">Beta</span>
+                    <span className="absolute -top-2 -right-2 rounded-full bg-rose-100 px-2 py-0.5 text-[9px] font-semibold uppercase text-rose-700 ring-1 ring-rose-200 shadow-sm">Beta</span>
                   </div>
 
                   <button
