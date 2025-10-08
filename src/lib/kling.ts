@@ -64,7 +64,7 @@ export async function createImageToVideoTask(input: CreateTaskInput): Promise<Cr
 
   const body = {
     model_name: "kling-v2-5-turbo",
-    mode: input.mode || "pro",
+    mode: input.mode || "turbo",
     duration: String(input.durationSec ?? 5), // "5" ou "10"
     image,                                    // URL publique ou base64 pur
     prompt: input.prompt,
