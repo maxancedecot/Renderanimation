@@ -89,7 +89,7 @@ export async function POST(req: Request) {
       if (contentType.includes("tiff")) return "tiff";
       return "png";
     })();
-    const file = await toFile(Buffer.from(buf), `input.${ext}`, { contentType });
+    const file = await toFile(Buffer.from(buf), `input.${ext}`, { type: contentType });
 
     const prompt =
       "Remove all people from the image. Preserve architecture, furniture, materials, lighting and straight lines. Fill removed regions plausibly with consistent textures and shadows. No new people or objects.";
