@@ -1,6 +1,6 @@
 // src/lib/kling.ts
-// Appels API Kling — Image → Vidéo (model v2.5)
-// Endpoints stables /v1/videos/image2video + model_name: "kling-v2-5"
+// Appels API Kling — Image → Vidéo (model v2.5 turbo)
+// Endpoints stables /v1/videos/image2video + model_name: "kling-v2-5-turbo"
 
 import { getKlingToken } from "@/lib/klingAuth";
 
@@ -57,14 +57,14 @@ function ensureImageParam(imageUrl?: string, imageDataUrl?: string): string {
   throw new Error("Aucune image fournie (ni URL publique, ni base64).");
 }
 
-/** Crée une tâche Kling Image→Vidéo (model v2.5) et renvoie { taskId } */
+/** Crée une tâche Kling Image→Vidéo (model v2.5 turbo) et renvoie { taskId } */
 export async function createImageToVideoTask(input: CreateTaskInput): Promise<CreateTaskResponse> {
   const token = getKlingToken();
   const image = ensureImageParam(input.imageUrl, input.imageDataUrl);
 
   const body = {
-    model_name: "kling-v2-5",
-    mode: input.mode || "turbo",
+    model_name: "kling-v2-5-turbo",
+    mode: input.mode || "pro",
     duration: String(input.durationSec ?? 5), // "5" ou "10"
     image,                                    // URL publique ou base64 pur
     prompt: input.prompt,
