@@ -31,7 +31,6 @@ export default function HeaderNav({ lang, isAuthed }: { lang: Lang; isAuthed: bo
     <div className="flex items-center gap-2">
       {/* Desktop nav */}
       <nav className="hidden md:flex items-center gap-4 text-sm text-neutral-600">
-        <a href="/#pricing" className="hover:text-black">{t(lang, 'navPricing')}</a>
         {isAuthed ? (
           <>
             <a href="/app" className="hover:text-black">{t(lang, 'navApp')}</a>
@@ -64,7 +63,6 @@ export default function HeaderNav({ lang, isAuthed }: { lang: Lang; isAuthed: bo
       {open ? (
         <div className="md:hidden fixed inset-x-0 top-14 z-50 mx-3 rounded-xl border bg-white shadow-lg">
           <div className="p-3 grid gap-2 text-sm text-neutral-700">
-            <a href="/#pricing" onClick={() => setOpen(false)} className="rounded-md px-3 py-2 hover:bg-neutral-50">{t(lang, 'navPricing')}</a>
             {isAuthed ? (
               <>
                 <a href="/app" onClick={() => setOpen(false)} className="rounded-md px-3 py-2 hover:bg-neutral-50">{t(lang, 'navApp')}</a>
