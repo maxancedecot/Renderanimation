@@ -1,6 +1,6 @@
 // src/lib/kling.ts
-// Appels API Kling — Image → Vidéo (model v2.1)
-// Endpoints stables /v1/videos/image2video + model_name: "kling-v2-1"
+// Appels API Kling — Image → Vidéo (model v2.5 turbo)
+// Endpoints stables /v1/videos/image2video + model_name: "kling-v2-5-turbo"
 
 import { getKlingToken } from "@/lib/klingAuth";
 
@@ -63,7 +63,7 @@ export async function createImageToVideoTask(input: CreateTaskInput): Promise<Cr
   const image = ensureImageParam(input.imageUrl, input.imageDataUrl);
 
   const body = {
-    model_name: "kling-v2-1",
+    model_name: "kling-v2-5-turbo",
     mode: input.mode || "pro",
     duration: String(input.durationSec ?? 5), // "5" ou "10"
     image,                                    // URL publique ou base64 pur
