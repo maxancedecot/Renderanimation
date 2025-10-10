@@ -2,24 +2,31 @@ export const runtime = "nodejs";
 
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/src/lib/auth";
-import { listUsers, addUser, ensureDefaultAdmin, getEnvAdminEmails } from "@/lib/users";
+import { listUsers, addUser, ensureDefaultAdmin, getEnvAdminEmails, findUserByEmail } from "@/lib/users";
 import { getBilling } from "@/lib/billing";
 
-function sessionIsAdmin(session: any): boolean {
+async function sessionIsAdmin(session: any): Promise<boolean> {
   if (!session?.user) return false;
   const env = (process.env.ADMIN_EMAILS || "").split(",").map((s) => s.trim().toLowerCase()).filter(Boolean);
   const email = (session.user.email || "").toLowerCase();
   const flag = (session.user as any).isAdmin === true;
   if (env.length > 0) {
-    return flag || (email ? env.includes(email) : false);
+    if (email && env.includes(email)) return true;
   }
-  return flag;
+  if (flag) return true;
+  if (!email) return false;
+  try {
+    const user = await findUserByEmail(email);
+    return !!user?.admin;
+  } catch {
+    return false;
+  }
 }
 
 export async function GET() {
   await ensureDefaultAdmin();
   const session = await auth();
-  if (!sessionIsAdmin(session)) {
+  if (!(await sessionIsAdmin(session))) {
     return NextResponse.json({ error: "forbidden" }, { status: 403 });
   }
   const users = await listUsers();
@@ -48,7 +55,7 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   await ensureDefaultAdmin();
   const session = await auth();
-  if (!sessionIsAdmin(session)) {
+  if (!(await sessionIsAdmin(session))) {
     return NextResponse.json({ error: "forbidden" }, { status: 403 });
   }
   try {
