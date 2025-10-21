@@ -31,7 +31,7 @@ function ProgressBar({ percent }: { percent: number }) {
   );
 }
 
-export default function UploadBox() {
+export default function UploadBox({ isAdmin = false }: { isAdmin?: boolean }) {
   const qc = useQueryClient();
   const lang = getClientLang();
 
@@ -61,6 +61,8 @@ export default function UploadBox() {
   const [imageUrl, setImageUrl] = useState<string | null>(null);       // image originale OU nettoyée
   const [cleanedUrl, setCleanedUrl] = useState<string | null>(null);   // image sans personnes
   const [result, setResult] = useState<any>(null);
+  const [lastPrompt, setLastPrompt] = useState<string | null>(null);
+  const [showPrompt, setShowPrompt] = useState(false);
 
   const [klingTaskId, setKlingTaskId] = useState<string | null>(null);
   const [finalVideoUrl, setFinalVideoUrl] = useState<string | null>(null);
@@ -236,7 +238,9 @@ export default function UploadBox() {
       if (r.error || !r.taskId) throw new Error(r.error || "taskId absent");
       return { taskId: r.taskId as string };
     },
-    onMutate: () => {
+    onMutate: ({ prompt }) => {
+      setLastPrompt(prompt);
+      setShowPrompt(false);
       toast.loading(t(lang, 'toastTaskSubmitted'), { id: "kg" });
       setKlingTaskId(null);
       setFinalVideoUrl(null);
@@ -671,6 +675,27 @@ export default function UploadBox() {
                   title={t(lang, 'upscale4k')}
                 >{createTopazUpscale.isPending ? t(lang, 'upscale4k') + '…' : (!!topazTaskId ? t(lang, 'fourkPending') : t(lang, 'upscale4k'))}</button>
               </div>
+              {isAdmin && lastPrompt && (
+                <div className="mt-4 rounded-lg border border-neutral-200 bg-neutral-50/80 p-3">
+                  <button
+                    type="button"
+                    className="inline-flex items-center justify-center rounded-md border px-3 py-1.5 text-sm font-medium text-neutral-700 hover:bg-neutral-100"
+                    onClick={() => setShowPrompt((v) => !v)}
+                  >
+                    {showPrompt ? t(lang, 'adminHidePrompt') : t(lang, 'adminShowPrompt')}
+                  </button>
+                  {showPrompt && (
+                    <div className="mt-3 space-y-2">
+                      <div className="text-xs font-semibold uppercase tracking-wide text-neutral-500">
+                        {t(lang, 'adminPromptTitle')}
+                      </div>
+                      <pre className="max-h-64 overflow-auto whitespace-pre-wrap break-words rounded-md border border-neutral-200 bg-white p-3 text-xs leading-relaxed text-neutral-700">
+                        {lastPrompt}
+                      </pre>
+                    </div>
+                  )}
+                </div>
+              )}
               {/* Capture metadata once */}
               {finalVideoUrl && (
                 <MetadataCapture videoId="kling-video" onMeta={(m) => setTopazMeta(m)} />

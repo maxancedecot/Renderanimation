@@ -11,6 +11,11 @@ export default async function AppPage() {
     redirect("/login");
   }
   const lang = getRequestLang();
+  const email = (session.user.email || "").toLowerCase();
+  const envAdmins = (process.env.ADMIN_EMAILS || "").split(",").map((s) => s.trim().toLowerCase()).filter(Boolean);
+  const sessionAdmin = (session.user as any).isAdmin === true;
+  const fallbackAdmin = envAdmins.length > 0 && email ? envAdmins.includes(email) : false;
+  const isAdmin = envAdmins.length > 0 ? (sessionAdmin || fallbackAdmin) : sessionAdmin;
   return (
     <div className="space-y-10">
       <section className="rounded-3xl bg-white shadow-sm ring-1 ring-black/5 p-8 md:p-10">
@@ -41,7 +46,7 @@ export default async function AppPage() {
         </div>
       </section>
 
-      <UploadBox />
+      <UploadBox isAdmin={isAdmin} />
 
       
     </div>
