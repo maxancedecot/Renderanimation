@@ -55,7 +55,7 @@ export function createPromptFromAnalysis(
     forward_push: {
       title: 'Forward push',
       bullets: [
-        'Hold for ~0.5s, then glide forward very slowly along the existing viewing axis.',
+        'Glide forward immediately at a very slow pace along the existing viewing axis.',
         'Maintain a subtle dolly-in with perfectly level framing—no tilt, roll, or lateral drift.',
         'Keep the camera distance changes gentle; no sudden zooms or parallax exaggeration.',
       ],
@@ -64,7 +64,7 @@ export function createPromptFromAnalysis(
     orbit_left: {
       title: 'Orbit left',
       bullets: [
-        'Hold for ~0.5s, then orbit counter-clockwise (to the left) around the main subject at a slow, even speed.',
+        'Orbit counter-clockwise (to the left) around the main subject at a slow, even speed right from the start.',
         'Keep a constant radius and camera height; always face the focal point of the scene.',
         'Avoid tilt or roll; keep verticals straight and the orbit extremely smooth.',
       ],
@@ -73,7 +73,7 @@ export function createPromptFromAnalysis(
     orbit_right: {
       title: 'Orbit right',
       bullets: [
-        'Hold for ~0.5s, then orbit clockwise (to the right) around the main subject at a slow, even speed.',
+        'Orbit clockwise (to the right) around the main subject at a slow, even speed right from the start.',
         'Maintain a consistent distance and camera height while keeping focus on the center of the scene.',
         'Keep the move perfectly level—no tilt, roll, or sudden accelerations.',
       ],
@@ -114,7 +114,7 @@ ${motionLines}
 
 Timing:
 - Duration: ${duration}s
-- 0.5s hold → ${motion.timing} → 0.5s settle.
+- Immediate ${motion.timing} → 0.5s settle.
 
 Constraints:
 - Preserve architecture and materials exactly.
