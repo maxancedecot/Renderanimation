@@ -249,14 +249,14 @@ export default function LibraryGrid() {
                     <a
                       href={it.videoUrl}
                       download
-                      className="inline-flex items-center justify-center rounded-lg bg-black px-4 py-2 text-white hover:bg-black/90 whitespace-nowrap"
+                      className="inline-flex items-center justify-center rounded-md bg-black px-3 py-1.5 text-sm font-medium text-white hover:bg-black/85 whitespace-nowrap shadow-sm"
                     >
                       {t(lang, 'download')}
                     </a>
                     {!show4k ? (
                       <button
                         onClick={() => upscale.mutate({ itemId: it.id, url: it.videoUrl })}
-                        className="inline-flex items-center justify-center rounded-lg bg-[#F9D83C] px-4 py-2 text-black hover:bg-[#F9D83C]/90 disabled:opacity-60 whitespace-nowrap"
+                        className="inline-flex items-center justify-center rounded-md bg-[#F9D83C] px-3 py-1.5 text-sm font-medium text-black hover:bg-[#F9D83C]/90 disabled:opacity-60 whitespace-nowrap shadow-sm"
                         disabled={!!topaz[it.id]?.taskId || upscale.isPending}
                         title={t(lang, 'upscale4k')}
                       >
