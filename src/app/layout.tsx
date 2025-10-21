@@ -38,6 +38,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                   alt="RenderAnimation"
                   className="h-8 w-auto"
                 />
+                <span className="rounded-full border border-amber-200 bg-amber-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700 shadow-sm">
+                  Beta 2.0
+                </span>
               </a>
               <HeaderNav lang={lang} isAuthed={!!session?.user} />
             </div>
