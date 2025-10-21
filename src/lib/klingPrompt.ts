@@ -118,7 +118,7 @@ Timing:
 
 Constraints:
 - Preserve architecture and materials exactly.
-- No new objects, no people.
+- No new objects.
 - No flicker or texture crawling; no warping lines.
 
 Output: ${fps} fps, ${aspect}.`;
