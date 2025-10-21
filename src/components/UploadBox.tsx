@@ -667,7 +667,6 @@ export default function UploadBox({ isAdmin = false }: { isAdmin?: boolean }) {
                   download
                   className="inline-flex items-center justify-center rounded-lg bg-black px-4 py-2 text-white hover:bg-black/90"
                 >{t(lang, 'download')}</a>
-                <a href="/library" className="text-sm rounded-md border px-3 py-2 hover:bg-neutral-50">{t(lang, 'viewLibrary')}</a>
                 <button
                   className="inline-flex items-center justify-center rounded-lg bg-[#F9D83C] px-4 py-2 text-black hover:bg-[#F9D83C]/90 disabled:opacity-60 whitespace-nowrap"
                   onClick={() => createTopazUpscale.mutate()}
